@@ -53,7 +53,8 @@ Now start the simulator:
 ```
 modprobe configfs
 mount -t configfs none /sys/kernel/config
-modprobe libcomposite dummy_hcd
+modprobe libcomposite
+modprobe dummy_hcd
 gbsim /path/to
 ```
 
