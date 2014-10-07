@@ -11,7 +11,7 @@
 #CROSS_COMPILE = arm-linux-gnueabi-
  
 # Location of Greybus kernel headers
-GBDIR = /home/mporter/src/greybus
+GBDIR ?= /home/mporter/src/greybus
 
 # Install directory
 INSTALLDIR = /usr/local/bin
