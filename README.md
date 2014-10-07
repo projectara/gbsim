@@ -33,6 +33,9 @@ if you are cross compiling the simulator.
 
 Build it:
 
+gbsim depends on libusbg (https://github.com/libusbg/libusbg)
+and libconfig (http://hyperrealm.com/libconfig/libconfig.html)
+
 ```
 cd /path/to/gbsim
 make
