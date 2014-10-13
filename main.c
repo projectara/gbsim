@@ -27,9 +27,9 @@ static void cleanup(void)
 	printf("cleaning up\n");
 	sigemptyset(&sigact.sa_mask);
 
-	functionfs_cleanup();
-
 	gadget_cleanup(s, g);
+
+	functionfs_cleanup();
 }
 
 static void signal_handler(int sig){
