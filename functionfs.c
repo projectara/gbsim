@@ -198,7 +198,7 @@ static int cport_write(void *buf, size_t length)
 {
 	int ret = write(cport_in, buf, length);
 	if (ret < length)
-		gbsim_error("Failed CPort write (%ld bytes) to AP\n", length);
+		gbsim_error("Failed CPort write (%zu bytes) to AP\n", length);
 
 	return ret;
 }
@@ -207,9 +207,9 @@ static int cport_read(void *buf, size_t length)
 {
 	int ret = read(cport_out, buf, length);
 	if (ret < 0)
-		gbsim_error("Failed CPort read (%ld bytes) from AP\n", length);
+		gbsim_error("Failed CPort read (%zu bytes) from AP\n", length);
 	else
-		gbsim_debug("Successful CPort read (%ld bytes) from AP\n", length);
+		gbsim_debug("Successful CPort read (%zu bytes) from AP\n", length);
 
 	return ret;
 }
