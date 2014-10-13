@@ -312,9 +312,11 @@ static void *cport_thread(void *param)
 	do {
 		size_t size = cport_read(buf, CPORT_BUF_SIZE);
 		if (size < 0)
-			continue;
+			break;
 		cport_write(buf, size);
 	} while (1);
+
+	free(buf);
 
 	pthread_cleanup_pop(1);
 
