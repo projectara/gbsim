@@ -61,10 +61,10 @@ enum gbsim_state {
 	GBEMU_HS_COMPLETE	= 1,
 };
 
-static int control = -ENXIO;
-static int svc_int = -ENXIO;
-static int cport_in = -ENXIO;
-static int cport_out = -ENXIO;
+int control = -ENXIO;
+int svc_int = -ENXIO;
+int cport_in = -ENXIO;
+int cport_out = -ENXIO;
 
 static pthread_t cport_pthread;
 
@@ -194,26 +194,6 @@ static const struct {
  * Endpoint handling
  */
 
-static int cport_write(void *buf, size_t length)
-{
-	int ret = write(cport_in, buf, length);
-	if (ret < length)
-		gbsim_error("Failed CPort write (%ld bytes) to AP\n", length);
-
-	return ret;
-}
-
-static int cport_read(void *buf, size_t length)
-{
-	int ret = read(cport_out, buf, length);
-	if (ret < 0)
-		gbsim_error("Failed CPort read (%ld bytes) from AP\n", length);
-	else
-		gbsim_debug("Successful CPort read (%ld bytes) from AP\n", length);
-
-	return ret;
-}
-
 static int svc_int_write(void *buf, size_t length)
 {
 	return write(svc_int, buf, length);
@@ -269,7 +249,7 @@ void send_hot_unplug(int mid)
 	gbsim_debug("SVC->AP hotplug event (unplug) sent\n");
 }
 
-static void cleanup_endpoint(int ep_fd, char *ep_name)
+void cleanup_endpoint(int ep_fd, char *ep_name)
 {
 	int ret;
 
@@ -289,36 +269,6 @@ static void cleanup_endpoint(int ep_fd, char *ep_name)
 
 	if(close(ep_fd) < 0)
 		gbsim_error("%s: close \n", ep_name);
-}
-
-static void cport_thread_cleanup(void *arg)
-{
-	cleanup_endpoint(svc_int, "svc_int");
-	cleanup_endpoint(cport_in, "cport_in");
-	cleanup_endpoint(cport_out, "cport_out");
-}
-
-static void *cport_thread(void *param)
-{
-	char *buf;
-
-	/* FIXME: just a placeholder for now */
-
-	pthread_cleanup_push(cport_thread_cleanup, NULL);
-
-	/* alloc send/receive buffers */
-	buf = malloc(CPORT_BUF_SIZE);
-
-	do {
-		size_t size = cport_read(buf, CPORT_BUF_SIZE);
-		if (size < 0)
-			continue;
-		cport_write(buf, size);
-	} while (1);
-
-	pthread_cleanup_pop(1);
-
-	pthread_exit(NULL);
 }
 
 static int enable_endpoints(void)
@@ -452,7 +402,7 @@ static int read_control(void)
 	nevent = ret/ sizeof event[0];
 
 	for (i = 0; i < nevent; i++) {
-		gbsim_debug("event %s,%d\n", names[event->type], event[i].type);
+		gbsim_debug("USB %s\n", names[event->type]);
 
 		switch (event[i].type) {
 		case FUNCTIONFS_BIND:
