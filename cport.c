@@ -29,7 +29,7 @@ void cport_handler(__u8 *rbuf, size_t size)
 
 	/* FIXME: can identify module from our cport connection */
 	gbsim_debug("AP -> Module %d CPort %d %s request\n  ",
-		    get_module_id(cmsg->cport),
+		    cport_to_module_id(cmsg->cport),
 		    cmsg->cport,
 		    get_protocol(cmsg->cport));
 	if (verbose)
