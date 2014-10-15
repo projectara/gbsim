@@ -84,7 +84,7 @@ int gadget_create(usbg_state **s, usbg_gadget **g)
 		goto out2;
 	}
 
-	gbsim_info("gbsim gadget created\n");
+	gbsim_info("USB gadget created\n");
 
 	return 0;
 
