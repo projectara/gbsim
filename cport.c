@@ -38,6 +38,8 @@ void cport_handler(__u8 *rbuf, size_t size)
 	/* FIXME: call based on cport protocol and established connection */
 	i2c_handler(rbuf, size);
 	/* gpio, uart, ... */
+
+	free(rbuf);
 }
 
 void cport_thread_cleanup(void *arg)
