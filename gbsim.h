@@ -6,6 +6,8 @@
 
 #include <svc_msg.h>
 
+extern int bbb_backend;
+extern int i2c_adapter;
 extern int verbose;
 
 /* Matches up with the Greybus Protocol specification document */
@@ -23,6 +25,11 @@ extern int cport_out;
 /* CPorts */
 
 #define PROTOCOL_STATUS_SUCCESS	0x00
+#define PROTOCOL_STATUS_INVALID	0x01
+#define PROTOCOL_STATUS_NOMEM	0x02
+#define PROTOCOL_STATUS_BUSY	0x03
+#define PROTOCOL_STATUS_RETRY	0x04
+#define PROTOCOL_STATUS_BAD	0xff
 
 struct cport_msg {
 	__u8	cport;
@@ -130,3 +137,4 @@ void *cport_thread(void *);
 void cport_thread_cleanup(void *);
 
 void i2c_handler(__u8 *, size_t);
+void i2c_init(void);

@@ -7,15 +7,20 @@
  * Provided under the three clause BSD license found in the LICENSE file.
  */
 
+#include <ctype.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include <usbg/usbg.h>
 
 #include "gbsim.h"
 
-int verbose = 1;
+int bbb_backend = 0;
+int i2c_adapter = 0;
+int verbose = 0;
 
 static usbg_state *s;
 static usbg_gadget *g;
@@ -47,8 +52,39 @@ static void signals_init(void) {
 int main(int argc, char *argv[])
 {
 	int ret = -EINVAL;
+	int o;
+	char *hotplug_basedir;
 
-	/* parse cmdline options */
+	while ((o = getopt(argc, argv, "bh:i:v")) != -1) {
+		switch (o) {
+		case 'b':
+			bbb_backend = 1;
+			printf("bbb_backend %d\n", bbb_backend);
+			break;
+		case 'h':
+			hotplug_basedir = optarg;
+			printf("hotplug_basedir %s\n", hotplug_basedir);
+			break;
+		case 'i':
+			i2c_adapter = atoi(optarg);
+			printf("i2c_adapter %d\n", i2c_adapter);
+			break;
+		case 'v':
+			verbose = 1;
+			printf("verbose %d\n", verbose);
+			break;
+		case '?':
+			if (optopt == 'i')
+				gbsim_error("-%c needs an i2c adapter argument\n", optopt);
+			else if (isprint(optopt))
+				gbsim_error("unknown option -%c'\n", optopt);
+			else
+				gbsim_error("unknown option character `\\x%x'\n", optopt);
+			return 1;
+		default:
+			abort();
+		}
+	}
 
 	signals_init();
 
@@ -58,10 +94,10 @@ int main(int argc, char *argv[])
 
 	ret = gadget_enable(g);
 
-	/* arg1 is our inotify hotplug base directory */
-	ret = inotify_start(argv[1]);
+	ret = inotify_start(hotplug_basedir);
 
-	/* FIXME: init subdev handling here */
+	/* Protocol handlers */
+	i2c_init();
 
 	ret = functionfs_loop();
 
