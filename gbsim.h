@@ -36,13 +36,14 @@ struct op_header {
 	__u8	pad[3];
 };
 
-/* I2C */
-struct i2c_protocol_version_rsp {
+/* common ops */
+struct protocol_version_rsp {
 	__u8	status;
 	__u8	version_major;
 	__u8	version_minor;
 };
 
+/* I2C */
 struct i2c_functionality_rsp {
 	__u8	status;
 	__le32	functionality;
@@ -76,7 +77,7 @@ struct i2c_transfer_rsp {
 struct op_msg {
 	struct op_header	header;
 	union {
-		struct i2c_protocol_version_rsp		i2c_pv_rsp;
+		struct protocol_version_rsp		pv_rsp;
 		struct i2c_functionality_rsp		i2c_fcn_rsp;
 		struct i2c_timeout_rsp			i2c_to_rsp;
 		struct i2c_retries_rsp			i2c_rt_rsp;
