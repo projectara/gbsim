@@ -33,8 +33,11 @@ if you are cross compiling the simulator.
 
 Build it:
 
-gbsim depends on libusbg (https://github.com/libusbg/libusbg)
-and libconfig (http://hyperrealm.com/libconfig/libconfig.html)
+gbsim has the following dependencies:
+
+* libusbg (https://github.com/libusbg/libusbg)
+* libconfig (http://hyperrealm.com/libconfig/libconfig.html)
+* i2c-dev.h userspace header (http://www.lm-sensors.org/wiki/I2CTools or libi2c-dev on debian/ubuntu)
 
 ```
 cd /path/to/gbsim
@@ -58,11 +61,18 @@ modprobe configfs
 mount -t configfs none /sys/kernel/config
 modprobe libcomposite
 modprobe dummy_hcd
-gbsim /path/to
+gbsim -h /path/to -v
 ```
 
 Where */path/to* is the base directory containing the
 directory *hotplug-modules
+
+gbsim supports the following option flags:
+
+* -b: enable the BeagleBone Black hardware backend
+* -h: hotplug base directory
+* -i: i2c adapter (if BBB hardware backend is enabled)
+* -v: enable verbose output
 
 ### Using the simulator
 
