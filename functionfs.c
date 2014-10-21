@@ -49,6 +49,10 @@
 #define HS_PAYLOAD_SIZE		(sizeof(struct svc_function_handshake))
 #define HS_MSG_SIZE		(sizeof(struct svc_msg_header) +	\
 					HS_PAYLOAD_SIZE)
+#define DID_PAYLOAD_SIZE	(sizeof(struct svc_function_unipro_management))
+#define DID_MSG_SIZE		(sizeof(struct svc_msg_header) +	\
+					DID_PAYLOAD_SIZE)
+
 #define HS_VALID(m)							\
 	((m->handshake.version_major == GREYBUS_VERSION_MAJOR) &&	\
 	(m->handshake.version_minor == GREYBUS_VERSION_MINOR) &&	\
@@ -249,6 +253,23 @@ void send_hot_unplug(int mid)
 	gbsim_debug("SVC->AP hotplug event (unplug) sent\n");
 }
 
+void send_ap_device_id(void)
+{
+	struct svc_msg msg;
+	
+	msg.header.function_id = SVC_FUNCTION_UNIPRO_NETWORK_MANAGEMENT;
+	msg.header.message_type = SVC_MSG_DATA;
+	msg.header.payload_length = cpu_to_le16(DID_PAYLOAD_SIZE);
+	msg.management.management_packet_type = SVC_MANAGEMENT_AP_DEVICE_ID;
+	msg.management.ap_device_id.device_id = 1;
+
+	/* Write out hotplug message */
+	svc_int_write(&msg, DID_MSG_SIZE);
+
+	gbsim_debug("SVC -> AP Device ID (1) message sent\n");
+}
+
+
 void cleanup_endpoint(int ep_fd, char *ep_name)
 {
 	int ret;
@@ -363,6 +384,7 @@ static void handle_setup(const struct usb_ctrlrequest *setup)
 			if (HS_VALID(m)) {
 				gbsim_info("AP handshake complete\n");
 				state = GBEMU_HS_COMPLETE;
+				send_ap_device_id();
 			} else
 				perror("AP handshake invalid");
 			break;
