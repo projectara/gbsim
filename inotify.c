@@ -108,6 +108,12 @@ static void *inotify_thread(void *param)
 						if (mid > 0) {
 							gbsim_info("%s module inserted\n", event->name);
 							send_hot_plug(hpe, mid);
+							/*
+							 * FIXME: hardcoded
+							 * interface and device
+							 * ID
+							 */
+							send_link_up(mid, 0, 2);
 						} else
 							gbsim_error("invalid module ID, no hotplug plug event sent\n");
 					} else

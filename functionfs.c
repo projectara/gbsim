@@ -52,6 +52,9 @@
 #define DID_PAYLOAD_SIZE	(sizeof(struct svc_function_unipro_management))
 #define DID_MSG_SIZE		(sizeof(struct svc_msg_header) +	\
 					DID_PAYLOAD_SIZE)
+#define LU_PAYLOAD_SIZE		(sizeof(struct svc_function_unipro_management))
+#define LU_MSG_SIZE		(sizeof(struct svc_msg_header) +	\
+					LU_PAYLOAD_SIZE)
 
 #define HS_VALID(m)							\
 	((m->handshake.version_major == GREYBUS_VERSION_MAJOR) &&	\
@@ -251,6 +254,25 @@ void send_hot_unplug(int mid)
 	svc_int_write(&msg, HP_BASE_SIZE);
 
 	gbsim_debug("SVC->AP hotplug event (unplug) sent\n");
+}
+
+void send_link_up(int mid, int iid, int did)
+{
+	struct svc_msg msg;
+
+	msg.header.function_id = SVC_FUNCTION_UNIPRO_NETWORK_MANAGEMENT;
+	msg.header.message_type = SVC_MSG_DATA;
+	msg.header.payload_length = cpu_to_le16(LU_PAYLOAD_SIZE);
+	msg.management.management_packet_type = SVC_MANAGEMENT_LINK_UP;
+	msg.management.link_up.module_id = mid;
+	msg.management.link_up.interface_id = iid;
+	msg.management.link_up.device_id = did;
+
+	/* Write out hotplug message */
+	svc_int_write(&msg, LU_MSG_SIZE);
+
+	gbsim_debug("SVC -> AP Link Up (%d:%d:%d) message sent\n",
+		    mid, iid, did);
 }
 
 void send_ap_device_id(void)
