@@ -410,7 +410,10 @@ static void handle_setup(const struct usb_ctrlrequest *setup)
 			} else
 				perror("AP handshake invalid");
 			break;
-
+		case SVC_FUNCTION_UNIPRO_NETWORK_MANAGEMENT:
+			gbsim_debug("AP -> SVC set route to Device ID %d\n",
+				    m->management.set_route.device_id);
+			break;
 		default:
 			perror("SVC message ID invalid");
 			return;
