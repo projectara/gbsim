@@ -27,6 +27,8 @@ static usbg_gadget *g;
 
 static struct sigaction sigact;
 
+struct gbsim_info info;
+
 static void cleanup(void)
 {
 	printf("cleaning up\n");
@@ -87,6 +89,8 @@ int main(int argc, char *argv[])
 	}
 
 	signals_init();
+
+	TAILQ_INIT(&info.cports);
 
 	ret = gadget_create(&s, &g);
 

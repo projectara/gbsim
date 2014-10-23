@@ -66,6 +66,14 @@ out:
 	return hpb;
 }
 
+static void parse_manifest_blob(char *hpe)
+{
+	struct greybus_manifest_header *mh =
+		(struct greybus_manifest_header *)(hpe + HP_BASE_SIZE);
+
+	manifest_parse(mh, le16toh(mh->size));
+}
+
 static int get_module_id(char *fname)
 {
 	char *mid_str;
@@ -104,6 +112,7 @@ static void *inotify_thread(void *param)
 					strcat(mnfs, event->name);
 					hpe = get_manifest_blob(mnfs);
 					if (hpe) {
+						parse_manifest_blob(hpe);
 						int mid = get_module_id(event->name);
 						if (mid > 0) {
 							gbsim_info("%s module inserted\n", event->name);

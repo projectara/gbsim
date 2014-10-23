@@ -1,6 +1,8 @@
 /*
 */
 
+#include <endian.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <usbg/usbg.h>
 
@@ -21,6 +23,18 @@ extern int control;
 extern int svc_int;
 extern int cport_in;
 extern int cport_out;
+
+struct gbsim_cport {
+	TAILQ_ENTRY(gbsim_cport) cnode;
+	int id;
+	int protocol;
+};
+
+struct gbsim_info {
+	TAILQ_HEAD(chead, gbsim_cport) cports;
+};
+
+extern struct gbsim_info info;
 
 /* CPorts */
 
@@ -140,3 +154,5 @@ void cport_thread_cleanup(void *);
 
 void i2c_handler(__u8 *, size_t);
 void i2c_init(void);
+
+bool manifest_parse(void *data, size_t size);

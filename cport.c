@@ -9,17 +9,45 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/types.h>
+#include <linux/types.h>
 #include <unistd.h>
+
+#include <greybus_manifest.h>
 
 #include "gbsim.h"
 
 #define ES1_MSG_SIZE	(4 * 1024)
 
-static char *get_protocol(__le16 cport)
+static char *get_protocol(__le16 id)
 {
-	/* FIXME can identify based on register cport protocol */
-	return "I2C";
+	struct gbsim_cport *cport;
+
+	TAILQ_FOREACH(cport, &info.cports, cnode) {
+		if (cport->id == id) {
+			switch (cport->protocol) {
+			case GREYBUS_PROTOCOL_I2C:
+				return "I2C";
+			}
+		}
+	}
+	return "N/A";
+}
+
+static void exec_subdev_handler(__le16 id, __u8 *rbuf, size_t size)
+{
+	struct gbsim_cport *cport;
+
+	TAILQ_FOREACH(cport, &info.cports, cnode) {
+		if (cport->id == id)
+			switch (cport->protocol) {
+			case GREYBUS_PROTOCOL_I2C:
+				i2c_handler(rbuf, size);
+				break;
+			default:
+				gbsim_error("subdev handler not found for cport %d\n",
+					     id);
+			}
+	}
 }
 
 void cport_handler(__u8 *rbuf, size_t size)
@@ -35,9 +63,7 @@ void cport_handler(__u8 *rbuf, size_t size)
 	if (verbose)
 		gbsim_dump(cmsg->data, size - 1);
 
-	/* FIXME: call based on cport protocol and established connection */
-	i2c_handler(rbuf, size);
-	/* gpio, uart, ... */
+	exec_subdev_handler(cmsg->cport, rbuf, size);
 
 	free(rbuf);
 }

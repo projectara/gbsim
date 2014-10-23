@@ -37,11 +37,6 @@
 #define FFS_GBEMU_IN	FFS_PREFIX"ep2"
 #define FFS_GBEMU_OUT	FFS_PREFIX"ep3"
 
-#define cpu_to_le16(x)  htole16(x)
-#define cpu_to_le32(x)  htole32(x)
-#define le32_to_cpu(x)  le32toh(x)
-#define le16_to_cpu(x)  le16toh(x)
-
 #define STR_INTERFACE	"gbsim"
 
 #define NEVENT		5
@@ -104,15 +99,15 @@ static const struct {
 } __attribute__((packed)) descriptors = {
 	.header = {
 #ifdef USE_DEPRECATED_DESC_HEAD
-		.magic = cpu_to_le32(FUNCTIONFS_DESCRIPTORS_MAGIC),
+		.magic = htole32(FUNCTIONFS_DESCRIPTORS_MAGIC),
 #else
-		.magic = cpu_to_le32(FUNCTIONFS_DESCRIPTORS_MAGIC_V2),
-		.flags = cpu_to_le32(FUNCTIONFS_HAS_FS_DESC |
+		.magic = htole32(FUNCTIONFS_DESCRIPTORS_MAGIC_V2),
+		.flags = htole32(FUNCTIONFS_HAS_FS_DESC |
 				     FUNCTIONFS_HAS_HS_DESC),
 #endif
-		.length = cpu_to_le32(sizeof descriptors),
-		.fs_count = cpu_to_le32(4),
-		.hs_count = cpu_to_le32(4),
+		.length = htole32(sizeof descriptors),
+		.fs_count = htole32(4),
+		.hs_count = htole32(4),
 	},
 	.fs_descs = {
 		.intf = {
@@ -186,13 +181,13 @@ static const struct {
 	} __attribute__((packed)) lang0;
 } __attribute__((packed)) strings = {
 	.header = {
-		.magic = cpu_to_le32(FUNCTIONFS_STRINGS_MAGIC),
-		.length = cpu_to_le32(sizeof strings),
-		.str_count = cpu_to_le32(1),
-		.lang_count = cpu_to_le32(1),
+		.magic = htole32(FUNCTIONFS_STRINGS_MAGIC),
+		.length = htole32(sizeof strings),
+		.str_count = htole32(1),
+		.lang_count = htole32(1),
 	},
 	.lang0 = {
-		cpu_to_le16(0x0409), /* en-us */
+		htole16(0x0409), /* en-us */
 		STR_INTERFACE,
 	},
 };
@@ -213,7 +208,7 @@ static void send_svc_handshake(void)
 
 	m->header.function_id = SVC_FUNCTION_HANDSHAKE;
 	m->header.message_type = SVC_MSG_DATA;
-	m->header.payload_length = cpu_to_le16(HS_PAYLOAD_SIZE);
+	m->header.payload_length = htole16(HS_PAYLOAD_SIZE);
 	m->handshake.version_major = 0;
 	m->handshake.version_minor = 0;
 	m->handshake.handshake_type = SVC_HANDSHAKE_SVC_HELLO;
@@ -262,7 +257,7 @@ void send_link_up(int mid, int iid, int did)
 
 	msg.header.function_id = SVC_FUNCTION_UNIPRO_NETWORK_MANAGEMENT;
 	msg.header.message_type = SVC_MSG_DATA;
-	msg.header.payload_length = cpu_to_le16(LU_PAYLOAD_SIZE);
+	msg.header.payload_length = htole16(LU_PAYLOAD_SIZE);
 	msg.management.management_packet_type = SVC_MANAGEMENT_LINK_UP;
 	msg.management.link_up.module_id = mid;
 	msg.management.link_up.interface_id = iid;
@@ -281,7 +276,7 @@ void send_ap_device_id(void)
 	
 	msg.header.function_id = SVC_FUNCTION_UNIPRO_NETWORK_MANAGEMENT;
 	msg.header.message_type = SVC_MSG_DATA;
-	msg.header.payload_length = cpu_to_le16(DID_PAYLOAD_SIZE);
+	msg.header.payload_length = htole16(DID_PAYLOAD_SIZE);
 	msg.management.management_packet_type = SVC_MANAGEMENT_AP_DEVICE_ID;
 	msg.management.ap_device_id.device_id = 1;
 
@@ -375,9 +370,9 @@ static void handle_setup(const struct usb_ctrlrequest *setup)
 		gbsim_debug("AP->AP Bridge setup message:\n");
 		gbsim_debug("  bRequestType = %02x\n", setup->bRequestType);
 		gbsim_debug("  bRequest     = %02x\n", setup->bRequest);
-		gbsim_debug("  wValue       = %04x\n", le16_to_cpu(setup->wValue));
-		gbsim_debug("  wIndex       = %04x\n", le16_to_cpu(setup->wIndex));
-		gbsim_debug("  wLength      = %04x\n", le16_to_cpu(setup->wLength));
+		gbsim_debug("  wValue       = %04x\n", le16toh(setup->wValue));
+		gbsim_debug("  wIndex       = %04x\n", le16toh(setup->wIndex));
+		gbsim_debug("  wLength      = %04x\n", le16toh(setup->wLength));
 	}
 
 	if ((setup->bRequest == 0x01) &&
