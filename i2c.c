@@ -174,8 +174,10 @@ void i2c_init(void)
 {
 	char filename[20];
 
-	snprintf(filename, 19, "/dev/i2c-%d", i2c_adapter);
-	ifd = open(filename, O_RDWR);
-	if (ifd < 0)
-		gbsim_error("failed opening i2c-dev node read/write\n");
+	if (bbb_backend) {
+		snprintf(filename, 19, "/dev/i2c-%d", i2c_adapter);
+		ifd = open(filename, O_RDWR);
+		if (ifd < 0)
+			gbsim_error("failed opening i2c-dev node read/write\n");
+	}
 }
