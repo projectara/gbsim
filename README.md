@@ -37,7 +37,6 @@ gbsim has the following dependencies:
 
 * libusbg (https://github.com/libusbg/libusbg)
 * libconfig (http://hyperrealm.com/libconfig/libconfig.html)
-* i2c-dev.h userspace header (http://www.lm-sensors.org/wiki/I2CTools or libi2c-dev on debian/ubuntu)
 
 ```
 cd /path/to/gbsim

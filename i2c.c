@@ -9,10 +9,12 @@
 
 #include <fcntl.h>
 #include <linux/fs.h>
+#include <linux/i2c.h>
 #include <linux/i2c-dev.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <unistd.h>
 
