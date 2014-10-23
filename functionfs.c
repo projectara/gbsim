@@ -270,15 +270,16 @@ void send_link_up(int mid, int iid, int did)
 		    mid, iid, did);
 }
 
-void send_ap_device_id(void)
+void send_ap_id(int mid)
 {
 	struct svc_msg msg;
 	
 	msg.header.function_id = SVC_FUNCTION_UNIPRO_NETWORK_MANAGEMENT;
 	msg.header.message_type = SVC_MSG_DATA;
 	msg.header.payload_length = htole16(DID_PAYLOAD_SIZE);
-	msg.management.management_packet_type = SVC_MANAGEMENT_AP_DEVICE_ID;
-	msg.management.ap_device_id.device_id = 1;
+	msg.management.management_packet_type = SVC_MANAGEMENT_AP_ID;
+	msg.management.ap_id.module_id = mid;
+	msg.management.ap_id.device_id = 1;
 
 	/* Write out hotplug message */
 	svc_int_write(&msg, DID_MSG_SIZE);
@@ -401,7 +402,7 @@ static void handle_setup(const struct usb_ctrlrequest *setup)
 			if (HS_VALID(m)) {
 				gbsim_info("AP handshake complete\n");
 				state = GBEMU_HS_COMPLETE;
-				send_ap_device_id();
+				send_ap_id(0);
 			} else
 				perror("AP handshake invalid");
 			break;
