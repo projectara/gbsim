@@ -64,6 +64,81 @@ struct protocol_version_rsp {
 	__u8	version_minor;
 };
 
+/* GPIO */
+struct gpio_line_count_rsp {
+	__u8	status;
+	__u8	count;
+};
+
+struct gpio_activate_req {
+	__u8	which;
+};
+
+struct gpio_activate_rsp {
+	__u8	status;
+};
+
+struct gpio_deactivate_req {
+	__u8	which;
+};
+
+struct gpio_deactivate_rsp {
+	__u8	status;
+};
+
+struct gpio_get_direction_req {
+	__u8	which;
+};
+
+struct gpio_get_direction_rsp {
+	__u8	status;
+	__u8	direction;
+};
+
+struct gpio_direction_input_req {
+	__u8	which;
+};
+
+struct gpio_direction_input_rsp {
+	__u8	status;
+};
+
+struct gpio_direction_output_req {
+	__u8	which;
+	__u8	value;
+};
+
+struct gpio_direction_output_rsp {
+	__u8	status;
+};
+
+struct gpio_get_value_req {
+	__u8	which;
+};
+
+struct gpio_get_value_rsp {
+	__u8	status;
+	__u8	value;
+};
+
+struct gpio_set_value_req {
+	__u8	which;
+	__u8	value;
+};
+
+struct gpio_set_value_rsp {
+	__u8	status;
+};
+
+struct gpio_set_debounce_req {
+	__u8	which;
+	__u8	usec;
+};
+
+struct gpio_set_debounce_rsp {
+	__u8	status;
+};
+
 /* I2C */
 struct i2c_functionality_rsp {
 	__u8	status;
@@ -99,6 +174,23 @@ struct op_msg {
 	struct op_header	header;
 	union {
 		struct protocol_version_rsp		pv_rsp;
+                struct gpio_line_count_rsp		gpio_lc_rsp;
+                struct gpio_activate_req		gpio_act_req;
+                struct gpio_activate_rsp		gpio_act_rsp;
+                struct gpio_deactivate_req		gpio_deact_req;
+                struct gpio_deactivate_rsp		gpio_deact_rsp;
+		struct gpio_get_direction_req		gpio_get_dir_req;
+		struct gpio_get_direction_rsp		gpio_get_dir_rsp;
+		struct gpio_direction_input_req		gpio_dir_input_req;
+		struct gpio_direction_input_rsp		gpio_dir_input_rsp;
+		struct gpio_direction_output_req	gpio_dir_output_req;
+		struct gpio_direction_output_rsp	gpio_dir_output_rsp;
+		struct gpio_get_value_req		gpio_get_val_req;
+		struct gpio_get_value_rsp		gpio_get_val_rsp;
+		struct gpio_set_value_req		gpio_set_val_req;
+		struct gpio_set_value_rsp		gpio_set_val_rsp;
+		struct gpio_set_debounce_req		gpio_set_db_req;
+		struct gpio_set_debounce_rsp		gpio_set_db_rsp;
 		struct i2c_functionality_rsp		i2c_fcn_rsp;
 		struct i2c_timeout_rsp			i2c_to_rsp;
 		struct i2c_retries_rsp			i2c_rt_rsp;
@@ -151,6 +243,9 @@ void send_link_up(int, int, int);
 
 void *cport_thread(void *);
 void cport_thread_cleanup(void *);
+
+void gpio_handler(__u8 *, size_t);
+void gpio_init(void);
 
 void i2c_handler(__u8 *, size_t);
 void i2c_init(void);

@@ -25,6 +25,8 @@ static char *get_protocol(__le16 id)
 	TAILQ_FOREACH(cport, &info.cports, cnode) {
 		if (cport->id == id) {
 			switch (cport->protocol) {
+			case GREYBUS_PROTOCOL_GPIO:
+				return "GPIO";
 			case GREYBUS_PROTOCOL_I2C:
 				return "I2C";
 			}
@@ -40,6 +42,9 @@ static void exec_subdev_handler(__le16 id, __u8 *rbuf, size_t size)
 	TAILQ_FOREACH(cport, &info.cports, cnode) {
 		if (cport->id == id)
 			switch (cport->protocol) {
+			case GREYBUS_PROTOCOL_GPIO:
+				gpio_handler(rbuf, size);
+				break;
 			case GREYBUS_PROTOCOL_I2C:
 				i2c_handler(rbuf, size);
 				break;

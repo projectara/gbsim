@@ -101,6 +101,7 @@ int main(int argc, char *argv[])
 	ret = inotify_start(hotplug_basedir);
 
 	/* Protocol handlers */
+	gpio_init();
 	i2c_init();
 
 	ret = functionfs_loop();
