@@ -8,6 +8,7 @@
  */
 
 #include <fcntl.h>
+#include <libsoc_gpio.h>
 #include <linux/fs.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -30,7 +31,8 @@
 #define GB_GPIO_TYPE_SET_DEBOUNCE	0x0a
 #define GB_GPIO_TYPE_RESPONSE		0x80
 
-static int gpio_dir[4];
+static int gpio_dir[6];
+static gpio *gpios[6];
 
 void gpio_handler(__u8 *rbuf, size_t size)
 {
@@ -72,7 +74,7 @@ void gpio_handler(__u8 *rbuf, size_t size)
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | GB_GPIO_TYPE_LINE_COUNT;
 		op_rsp->gpio_lc_rsp.status = PROTOCOL_STATUS_SUCCESS;
-		op_rsp->gpio_lc_rsp.count = 3; /* Something arbitrary, but useful */
+		op_rsp->gpio_lc_rsp.count = 5; /* Something arbitrary, but useful */
 		gbsim_debug("Module %d -> AP CPort %d GPIO line count response\n  ",
 			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
 		if (verbose)
@@ -109,7 +111,10 @@ void gpio_handler(__u8 *rbuf, size_t size)
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | GB_GPIO_TYPE_GET_DIRECTION;
 		op_rsp->gpio_get_dir_rsp.status = PROTOCOL_STATUS_SUCCESS;
-		op_rsp->gpio_get_dir_rsp.direction = gpio_dir[op_req->gpio_get_dir_req.which];
+		if (bbb_backend)
+			op_rsp->gpio_get_dir_rsp.direction = libsoc_gpio_get_direction(gpios[op_req->gpio_dir_output_req.which]);
+		else
+			op_rsp->gpio_get_dir_rsp.direction = gpio_dir[op_req->gpio_get_dir_req.which];
 		gbsim_debug("Module %d -> AP CPort %d GPIO %d get direction (%d) response\n  ",
 			    cport_to_module_id(cport_req->cport), cport_rsp->cport, op_req->gpio_get_dir_req.which, op_rsp->gpio_get_dir_rsp.direction);
 		if (verbose)
@@ -126,6 +131,10 @@ void gpio_handler(__u8 *rbuf, size_t size)
 			    cport_to_module_id(cport_req->cport), cport_req->cport, op_req->gpio_dir_input_req.which);
 		if (verbose)
 			gbsim_dump((__u8 *)op_req, op_req->header.size);
+		if (bbb_backend)
+			libsoc_gpio_set_direction(gpios[op_req->gpio_dir_output_req.which], INPUT);
+		else
+			gpio_dir[op_req->gpio_dir_output_req.which] = 0;
 		write(cport_in, cport_rsp, op_rsp->header.size + 1);
 		break;
 	case GB_GPIO_TYPE_DIRECTION_OUT:
@@ -138,6 +147,10 @@ void gpio_handler(__u8 *rbuf, size_t size)
 			    cport_to_module_id(cport_req->cport), cport_req->cport, op_req->gpio_dir_output_req.which);
 		if (verbose)
 			gbsim_dump((__u8 *)op_req, op_req->header.size);
+		if (bbb_backend)
+			libsoc_gpio_set_direction(gpios[op_req->gpio_dir_output_req.which], OUTPUT);
+		else
+			gpio_dir[op_req->gpio_dir_output_req.which] = 1;
 		write(cport_in, cport_rsp, op_rsp->header.size + 1);
 		break;
 	case GB_GPIO_TYPE_GET_VALUE:
@@ -146,7 +159,10 @@ void gpio_handler(__u8 *rbuf, size_t size)
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | GB_GPIO_TYPE_GET_VALUE;
 		op_rsp->gpio_get_val_rsp.status = PROTOCOL_STATUS_SUCCESS;
-		op_rsp->gpio_get_val_rsp.value = 1;
+		if (bbb_backend)
+			op_rsp->gpio_get_val_rsp.value = libsoc_gpio_get_level(gpios[op_req->gpio_dir_output_req.which]);
+		else
+			op_rsp->gpio_get_val_rsp.value = 1;
 		gbsim_debug("Module %d -> AP CPort %d GPIO %d get value (%d) response\n  ",
 			    cport_to_module_id(cport_req->cport), cport_rsp->cport, op_req->gpio_get_val_req.which, op_rsp->gpio_get_val_rsp.value);
 		if (verbose)
@@ -163,6 +179,8 @@ void gpio_handler(__u8 *rbuf, size_t size)
 			    cport_to_module_id(cport_req->cport), cport_req->cport, op_req->gpio_set_val_req.which, op_req->gpio_set_val_req.value);
 		if (verbose)
 			gbsim_dump((__u8 *)op_req, op_req->header.size);
+		if (bbb_backend)
+			libsoc_gpio_set_level(gpios[op_req->gpio_set_val_req.which], op_req->gpio_set_val_req.value);
 		write(cport_in, cport_rsp, op_rsp->header.size + 1);
 		break;
 	case GB_GPIO_TYPE_SET_DEBOUNCE:
@@ -186,6 +204,16 @@ void gpio_handler(__u8 *rbuf, size_t size)
 
 void gpio_init(void)
 {
-	if (bbb_backend)
-		;
+	int i;
+
+	if (bbb_backend) {
+		/*
+		 * Grab the four onboard LEDs (gpio1:24-27) and then
+		 * P9-12 and P8-26 (gpio1:28-29) to support input. The
+		 * pins on the header can be used in loopback mode for
+		 * testing.
+		 */
+		for (i=0; i<6; i++)
+			gpios[i] = libsoc_gpio_request(56+i, LS_GREEDY);
+	}
 }

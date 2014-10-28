@@ -20,7 +20,7 @@ CC = $(CROSS_COMPILE)gcc
 CFLAGS = -Wall -g
 INCS = -I$(GBDIR)
 LFLAGS = 
-LIBS = -lpthread -lusbg
+LIBS = -lpthread -lusbg -lsoc
 
 SRCS = main.c gadget.c functionfs.c inotify.c manifest.c cport.c i2c.c gpio.c
 OBJS = $(SRCS:.c=.o)

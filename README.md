@@ -37,6 +37,7 @@ gbsim has the following dependencies:
 
 * libusbg (https://github.com/libusbg/libusbg)
 * libconfig (http://hyperrealm.com/libconfig/libconfig.html)
+* libsoc (https://github.com/jackmitch/libsoc)
 
 ```
 cd /path/to/gbsim
