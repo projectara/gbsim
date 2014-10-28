@@ -44,9 +44,9 @@
 #define HS_PAYLOAD_SIZE		(sizeof(struct svc_function_handshake))
 #define HS_MSG_SIZE		(sizeof(struct svc_msg_header) +	\
 					HS_PAYLOAD_SIZE)
-#define DID_PAYLOAD_SIZE	(sizeof(struct svc_function_unipro_management))
-#define DID_MSG_SIZE		(sizeof(struct svc_msg_header) +	\
-					DID_PAYLOAD_SIZE)
+#define APID_PAYLOAD_SIZE	(sizeof(struct svc_function_unipro_management))
+#define APID_MSG_SIZE		(sizeof(struct svc_msg_header) +	\
+					APID_PAYLOAD_SIZE)
 #define LU_PAYLOAD_SIZE		(sizeof(struct svc_function_unipro_management))
 #define LU_MSG_SIZE		(sizeof(struct svc_msg_header) +	\
 					LU_PAYLOAD_SIZE)
@@ -276,15 +276,15 @@ void send_ap_id(int mid)
 	
 	msg.header.function_id = SVC_FUNCTION_UNIPRO_NETWORK_MANAGEMENT;
 	msg.header.message_type = SVC_MSG_DATA;
-	msg.header.payload_length = htole16(DID_PAYLOAD_SIZE);
+	msg.header.payload_length = htole16(APID_PAYLOAD_SIZE);
 	msg.management.management_packet_type = SVC_MANAGEMENT_AP_ID;
 	msg.management.ap_id.module_id = mid;
 	msg.management.ap_id.device_id = 1;
 
 	/* Write out hotplug message */
-	svc_int_write(&msg, DID_MSG_SIZE);
+	svc_int_write(&msg, APID_MSG_SIZE);
 
-	gbsim_debug("SVC -> AP Device ID (1) message sent\n");
+	gbsim_debug("SVC -> AP ID (MID:%d DID:1) message sent\n", mid);
 }
 
 
