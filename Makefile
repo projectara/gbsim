@@ -22,7 +22,7 @@ INCS = -I$(GBDIR)
 LFLAGS = 
 LIBS = -lpthread -lusbg -lsoc
 
-SRCS = main.c gadget.c functionfs.c inotify.c manifest.c cport.c i2c.c gpio.c
+SRCS = main.c gadget.c functionfs.c inotify.c manifest.c cport.c i2c.c gpio.c pwm.c
 OBJS = $(SRCS:.c=.o)
 MAIN = gbsim
 

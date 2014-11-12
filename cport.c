@@ -29,6 +29,8 @@ static char *get_protocol(__le16 id)
 				return "GPIO";
 			case GREYBUS_PROTOCOL_I2C:
 				return "I2C";
+			case GREYBUS_PROTOCOL_PWM:
+				return "PWM";
 			}
 		}
 	}
@@ -47,6 +49,9 @@ static void exec_subdev_handler(__le16 id, __u8 *rbuf, size_t size)
 				break;
 			case GREYBUS_PROTOCOL_I2C:
 				i2c_handler(rbuf, size);
+				break;
+			case GREYBUS_PROTOCOL_PWM:
+				pwm_handler(rbuf, size);
 				break;
 			default:
 				gbsim_error("subdev handler not found for cport %d\n",
