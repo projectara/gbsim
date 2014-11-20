@@ -54,12 +54,12 @@ struct op_header {
 	__le16	size;
 	__le16	id;
 	__u8	type;
-	__u8	pad[3];
+	__u8	result;
+	__u8	pad[2];
 };
 
 /* common ops */
 struct protocol_version_rsp {
-	__u8	status;
 	__u8	version_major;
 	__u8	version_minor;
 };

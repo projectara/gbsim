@@ -57,7 +57,7 @@ void pwm_handler(__u8 *rbuf, size_t size)
 				      sizeof(struct protocol_version_rsp);
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | GB_PWM_TYPE_PROTOCOL_VERSION;
-		op_rsp->pv_rsp.status = PROTOCOL_STATUS_SUCCESS;
+		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 		op_rsp->pv_rsp.version_major = GREYBUS_VERSION_MAJOR;
 		op_rsp->pv_rsp.version_minor = GREYBUS_VERSION_MINOR;
 		gbsim_debug("Module %d -> AP CPort %d PWM protocol version response\n  ",
