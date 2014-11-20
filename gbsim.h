@@ -134,22 +134,15 @@ struct i2c_transfer_rsp {
 
 /* PWM */
 struct pwm_count_rsp {
-	__u8	status;
 	__u8	count;
 };
 
 struct pwm_activate_req {
 	__u8	which;
 };
-struct pwm_activate_rsp {
-	__u8	status;
-};
 
 struct pwm_deactivate_req {
 	__u8	which;
-};
-struct pwm_deactivate_rsp {
-	__u8	status;
 };
 
 struct pwm_config_req {
@@ -157,34 +150,19 @@ struct pwm_config_req {
 	__u32	duty;
 	__u32	period;
 };
-struct pwm_config_rsp {
-	__u8	status;
-};
 
 struct pwm_polarity_req {
 	__u8	which;
 	__u8	polarity;
-};
-struct pwm_polarity_rsp {
-	__u8	status;
 };
 
 struct pwm_enable_req {
 	__u8	which;
 };
 
-struct pwm_enable_rsp {
-	__u8	status;
-};
-
 struct pwm_disable_req {
 	__u8	which;
 };
-
-struct pwm_disable_rsp {
-	__u8	status;
-};
-
 
 /* Ops */
 struct op_msg {
@@ -207,17 +185,11 @@ struct op_msg {
 		struct i2c_transfer_rsp			i2c_xfer_rsp;
                 struct pwm_count_rsp			pwm_cnt_rsp;
                 struct pwm_activate_req			pwm_act_req;
-                struct pwm_activate_rsp			pwm_act_rsp;
                 struct pwm_deactivate_req		pwm_deact_req;
-                struct pwm_deactivate_rsp		pwm_deact_rsp;
                 struct pwm_config_req			pwm_cfg_req;
-                struct pwm_config_rsp			pwm_cfg_rsp;
                 struct pwm_polarity_req			pwm_pol_req;
-                struct pwm_polarity_rsp			pwm_pol_rsp;
                 struct pwm_enable_req			pwm_enb_req;
-                struct pwm_enable_rsp			pwm_enb_rsp;
                 struct pwm_disable_req			pwm_dis_req;
-                struct pwm_disable_rsp			pwm_dis_rsp;
 	};
 };
 
