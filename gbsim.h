@@ -141,16 +141,7 @@ struct gpio_set_debounce_rsp {
 
 /* I2C */
 struct i2c_functionality_rsp {
-	__u8	status;
 	__le32	functionality;
-};
-
-struct i2c_timeout_rsp {
-	__u8	status;
-};
-
-struct i2c_retries_rsp {
-	__u8	status;
 };
 
 struct i2c_transfer_desc {
@@ -165,7 +156,6 @@ struct i2c_transfer_req {
 };
 
 struct i2c_transfer_rsp {
-	__u8	status;
 	__u8	data[0];
 };
 
@@ -246,8 +236,6 @@ struct op_msg {
 		struct gpio_set_debounce_req		gpio_set_db_req;
 		struct gpio_set_debounce_rsp		gpio_set_db_rsp;
 		struct i2c_functionality_rsp		i2c_fcn_rsp;
-		struct i2c_timeout_rsp			i2c_to_rsp;
-		struct i2c_retries_rsp			i2c_rt_rsp;
 		struct i2c_transfer_req			i2c_xfer_req;
 		struct i2c_transfer_rsp			i2c_xfer_rsp;
                 struct pwm_count_rsp			pwm_cnt_rsp;

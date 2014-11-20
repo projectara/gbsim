@@ -73,7 +73,7 @@ void i2c_handler(__u8 *rbuf, size_t size)
 				   sizeof(struct i2c_functionality_rsp);
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | OP_I2C_PROTOCOL_FUNCTIONALITY;
-		op_rsp->i2c_fcn_rsp.status = PROTOCOL_STATUS_SUCCESS;
+		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 		op_rsp->i2c_fcn_rsp.functionality = I2C_FUNC_I2C;
 		gbsim_debug("Module %d -> AP CPort %d I2C protocol functionality response\n  ",
 			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
@@ -82,11 +82,10 @@ void i2c_handler(__u8 *rbuf, size_t size)
 		write(cport_in, cport_rsp, op_rsp->header.size + 1);
 		break;
 	case OP_I2C_PROTOCOL_TIMEOUT:
-		op_rsp->header.size = sizeof(struct op_header) +
-				   sizeof(struct i2c_timeout_rsp);
+		op_rsp->header.size = sizeof(struct op_header) + 0;
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | OP_I2C_PROTOCOL_TIMEOUT;
-		op_rsp->i2c_to_rsp.status = PROTOCOL_STATUS_SUCCESS;
+		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 		gbsim_debug("Module %d -> AP CPort %d I2C protocol timeout response\n  ",
 			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
 		if (verbose)
@@ -94,11 +93,10 @@ void i2c_handler(__u8 *rbuf, size_t size)
 		write(cport_in, cport_rsp, op_rsp->header.size + 1);
 		break;
 	case OP_I2C_PROTOCOL_RETRIES:
-		op_rsp->header.size = sizeof(struct op_header) +
-				   sizeof(struct i2c_retries_rsp);
+		op_rsp->header.size = sizeof(struct op_header) + 0;
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | OP_I2C_PROTOCOL_RETRIES;
-		op_rsp->i2c_rt_rsp.status = PROTOCOL_STATUS_SUCCESS;
+		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 		gbsim_debug("Module %d -> AP CPort %d I2C protocol retries response\n  ",
 			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
 		if (verbose)
@@ -148,10 +146,10 @@ void i2c_handler(__u8 *rbuf, size_t size)
 		op_rsp->header.type = OP_RESPONSE | OP_I2C_PROTOCOL_TRANSFER;
 
 		if (write_fail)
-			op_rsp->i2c_xfer_rsp.status = PROTOCOL_STATUS_RETRY;
+			op_rsp->header.result = PROTOCOL_STATUS_RETRY;
 		else
 			/* FIXME: handle read failure */
-			op_rsp->i2c_xfer_rsp.status = PROTOCOL_STATUS_SUCCESS;
+			op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 
 		if (read_op)
 			op_rsp->header.size = sizeof(struct op_header) + 1 + read_count;
