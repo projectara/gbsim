@@ -38,6 +38,8 @@ void pwm_handler(__u8 *rbuf, size_t size)
 	char *tbuf;
 	struct op_msg *op_req, *op_rsp;
 	struct cport_msg *cport_req, *cport_rsp;
+	__u32 duty;
+	__u32 period;
 
 	tbuf = malloc(4 * 1024);
 	if (!tbuf) {
@@ -103,15 +105,17 @@ void pwm_handler(__u8 *rbuf, size_t size)
 		break;
 	case GB_PWM_TYPE_CONFIG:
 		op_rsp->header.size = sizeof(struct op_header) + 0;
+		duty = le32toh(op_req->pwm_cfg_req.duty);
+		period = le32toh(op_req->pwm_cfg_req.period);
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | GB_PWM_TYPE_CONFIG;
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 		if (bbb_backend) {
-			libsoc_pwm_set_duty_cycle(pwms[op_req->pwm_cfg_req.which], op_req->pwm_cfg_req.duty);
-			libsoc_pwm_set_period(pwms[op_req->pwm_cfg_req.which], op_req->pwm_cfg_req.period);
+			libsoc_pwm_set_duty_cycle(pwms[op_req->pwm_cfg_req.which], duty);
+			libsoc_pwm_set_period(pwms[op_req->pwm_cfg_req.which], period);
 		}
 		gbsim_debug("AP -> Module %d CPort %d PWM %d config (%dns/%dns) request\n  ",
-			    cport_to_module_id(cport_req->cport), cport_rsp->cport, op_req->pwm_cfg_req.which, op_req->pwm_cfg_req.duty, op_req->pwm_cfg_req.period);
+			    cport_to_module_id(cport_req->cport), cport_rsp->cport, op_req->pwm_cfg_req.which, duty, period);
 		if (verbose)
 			gbsim_dump((__u8 *)op_req, op_req->header.size);
 		write(cport_in, cport_rsp, op_rsp->header.size + 1);

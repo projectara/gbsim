@@ -147,8 +147,8 @@ struct pwm_deactivate_req {
 
 struct pwm_config_req {
 	__u8	which;
-	__u32	duty;
-	__u32	period;
+	__le32	duty;
+	__le32	period;
 };
 
 struct pwm_polarity_req {
