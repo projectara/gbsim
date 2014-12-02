@@ -38,6 +38,7 @@ void pwm_handler(__u8 *rbuf, size_t size)
 	char *tbuf;
 	struct op_msg *op_req, *op_rsp;
 	struct cport_msg *cport_req, *cport_rsp;
+	size_t sz;
 	__u32 duty;
 	__u32 period;
 
@@ -55,8 +56,9 @@ void pwm_handler(__u8 *rbuf, size_t size)
 	
 	switch (oph->type) {
 	case GB_PWM_TYPE_PROTOCOL_VERSION:
-		op_rsp->header.size = sizeof(struct op_header) +
+		sz = sizeof(struct op_header) +
 				      sizeof(struct protocol_version_rsp);
+		op_rsp->header.size = htole16((__u16)sz);
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | GB_PWM_TYPE_PROTOCOL_VERSION;
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
@@ -65,12 +67,12 @@ void pwm_handler(__u8 *rbuf, size_t size)
 		gbsim_debug("Module %d -> AP CPort %d PWM protocol version response\n  ",
 			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, op_rsp->header.size);
-		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+			gbsim_dump((__u8 *)op_rsp, sz);
+		write(cport_in, cport_rsp, sz + 1);
 		break;
 	case GB_PWM_TYPE_PWM_COUNT:
-		op_rsp->header.size = sizeof(struct op_header) +
-				   sizeof(struct pwm_count_rsp);
+		sz = sizeof(struct op_header) + sizeof(struct pwm_count_rsp);
+		op_rsp->header.size = htole16((__u16)sz);
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | GB_PWM_TYPE_PWM_COUNT;
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
@@ -78,35 +80,38 @@ void pwm_handler(__u8 *rbuf, size_t size)
 		gbsim_debug("Module %d -> AP CPort %d PWM count response\n  ",
 			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, op_rsp->header.size);
-		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+			gbsim_dump((__u8 *)op_rsp, sz);
+		write(cport_in, cport_rsp, sz + 1);
 		break;
 	case GB_PWM_TYPE_ACTIVATE:
-		op_rsp->header.size = sizeof(struct op_header) + 0;
+		sz = sizeof(struct op_header) + 0;
+		op_rsp->header.size = htole16((__u16)sz);
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | GB_PWM_TYPE_ACTIVATE;
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 		gbsim_debug("AP -> Module %d CPort %d PWM %d activate request\n  ",
 			    cport_to_module_id(cport_req->cport), cport_req->cport, op_req->pwm_act_req.which);
 		if (verbose)
-			gbsim_dump((__u8 *)op_req, op_req->header.size);
-		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+			gbsim_dump((__u8 *)op_req, sz);
+		write(cport_in, cport_rsp, sz + 1);
 		break;
 	case GB_PWM_TYPE_DEACTIVATE:
-		op_rsp->header.size = sizeof(struct op_header) + 0;
+		sz = sizeof(struct op_header) + 0;
+		op_rsp->header.size = htole16((__u16)sz);
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | GB_PWM_TYPE_DEACTIVATE;
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 		gbsim_debug("AP -> Module %d CPort %d PWM %d deactivate request\n  ",
 			    cport_to_module_id(cport_req->cport), cport_req->cport, op_req->pwm_deact_req.which);
 		if (verbose)
-			gbsim_dump((__u8 *)op_req, op_req->header.size);
-		write(cport_in, cport_rsp, op_req->header.size + 1);
+			gbsim_dump((__u8 *)op_req, sz);
+		write(cport_in, cport_rsp, sz + 1);
 		break;
 	case GB_PWM_TYPE_CONFIG:
-		op_rsp->header.size = sizeof(struct op_header) + 0;
+		sz = sizeof(struct op_header) + 0;
 		duty = le32toh(op_req->pwm_cfg_req.duty);
 		period = le32toh(op_req->pwm_cfg_req.period);
+		op_rsp->header.size = htole16((__u16)sz);
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | GB_PWM_TYPE_CONFIG;
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
@@ -121,7 +126,8 @@ void pwm_handler(__u8 *rbuf, size_t size)
 		write(cport_in, cport_rsp, op_rsp->header.size + 1);
 		break;
 	case GB_PWM_TYPE_POLARITY:
-		op_rsp->header.size = sizeof(struct op_header) + 0;
+		sz = sizeof(struct op_header) + 0;
+		op_rsp->header.size = htole16((__u16)sz);
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | GB_PWM_TYPE_POLARITY;
 		if (pwm_on[op_req->pwm_pol_req.which])
@@ -137,11 +143,12 @@ void pwm_handler(__u8 *rbuf, size_t size)
 			    cport_rsp->cport, op_req->pwm_cfg_req.which,
 			    op_req->pwm_pol_req.polarity ? "inverse" : "normal");
 		if (verbose)
-			gbsim_dump((__u8 *)op_req, op_req->header.size);
-		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+			gbsim_dump((__u8 *)op_req, sz);
+		write(cport_in, cport_rsp, sz + 1);
 		break;
 	case GB_PWM_TYPE_ENABLE:
-		op_rsp->header.size = sizeof(struct op_header) + 0;
+		sz = sizeof(struct op_header) + 0;
+		op_rsp->header.size = htole16((__u16)sz);
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | GB_PWM_TYPE_ENABLE;
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
@@ -151,11 +158,12 @@ void pwm_handler(__u8 *rbuf, size_t size)
 		gbsim_debug("AP -> Module %d CPort %d PWM %d enable request\n  ",
 			    cport_to_module_id(cport_req->cport), cport_req->cport, op_req->pwm_enb_req.which);
 		if (verbose)
-			gbsim_dump((__u8 *)op_req, op_req->header.size);
-		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+			gbsim_dump((__u8 *)op_req, sz);
+		write(cport_in, cport_rsp, sz + 1);
 		break;
 	case GB_PWM_TYPE_DISABLE:
-		op_rsp->header.size = sizeof(struct op_header) + 0;
+		sz = sizeof(struct op_header) + 0;
+		op_rsp->header.size = htole16((__u16)sz);
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | GB_PWM_TYPE_DISABLE;
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
@@ -165,8 +173,8 @@ void pwm_handler(__u8 *rbuf, size_t size)
 		gbsim_debug("AP -> Module %d CPort %d PWM %d disable request\n  ",
 			    cport_to_module_id(cport_req->cport), cport_req->cport, op_req->pwm_dis_req.which);
 		if (verbose)
-			gbsim_dump((__u8 *)op_req, op_req->header.size);
-		write(cport_in, cport_rsp, op_req->header.size + 1);
+			gbsim_dump((__u8 *)op_req, sz);
+		write(cport_in, cport_rsp, sz + 1);
 		break;
 	default:
 		gbsim_error("pwm operation type %02x not supported\n", oph->type);

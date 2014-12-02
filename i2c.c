@@ -40,6 +40,7 @@ void i2c_handler(__u8 *rbuf, size_t size)
 	bool read_op;
 	int read_count = 0;
 	bool write_fail = false;
+	size_t sz;
 
 	tbuf = malloc(4 * 1024);
 	if (!tbuf) {
@@ -55,8 +56,9 @@ void i2c_handler(__u8 *rbuf, size_t size)
 	
 	switch (oph->type) {
 	case OP_I2C_PROTOCOL_VERSION:
-		op_rsp->header.size = sizeof(struct op_header) +
+		sz = sizeof(struct op_header) +
 				      sizeof(struct protocol_version_rsp);
+		op_rsp->header.size = htole16((__u16)sz);
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | OP_I2C_PROTOCOL_VERSION;
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
@@ -65,80 +67,90 @@ void i2c_handler(__u8 *rbuf, size_t size)
 		gbsim_debug("Module %d -> AP CPort %d I2C protocol version response\n  ",
 			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, op_rsp->header.size);
-		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+			gbsim_dump((__u8 *)op_rsp, sz);
+		write(cport_in, cport_rsp, sz + 1);
 		break;
 	case OP_I2C_PROTOCOL_FUNCTIONALITY:
-		op_rsp->header.size = sizeof(struct op_header) +
+		sz = sizeof(struct op_header) +
 				   sizeof(struct i2c_functionality_rsp);
+		op_rsp->header.size = htole16((__u16)sz);
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | OP_I2C_PROTOCOL_FUNCTIONALITY;
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
-		op_rsp->i2c_fcn_rsp.functionality = I2C_FUNC_I2C;
+		op_rsp->i2c_fcn_rsp.functionality = htole32(I2C_FUNC_I2C);
 		gbsim_debug("Module %d -> AP CPort %d I2C protocol functionality response\n  ",
 			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, op_rsp->header.size);
-		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+			gbsim_dump((__u8 *)op_rsp, sz);
+		write(cport_in, cport_rsp, sz + 1);
 		break;
 	case OP_I2C_PROTOCOL_TIMEOUT:
-		op_rsp->header.size = sizeof(struct op_header) + 0;
+		sz = sizeof(struct op_header) + 0;
+		op_rsp->header.size = htole16((__u16)sz);
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | OP_I2C_PROTOCOL_TIMEOUT;
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 		gbsim_debug("Module %d -> AP CPort %d I2C protocol timeout response\n  ",
 			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, op_rsp->header.size);
-		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+			gbsim_dump((__u8 *)op_rsp, sz);
+		write(cport_in, cport_rsp, sz + 1);
 		break;
 	case OP_I2C_PROTOCOL_RETRIES:
-		op_rsp->header.size = sizeof(struct op_header) + 0;
+		sz = sizeof(struct op_header) + 0;
+		op_rsp->header.size = htole16((__u16)sz);
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | OP_I2C_PROTOCOL_RETRIES;
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 		gbsim_debug("Module %d -> AP CPort %d I2C protocol retries response\n  ",
 			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, op_rsp->header.size);
-		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+			gbsim_dump((__u8 *)op_rsp, sz);
+		write(cport_in, cport_rsp, sz + 1);
 		break;
 	case OP_I2C_PROTOCOL_TRANSFER:
-		op_count = op_req->i2c_xfer_req.op_count;
+		op_count = le16toh(op_req->i2c_xfer_req.op_count);
 		write_data = (__u8 *)&op_req->i2c_xfer_req.desc[op_count];
 		gbsim_debug("Number of transfer ops %d\n", op_count);
 		for (i = 0; i < op_count; i++) {
 			struct i2c_transfer_desc *desc;
+			__u16 addr;
+			__u16 flags;
+			__u16 size;
+
 			desc = &op_req->i2c_xfer_req.desc[i];
-			read_op = (desc->flags & I2C_M_RD) ? true : false;
+			addr = le16toh(desc->addr);
+			flags = le16toh(desc->flags);
+			size = le16toh(desc->size);
+			read_op = (flags & I2C_M_RD) ? true : false;
 			gbsim_debug("op %d: %s address %04x size %04x\n",
 				    i, (read_op ? "read" : "write"),
-				    desc->addr, desc->size);
+				    addr, size);
 			/* FIXME: need some error handling */
-			if (ioctl(ifd, I2C_SLAVE, desc->addr) < 0)
+			if (ioctl(ifd, I2C_SLAVE, addr) < 0)
 				gbsim_error("failed setting i2c slave address\n");
 			if (read_op) {
 				if (bbb_backend) {
 					int count;
 					ioctl(ifd, BLKFLSBUF);
-					count = read(ifd, &op_rsp->i2c_xfer_rsp.data[read_count], desc->size);
-					if (count != desc->size)
-						gbsim_error("op %d: failed to read %04x bytes\n", i, desc->size);
+					count = read(ifd, &op_rsp->i2c_xfer_rsp.data[read_count], size);
+					if (count != size)
+						gbsim_error("op %d: failed to read %04x bytes\n", i, size);
 				} else {
-					for (i = read_count; i < (read_count + desc->size); i++)
+					for (i = read_count; i < (read_count + size); i++)
 					op_rsp->i2c_xfer_rsp.data[i] = data_byte++;
 				}
-				read_count += desc->size;
+				read_count += size;
 			} else {
 				if (bbb_backend) {
 					int count;
-					count = write(ifd, write_data, desc->size);
-					if (count != desc->size) {
-						gbsim_debug("op %d: failed to write %04x bytes\n", i, desc->size);
+					count = write(ifd, write_data, size);
+					if (count != size) {
+						gbsim_debug("op %d: failed to write %04x bytes\n", i, size);
 						write_fail = true;
 					}
 				}
-				write_data += desc->size;
+				write_data += size;
 			}
 		}
 
@@ -152,15 +164,16 @@ void i2c_handler(__u8 *rbuf, size_t size)
 			op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 
 		if (read_op)
-			op_rsp->header.size = sizeof(struct op_header) + 1 + read_count;
+			sz = sizeof(struct op_header) + 1 + read_count;
 		else
-			op_rsp->header.size = sizeof(struct op_header) + 1;
+			sz = sizeof(struct op_header) + 1;
 
+		op_rsp->header.size = htole16((__u16)sz);
 		gbsim_debug("Module %d -> AP CPort %d I2C transfer response\n  ",
 			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, op_rsp->header.size);
-		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+			gbsim_dump((__u8 *)op_rsp, sz);
+		write(cport_in, cport_rsp, sz + 1);
 
 		break;
 	default:
