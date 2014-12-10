@@ -25,9 +25,18 @@
 #define OP_I2C_PROTOCOL_TIMEOUT		0x03
 #define OP_I2C_PROTOCOL_RETRIES		0x04
 #define OP_I2C_PROTOCOL_TRANSFER	0x05
+#define OP_I2C_PROTOCOL_IRQ_TYPE	0x06
+#define OP_I2C_PROTOCOL_IRQ_ACK		0x07
+#define OP_I2C_PROTOCOL_IRQ_MASK	0x08
+#define OP_I2C_PROTOCOL_IRQ_UNMASK	0x09
+#define OP_I2C_PROTOCOL_IRQ_EVENT	0x0a
 
 static __u8 data_byte;
 static int ifd;
+static int mms114_state;
+
+#define READ_PACKETSIZE		1
+#define READ_INFOMATION		2
 
 void i2c_handler(__u8 *rbuf, size_t size)
 {
@@ -77,7 +86,7 @@ void i2c_handler(__u8 *rbuf, size_t size)
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | OP_I2C_PROTOCOL_FUNCTIONALITY;
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
-		op_rsp->i2c_fcn_rsp.functionality = htole32(I2C_FUNC_I2C);
+		op_rsp->i2c_fcn_rsp.functionality = htole32(I2C_FUNC_I2C|I2C_FUNC_PROTOCOL_MANGLING);
 		gbsim_debug("Module %d -> AP CPort %d I2C protocol functionality response\n  ",
 			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
 		if (verbose)
@@ -138,8 +147,20 @@ void i2c_handler(__u8 *rbuf, size_t size)
 					if (count != size)
 						gbsim_error("op %d: failed to read %04x bytes\n", i, size);
 				} else {
-					for (i = read_count; i < (read_count + size); i++)
-					op_rsp->i2c_xfer_rsp.data[i] = data_byte++;
+					if (mms114_state == READ_PACKETSIZE)
+						op_rsp->i2c_xfer_rsp.data[0] = 8;
+					else if (mms114_state == READ_INFOMATION) {
+						op_rsp->i2c_xfer_rsp.data[0] = 0xa2;
+						op_rsp->i2c_xfer_rsp.data[1] = 0x11;
+						op_rsp->i2c_xfer_rsp.data[2] = 0x08;
+						op_rsp->i2c_xfer_rsp.data[3] = 0x80;
+						op_rsp->i2c_xfer_rsp.data[4] = 0x0a;
+						op_rsp->i2c_xfer_rsp.data[5] = 0xa0;
+						op_rsp->i2c_xfer_rsp.data[6] = 0x00;
+						op_rsp->i2c_xfer_rsp.data[7] = 0x00;
+					} else
+						for (i = read_count; i < (read_count + size); i++)
+							op_rsp->i2c_xfer_rsp.data[i] = data_byte++;
 				}
 				read_count += size;
 			} else {
@@ -150,6 +171,13 @@ void i2c_handler(__u8 *rbuf, size_t size)
 						gbsim_debug("op %d: failed to write %04x bytes\n", i, size);
 						write_fail = true;
 					}
+				}
+				if ((write_data[0] == 0x10) && (write_data[1] == 0x0f)) {
+					mms114_state = READ_PACKETSIZE;
+					gbsim_debug("i2c mms114 state: read packet size\n");
+				} else if ((write_data[0] == 0x10) && (write_data[1] == 0x10)) {
+					mms114_state = READ_INFOMATION;
+					gbsim_debug("i2c mms114 state: read infomation\n");
 				}
 				write_data += size;
 			}
@@ -176,6 +204,64 @@ void i2c_handler(__u8 *rbuf, size_t size)
 			gbsim_dump((__u8 *)op_rsp, sz);
 		write(cport_in, cport_rsp, sz + 1);
 
+		break;
+	case OP_I2C_PROTOCOL_IRQ_TYPE:
+		op_rsp->header.size = sizeof(struct op_header) + 0;
+		op_rsp->header.id = oph->id;
+		op_rsp->header.type = OP_RESPONSE | OP_I2C_PROTOCOL_IRQ_TYPE;
+		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
+		gbsim_debug("AP CPort %d -> Module %d I2C protocol IRQ type %d request\n  ",
+			    cport_req->cport, cport_to_module_id(cport_req->cport),
+			    op_req->i2c_type_req.type);
+		if (verbose)
+			gbsim_dump((__u8 *)op_req, op_req->header.size);
+		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+		break;
+	case OP_I2C_PROTOCOL_IRQ_ACK:
+		op_rsp->header.size = sizeof(struct op_header) + 0;
+		op_rsp->header.id = oph->id;
+		op_rsp->header.type = OP_RESPONSE | OP_I2C_PROTOCOL_IRQ_ACK;
+		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
+		gbsim_debug("AP CPort %d -> Module %d I2C protocol IRQ ack request\n  ",
+			    cport_req->cport, cport_to_module_id(cport_req->cport));
+		if (verbose)
+			gbsim_dump((__u8 *)op_req, op_req->header.size);
+		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+		break;
+	case OP_I2C_PROTOCOL_IRQ_MASK:
+		op_rsp->header.size = sizeof(struct op_header) + 0;
+		op_rsp->header.id = oph->id;
+		op_rsp->header.type = OP_RESPONSE | OP_I2C_PROTOCOL_IRQ_MASK;
+		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
+		gbsim_debug("AP CPort %d -> Module %d I2C protocol IRQ mask request\n  ",
+			    cport_req->cport, cport_to_module_id(cport_req->cport));
+		if (verbose)
+			gbsim_dump((__u8 *)op_req, op_req->header.size);
+		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+		break;
+	case OP_I2C_PROTOCOL_IRQ_UNMASK:
+		op_rsp->header.size = sizeof(struct op_header) + 0;
+		op_rsp->header.id = oph->id;
+		op_rsp->header.type = OP_RESPONSE | OP_I2C_PROTOCOL_IRQ_UNMASK;
+		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
+		gbsim_debug("AP CPort %d -> Module %d I2C protocol IRQ unmask request\n  ",
+			    cport_req->cport, cport_to_module_id(cport_req->cport));
+		if (verbose)
+			gbsim_dump((__u8 *)op_req, op_req->header.size);
+		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+#define TEST_HACK
+#ifdef TEST_HACK
+		op_req->header.size = sizeof(struct op_header) + 1;
+		op_req->header.id = 0x42;
+		op_req->header.type = OP_I2C_PROTOCOL_IRQ_EVENT;
+		op_req->header.result = 0;
+		op_req->i2c_event_req.which = 0;
+		cport_req->cport = 0;
+		write(cport_in, cport_req, op_req->header.size + 1);
+#endif
+		break;
+	case OP_RESPONSE | OP_I2C_PROTOCOL_IRQ_EVENT:
+		gbsim_debug("i2c irq event response received\n");
 		break;
 	default:
 		gbsim_error("i2c operation type %02x not supported\n", oph->type);

@@ -132,6 +132,27 @@ struct i2c_transfer_rsp {
 	__u8	data[0];
 };
 
+struct i2c_irq_type_req {
+	__u8	which;
+	__u8	type;
+};
+
+struct i2c_irq_ack_req {
+	__u8	which;
+};
+
+struct i2c_irq_mask_req {
+	__u8	which;
+};
+
+struct i2c_irq_unmask_req {
+	__u8	which;
+};
+
+struct i2c_irq_event_req {
+	__u8	which;
+};
+
 /* PWM */
 struct pwm_count_rsp {
 	__u8	count;
@@ -183,6 +204,11 @@ struct op_msg {
 		struct i2c_functionality_rsp		i2c_fcn_rsp;
 		struct i2c_transfer_req			i2c_xfer_req;
 		struct i2c_transfer_rsp			i2c_xfer_rsp;
+		struct i2c_irq_type_req			i2c_type_req;
+		struct i2c_irq_ack_req			i2c_ack_req;
+		struct i2c_irq_mask_req			i2c_mask_req;
+		struct i2c_irq_unmask_req		i2c_unmask_req;
+		struct i2c_irq_event_req		i2c_event_req;
                 struct pwm_count_rsp			pwm_cnt_rsp;
                 struct pwm_activate_req			pwm_act_req;
                 struct pwm_deactivate_req		pwm_deact_req;
