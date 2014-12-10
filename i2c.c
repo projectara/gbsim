@@ -127,8 +127,9 @@ void i2c_handler(__u8 *rbuf, size_t size)
 				    i, (read_op ? "read" : "write"),
 				    addr, size);
 			/* FIXME: need some error handling */
-			if (ioctl(ifd, I2C_SLAVE, addr) < 0)
-				gbsim_error("failed setting i2c slave address\n");
+			if (bbb_backend)
+				if (ioctl(ifd, I2C_SLAVE, addr) < 0)
+					gbsim_error("failed setting i2c slave address\n");
 			if (read_op) {
 				if (bbb_backend) {
 					int count;
