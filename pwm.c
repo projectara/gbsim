@@ -32,7 +32,7 @@
 static int pwm_on[2];
 static pwm *pwms[2];
 
-void pwm_handler(__u8 *rbuf, size_t size)
+void pwm_handler(__u8 cport_id, __u8 *rbuf, size_t size)
 {
 	struct op_header *oph;
 	char *tbuf;

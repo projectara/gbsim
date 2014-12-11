@@ -34,7 +34,7 @@
 static int gpio_dir[6];
 static gpio *gpios[6];
 
-void gpio_handler(__u8 *rbuf, size_t size)
+void gpio_handler(__u8 cport_id, __u8 *rbuf, size_t size)
 {
 	struct op_header *oph;
 	char *tbuf;

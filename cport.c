@@ -45,13 +45,13 @@ static void exec_subdev_handler(__le16 id, __u8 *rbuf, size_t size)
 		if (cport->id == id)
 			switch (cport->protocol) {
 			case GREYBUS_PROTOCOL_GPIO:
-				gpio_handler(rbuf, size);
+				gpio_handler(id, rbuf, size);
 				break;
 			case GREYBUS_PROTOCOL_I2C:
-				i2c_handler(rbuf, size);
+				i2c_handler(id, rbuf, size);
 				break;
 			case GREYBUS_PROTOCOL_PWM:
-				pwm_handler(rbuf, size);
+				pwm_handler(id, rbuf, size);
 				break;
 			default:
 				gbsim_error("subdev handler not found for cport %d\n",

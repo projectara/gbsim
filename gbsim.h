@@ -264,13 +264,13 @@ void send_link_up(int, int, int);
 void *cport_thread(void *);
 void cport_thread_cleanup(void *);
 
-void gpio_handler(__u8 *, size_t);
+void gpio_handler(__u8, __u8 *, size_t);
 void gpio_init(void);
 
-void i2c_handler(__u8 *, size_t);
+void i2c_handler(__u8, __u8 *, size_t);
 void i2c_init(void);
 
-void pwm_handler(__u8 *, size_t);
+void pwm_handler(__u8, __u8 *, size_t);
 void pwm_init(void);
 
 bool manifest_parse(void *data, size_t size);

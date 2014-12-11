@@ -38,7 +38,7 @@ static int mms114_state;
 #define READ_PACKETSIZE		1
 #define READ_INFOMATION		2
 
-void i2c_handler(__u8 *rbuf, size_t size)
+void i2c_handler(__u8 cport_id, __u8 *rbuf, size_t size)
 {
 	struct op_header *oph;
 	char *tbuf;
