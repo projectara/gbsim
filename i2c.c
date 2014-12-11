@@ -59,7 +59,7 @@ void i2c_handler(__u8 cport_id, __u8 *rbuf, size_t size)
 	cport_req = (struct cport_msg *)rbuf;
 	op_req = (struct op_msg *)cport_req->data;
 	cport_rsp = (struct cport_msg *)tbuf;
-	cport_rsp->cport = 0;	/* FIXME hardcoded until we have connections */
+	cport_rsp->cport = cport_id;
 	op_rsp = (struct op_msg *)cport_rsp->data;
 	oph = (struct op_header *)&op_req->header;
 	
@@ -256,7 +256,7 @@ void i2c_handler(__u8 cport_id, __u8 *rbuf, size_t size)
 		op_req->header.type = OP_I2C_PROTOCOL_IRQ_EVENT;
 		op_req->header.result = 0;
 		op_req->i2c_event_req.which = 0;
-		cport_req->cport = 0;
+		cport_req->cport = cport_id;
 		write(cport_in, cport_req, op_req->header.size + 1);
 #endif
 		break;
