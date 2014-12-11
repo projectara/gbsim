@@ -1,5 +1,11 @@
 /*
-*/
+ * Greybus Simulator
+ *
+ * Copyright 2014 Google Inc.
+ * Copyright 2014 Linaro Ltd.
+ *
+ * Provided under the three clause BSD license found in the LICENSE file.
+ */
 
 #include <endian.h>
 #include <stdbool.h>
