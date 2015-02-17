@@ -93,12 +93,20 @@ int main(int argc, char *argv[])
 	TAILQ_INIT(&info.cports);
 
 	ret = gadget_create(&s, &g);
+	if (ret < 0)
+		goto out;
 
 	ret = functionfs_init();
+	if (ret < 0)
+		goto out;
 
 	ret = gadget_enable(g);
+	if (ret < 0)
+		goto out;
 
 	ret = inotify_start(hotplug_basedir);
+	if (ret < 0)
+		goto out;
 
 	/* Protocol handlers */
 	gpio_init();
@@ -106,6 +114,7 @@ int main(int argc, char *argv[])
 
 	ret = functionfs_loop();
 
+out:
 	return ret;
 }
 
