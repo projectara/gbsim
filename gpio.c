@@ -29,6 +29,11 @@
 #define GB_GPIO_TYPE_GET_VALUE		0x08
 #define GB_GPIO_TYPE_SET_VALUE		0x09
 #define GB_GPIO_TYPE_SET_DEBOUNCE	0x0a
+#define GB_GPIO_TYPE_IRQ_TYPE		0x0b
+#define GB_GPIO_TYPE_IRQ_ACK		0x0c
+#define GB_GPIO_TYPE_IRQ_MASK		0x0d
+#define GB_GPIO_TYPE_IRQ_UNMASK		0x0e
+#define GB_GPIO_TYPE_IRQ_EVENT		0x0f
 #define GB_GPIO_TYPE_RESPONSE		0x80
 
 static int gpio_dir[6];
@@ -188,6 +193,66 @@ void gpio_handler(__u8 *rbuf, size_t size)
 		if (verbose)
 			gbsim_dump((__u8 *)op_req, op_req->header.size);
 		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+		break;
+	case GB_GPIO_TYPE_IRQ_TYPE:
+		op_rsp->header.size = sizeof(struct op_header) + 0;
+		op_rsp->header.id = oph->id;
+		op_rsp->header.type = OP_RESPONSE | GB_GPIO_TYPE_IRQ_TYPE;
+		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
+		gbsim_debug("AP CPort %d -> Module %d GPIO protocol IRQ type %d request\n  ",
+			    cport_req->cport, cport_to_module_id(cport_req->cport),
+			    op_req->gpio_irq_type_req.type);
+		if (verbose)
+			gbsim_dump((__u8 *)op_req, op_req->header.size);
+		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+		break;
+	case GB_GPIO_TYPE_IRQ_ACK:
+		op_rsp->header.size = sizeof(struct op_header) + 0;
+		op_rsp->header.id = oph->id;
+		op_rsp->header.type = OP_RESPONSE | GB_GPIO_TYPE_IRQ_ACK;
+		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
+		gbsim_debug("AP CPort %d -> Module %d GPIO protocol IRQ ack request\n  ",
+			    cport_req->cport, cport_to_module_id(cport_req->cport));
+		if (verbose)
+			gbsim_dump((__u8 *)op_req, op_req->header.size);
+		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+		break;
+	case GB_GPIO_TYPE_IRQ_MASK:
+		op_rsp->header.size = sizeof(struct op_header) + 0;
+		op_rsp->header.id = oph->id;
+		op_rsp->header.type = OP_RESPONSE | GB_GPIO_TYPE_IRQ_MASK;
+		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
+		gbsim_debug("AP CPort %d -> Module %d GPIO protocol IRQ mask request\n  ",
+			    cport_req->cport, cport_to_module_id(cport_req->cport));
+		if (verbose)
+			gbsim_dump((__u8 *)op_req, op_req->header.size);
+		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+		break;
+	case GB_GPIO_TYPE_IRQ_UNMASK:
+		op_rsp->header.size = sizeof(struct op_header) + 0;
+		op_rsp->header.id = oph->id;
+		op_rsp->header.type = OP_RESPONSE | GB_GPIO_TYPE_IRQ_UNMASK;
+		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
+		gbsim_debug("AP CPort %d -> Module %d GPIO protocol IRQ unmask request\n  ",
+			    cport_req->cport, cport_to_module_id(cport_req->cport));
+		if (verbose)
+			gbsim_dump((__u8 *)op_req, op_req->header.size);
+		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+#define TEST_HACK
+#ifdef TEST_HACK
+		op_req->header.size = sizeof(struct op_header) + 1;
+		op_req->header.id = 0x42;
+		op_req->header.type = GB_GPIO_TYPE_IRQ_EVENT;
+		op_req->header.result = 0;
+		op_req->gpio_irq_event_req.which = 1;
+		cport_req->cport = 0; /* FIXME */
+		gbsim_debug("Module %d -> AP CPort %d GPIO protocol IRQ event request\n  ",
+			    cport_to_module_id(cport_req->cport), cport_req->cport);
+		write(cport_in, cport_req, op_req->header.size + 1);
+#endif
+		break;
+	case OP_RESPONSE | GB_GPIO_TYPE_IRQ_EVENT:
+		gbsim_debug("gpio irq event response received\n");
 		break;
 	default:
 		gbsim_error("gpio operation type %02x not supported\n", oph->type);

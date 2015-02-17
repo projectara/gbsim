@@ -118,6 +118,34 @@ struct gpio_set_debounce_req {
 	__u8	usec;
 };
 
+struct gpio_irq_type_request {
+	__u8	which;
+	__u8	type;
+};
+/* irq type response has no payload */
+
+struct gpio_irq_mask_request {
+	__u8	which;
+};
+/* irq mask response has no payload */
+
+struct gpio_irq_unmask_request {
+	__u8	which;
+};
+/* irq unmask response has no payload */
+
+struct gpio_irq_ack_request {
+	__u8	which;
+};
+/* irq ack response has no payload */
+
+/* irq event requests originate on another module and are handled on the AP */
+struct gpio_irq_event_request {
+	__u8	which;
+};
+/* irq event response has no payload */
+
+
 /* I2C */
 struct i2c_functionality_rsp {
 	__le32	functionality;
@@ -186,6 +214,11 @@ struct op_msg {
 		struct gpio_get_value_rsp		gpio_get_val_rsp;
 		struct gpio_set_value_req		gpio_set_val_req;
 		struct gpio_set_debounce_req		gpio_set_db_req;
+		struct gpio_irq_type_request		gpio_irq_type_req;
+		struct gpio_irq_mask_request		gpio_irq_mask_req;
+		struct gpio_irq_unmask_request		gpio_irq_unmask_req;
+		struct gpio_irq_ack_request		gpio_irq_ack_req;
+		struct gpio_irq_event_request		gpio_irq_event_req;
 		struct i2c_functionality_rsp		i2c_fcn_rsp;
 		struct i2c_transfer_req			i2c_xfer_req;
 		struct i2c_transfer_rsp			i2c_xfer_rsp;
