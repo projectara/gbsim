@@ -43,7 +43,7 @@ void gpio_handler(__u8 *rbuf, size_t size)
 
 	tbuf = malloc(4 * 1024);
 	if (!tbuf) {
-		gbsim_error("failed to allocate i2c handler tx buf\n");
+		gbsim_error("failed to allocate gpio handler tx buf\n");
 		return;
 	}
 	cport_req = (struct cport_msg *)rbuf;
