@@ -51,7 +51,8 @@ Load up the greybus framework and ES1 USB driver:
 
 ```
 modprobe greybus
-modprobe es1-ap-usb
+modprobe gb-es1
+modprobe gb-phy
 ```
 
 Now start the simulator:
