@@ -115,7 +115,7 @@ struct gpio_set_value_req {
 
 struct gpio_set_debounce_req {
 	__u8	which;
-	__u8	usec;
+	__le16	usec __attribute__((__packed__));
 };
 
 struct gpio_irq_type_request {
