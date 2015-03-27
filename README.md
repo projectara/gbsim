@@ -66,7 +66,7 @@ gbsim -h /path/to -v
 ```
 
 Where */path/to* is the base directory containing the
-directory *hotplug-modules
+directory *hotplug-modules*
 
 gbsim supports the following option flags:
 
