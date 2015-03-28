@@ -10,8 +10,10 @@
 # Uncomment or set env to cross compile
 #CROSS_COMPILE = arm-linux-gnueabi-
  
-# Location of Greybus kernel headers
-GBDIR ?= /home/mporter/src/greybus
+# Location of Greybus directory is mandatory: GBDIR
+ifndef GBDIR
+$(error GBDIR (Path to Greybus directory) is mandatory)
+endif
 
 # Install directory
 INSTALLDIR = /usr/local/bin
