@@ -111,6 +111,7 @@ int main(int argc, char *argv[])
 	/* Protocol handlers */
 	gpio_init();
 	i2c_init();
+	i2s_init();
 
 	ret = functionfs_loop();
 

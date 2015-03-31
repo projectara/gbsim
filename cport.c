@@ -31,6 +31,12 @@ static char *get_protocol(__le16 id)
 				return "I2C";
 			case GREYBUS_PROTOCOL_PWM:
 				return "PWM";
+			case GREYBUS_PROTOCOL_I2S_MGMT:
+				return "I2S_MGMT";
+			case GREYBUS_PROTOCOL_I2S_RECEIVER:
+				return "I2S_RECEIVER";
+			case GREYBUS_PROTOCOL_I2S_TRANSMITTER:
+				return "I2S_TRANSMITTER";
 			}
 		}
 	}
@@ -52,6 +58,13 @@ static void exec_subdev_handler(__le16 id, __u8 *rbuf, size_t size)
 				break;
 			case GREYBUS_PROTOCOL_PWM:
 				pwm_handler(rbuf, size);
+				break;
+			case GREYBUS_PROTOCOL_I2S_MGMT:
+				i2s_mgmt_handler(rbuf, size);
+				break;
+			case GREYBUS_PROTOCOL_I2S_RECEIVER:
+			case GREYBUS_PROTOCOL_I2S_TRANSMITTER:
+				i2s_data_handler(rbuf, size);
 				break;
 			default:
 				gbsim_error("subdev handler not found for cport %d\n",

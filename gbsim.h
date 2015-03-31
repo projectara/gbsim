@@ -286,4 +286,8 @@ void i2c_init(void);
 void pwm_handler(__u8 *, size_t);
 void pwm_init(void);
 
+void i2s_mgmt_handler(__u8 *, size_t);
+void i2s_data_handler(__u8 *, size_t);
+void i2s_init(void);
+
 bool manifest_parse(void *data, size_t size);
