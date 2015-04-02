@@ -1,5 +1,5 @@
 /*
- * Greybus module manifest parsing
+ * Greybus interface manifest parsing
  *
  * Copyright 2014 Google Inc.
  * Copyright 2014 Linaro Ltd.
@@ -46,32 +46,22 @@ static int identify_descriptor(struct greybus_descriptor *desc, size_t size)
 		return -EINVAL;
 	}
 
+	/* Descriptor needs to at least have a header */
+	expected_size = sizeof(*desc_header);
+
 	switch (desc_header->type) {
-	case GREYBUS_TYPE_MODULE:
-		if (desc_size < sizeof(struct greybus_descriptor_module)) {
-			gbsim_error("module descriptor too small (%u)\n",
-				desc_size);
-			return -EINVAL;
-		}
-		break;
 	case GREYBUS_TYPE_STRING:
-		expected_size = sizeof(struct greybus_descriptor_header);
 		expected_size += sizeof(struct greybus_descriptor_string);
-		expected_size += (size_t)desc->string.length;
-		if (desc_size < expected_size) {
-			gbsim_error("string descriptor too small (%u)\n",
-				desc_size);
-			return -EINVAL;
-		}
+		expected_size += desc->string.length;
 		break;
 	case GREYBUS_TYPE_INTERFACE:
+		expected_size += sizeof(struct greybus_descriptor_interface);
+		break;
+	case GREYBUS_TYPE_BUNDLE:
+		expected_size += sizeof(struct greybus_descriptor_bundle);
 		break;
 	case GREYBUS_TYPE_CPORT:
-		if (desc_size < sizeof(struct greybus_descriptor_cport)) {
-			gbsim_error("cport descriptor too small (%u)\n",
-				desc_size);
-			return -EINVAL;
-		}
+		expected_size += sizeof(struct greybus_descriptor_cport);
 		cport = malloc(sizeof(struct gbsim_cport));
 		cport->id = desc->cport.id;
 		cport->protocol = desc->cport.protocol_id;
@@ -86,11 +76,17 @@ static int identify_descriptor(struct greybus_descriptor *desc, size_t size)
 		return -EINVAL;
 	}
 
+	if (desc_size < expected_size) {
+		gbsim_error("%d descriptor too small (%zu < %zu)\n",
+		       desc_header->type, desc_size, expected_size);
+		return -EINVAL;
+	}
+
 	return desc_size;
 }
 
 /*
- * Parse a buffer containing a module manifest.
+ * Parse a buffer containing a Interface manifest.
  *
  * If we find anything wrong with the content/format of the buffer
  * we reject it.
@@ -101,6 +97,14 @@ static int identify_descriptor(struct greybus_descriptor *desc, size_t size)
  * We make an initial pass through the buffer and identify all of
  * the descriptors it contains, keeping track for each its type
  * and the location size of its data in the buffer.
+ *
+ * Next we scan the descriptors, looking for a interface descriptor;
+ * there must be exactly one of those.  When found, we record the
+ * information it contains, and then remove that descriptor (and any
+ * string descriptors it refers to) from further consideration.
+ *
+ * After that we look for the interface's bundles--there must be at
+ * least one of those.
  *
  * Returns true if parsing was successful, false otherwise.
  */
@@ -143,9 +147,7 @@ bool manifest_parse(void *data, size_t size)
 		int desc_size;
 
 		desc_size = identify_descriptor(desc, size);
-		if (desc_size <= 0) {
-			if (!desc_size)
-				gbsim_error("zero-sized manifest descriptor\n");
+		if (desc_size < 0) {
 			result = false;
 			goto out;
 		}
