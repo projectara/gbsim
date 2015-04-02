@@ -217,7 +217,7 @@ static void send_svc_handshake(void)
 	gbsim_debug("SVC->AP handshake sent\n");
 }
 
-void send_hot_plug(char *hpe, int mid)
+void send_hot_plug(char *hpe, int iid)
 {
 	struct svc_msg *msg = (struct svc_msg *)hpe;
 	struct greybus_manifest_header *mh =
@@ -227,7 +227,7 @@ void send_hot_plug(char *hpe, int mid)
 	msg->header.message_type = SVC_MSG_DATA;
 	msg->header.payload_length = mh->size + 2;
 	msg->hotplug.hotplug_event = SVC_HOTPLUG_EVENT;
-	msg->hotplug.module_id = mid;
+	msg->hotplug.interface_id = iid;
 
 	/* Write out hotplug message with manifest payload */
 	svc_int_write(hpe, HP_BASE_SIZE + mh->size);
@@ -235,7 +235,7 @@ void send_hot_plug(char *hpe, int mid)
 	gbsim_debug("SVC->AP hotplug event (plug) sent\n");
 }
 
-void send_hot_unplug(int mid)
+void send_hot_unplug(int iid)
 {
 	struct svc_msg msg;
 	
@@ -243,7 +243,7 @@ void send_hot_unplug(int mid)
 	msg.header.message_type = SVC_MSG_DATA;
 	msg.header.payload_length = 2;
 	msg.hotplug.hotplug_event = SVC_HOTUNPLUG_EVENT;
-	msg.hotplug.module_id = mid;
+	msg.hotplug.interface_id = iid;
 
 	/* Write out hotplug message */
 	svc_int_write(&msg, HP_BASE_SIZE);
@@ -251,7 +251,7 @@ void send_hot_unplug(int mid)
 	gbsim_debug("SVC->AP hotplug event (unplug) sent\n");
 }
 
-void send_link_up(int mid, int iid, int did)
+void send_link_up(int iid, int did)
 {
 	struct svc_msg msg;
 
@@ -259,18 +259,17 @@ void send_link_up(int mid, int iid, int did)
 	msg.header.message_type = SVC_MSG_DATA;
 	msg.header.payload_length = htole16(LU_PAYLOAD_SIZE);
 	msg.management.management_packet_type = SVC_MANAGEMENT_LINK_UP;
-	msg.management.link_up.module_id = mid;
 	msg.management.link_up.interface_id = iid;
 	msg.management.link_up.device_id = did;
 
 	/* Write out hotplug message */
 	svc_int_write(&msg, LU_MSG_SIZE);
 
-	gbsim_debug("SVC -> AP Link Up (%d:%d:%d) message sent\n",
-		    mid, iid, did);
+	gbsim_debug("SVC -> AP Link Up (%d:%d) message sent\n",
+		    iid, did);
 }
 
-void send_ap_id(int mid)
+void send_ap_id(int iid)
 {
 	struct svc_msg msg;
 	
@@ -278,13 +277,13 @@ void send_ap_id(int mid)
 	msg.header.message_type = SVC_MSG_DATA;
 	msg.header.payload_length = htole16(APID_PAYLOAD_SIZE);
 	msg.management.management_packet_type = SVC_MANAGEMENT_AP_ID;
-	msg.management.ap_id.module_id = mid;
+	msg.management.ap_id.interface_id = iid;
 	msg.management.ap_id.device_id = 1;
 
 	/* Write out hotplug message */
 	svc_int_write(&msg, APID_MSG_SIZE);
 
-	gbsim_debug("SVC -> AP ID (MID:%d DID:1) message sent\n", mid);
+	gbsim_debug("SVC -> AP ID (IID:%d DID:1) message sent\n", iid);
 }
 
 

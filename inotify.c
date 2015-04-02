@@ -74,18 +74,18 @@ static void parse_manifest_blob(char *hpe)
 	manifest_parse(mh, le16toh(mh->size));
 }
 
-static int get_module_id(char *fname)
+static int get_interface_id(char *fname)
 {
-	char *mid_str;
-	int mid = 0;
+	char *iid_str;
+	int iid = 0;
 	char tmp[256];
 
 	strcpy(tmp, fname);
-	mid_str = strtok(tmp, "-");
-	if (!strncmp(mid_str, "MID", 3))
-		mid = strtol(mid_str+3, NULL, 0);
+	iid_str = strtok(tmp, "-");
+	if (!strncmp(iid_str, "MID", 3))
+		iid = strtol(iid_str+3, NULL, 0);
 
-	return mid;
+	return iid;
 }
 
 static void *inotify_thread(void *param)
@@ -113,28 +113,27 @@ static void *inotify_thread(void *param)
 					hpe = get_manifest_blob(mnfs);
 					if (hpe) {
 						parse_manifest_blob(hpe);
-						int mid = get_module_id(event->name);
-						if (mid > 0) {
-							gbsim_info("%s module inserted\n", event->name);
-							send_hot_plug(hpe, mid);
+						int iid = get_interface_id(event->name);
+						if (iid > 0) {
+							gbsim_info("%s Interface inserted\n", event->name);
+							send_hot_plug(hpe, iid);
 							/*
 							 * FIXME: hardcoded
-							 * interface and device
-							 * ID
+							 * device ID
 							 */
-							send_link_up(mid, 0, 2);
+							send_link_up(iid, 2);
 						} else
-							gbsim_error("invalid module ID, no hotplug plug event sent\n");
+							gbsim_error("invalid interface ID, no hotplug plug event sent\n");
 					} else
 						gbsim_error("missing manifest blob, no hotplug event sent\n");
 				}
 				else if (event->mask & IN_DELETE) {
-					int mid = get_module_id(event->name);
-					if (mid > 0) {
-						send_hot_unplug(get_module_id(event->name));
-						gbsim_info("%s module removed\n", event->name);
+					int iid = get_interface_id(event->name);
+					if (iid > 0) {
+						send_hot_unplug(get_interface_id(event->name));
+						gbsim_info("%s interface removed\n", event->name);
 					} else
-						gbsim_error("invalid module ID, no hotplug unplug event sent\n");
+						gbsim_error("invalid interface ID, no hotplug unplug event sent\n");
 				}
 			}
 			i += INOTIFY_EVENT_SIZE + event->len;

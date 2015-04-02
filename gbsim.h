@@ -272,7 +272,7 @@ int inotify_start(char *);
 void send_hot_plug(char *, int);
 void send_hot_unplug(int);
 
-void send_link_up(int, int, int);
+void send_link_up(int, int);
 
 void *cport_thread(void *);
 void cport_thread_cleanup(void *);
