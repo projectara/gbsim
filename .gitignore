@@ -1,0 +1,9 @@
+.*
+*.o
+*.o.*
+.*.swp
+tags
+cscope.*
+ncscope.*
+*.patch
+gbsim
