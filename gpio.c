@@ -8,6 +8,7 @@
  */
 
 #include <fcntl.h>
+#include <pthread.h>
 #include <libsoc_gpio.h>
 #include <linux/fs.h>
 #include <stdbool.h>
