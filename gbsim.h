@@ -203,9 +203,9 @@ struct op_msg {
 	struct op_header	header;
 	union {
 		struct protocol_version_rsp		pv_rsp;
-                struct gpio_line_count_rsp		gpio_lc_rsp;
-                struct gpio_activate_req		gpio_act_req;
-                struct gpio_deactivate_req		gpio_deact_req;
+		struct gpio_line_count_rsp		gpio_lc_rsp;
+		struct gpio_activate_req		gpio_act_req;
+		struct gpio_deactivate_req		gpio_deact_req;
 		struct gpio_get_direction_req		gpio_get_dir_req;
 		struct gpio_get_direction_rsp		gpio_get_dir_rsp;
 		struct gpio_direction_input_req		gpio_dir_input_req;
@@ -222,13 +222,13 @@ struct op_msg {
 		struct i2c_functionality_rsp		i2c_fcn_rsp;
 		struct i2c_transfer_req			i2c_xfer_req;
 		struct i2c_transfer_rsp			i2c_xfer_rsp;
-                struct pwm_count_rsp			pwm_cnt_rsp;
-                struct pwm_activate_req			pwm_act_req;
-                struct pwm_deactivate_req		pwm_deact_req;
-                struct pwm_config_req			pwm_cfg_req;
-                struct pwm_polarity_req			pwm_pol_req;
-                struct pwm_enable_req			pwm_enb_req;
-                struct pwm_disable_req			pwm_dis_req;
+		struct pwm_count_rsp			pwm_cnt_rsp;
+		struct pwm_activate_req			pwm_act_req;
+		struct pwm_deactivate_req		pwm_deact_req;
+		struct pwm_config_req			pwm_cfg_req;
+		struct pwm_polarity_req			pwm_pol_req;
+		struct pwm_enable_req			pwm_enb_req;
+		struct pwm_disable_req			pwm_dis_req;
 	};
 };
 
