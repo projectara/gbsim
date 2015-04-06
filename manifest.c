@@ -32,7 +32,7 @@ static int identify_descriptor(struct greybus_descriptor *desc, size_t size)
 {
 	struct greybus_descriptor_header *desc_header = &desc->header;
 	size_t expected_size;
-	int desc_size;
+	size_t desc_size;
 	struct gbsim_cport *cport;
 
 	if (size < sizeof(*desc_header)) {
