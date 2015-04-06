@@ -62,8 +62,8 @@ void i2s_mgmt_handler(__u8 *rbuf, size_t size)
 		gbsim_debug("Module %d -> AP CPort %d I2S SET_CONFIGURATION response\n  ",
 			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, op_rsp->header.size);
-		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+			gbsim_dump((__u8 *)op_rsp, sz);
+		write(cport_in, cport_rsp, sz + 1);
 		break;
 	case GB_I2S_MGMT_TYPE_SET_SAMPLES_PER_MESSAGE:
 		sz = sizeof(struct op_header);
@@ -76,8 +76,8 @@ void i2s_mgmt_handler(__u8 *rbuf, size_t size)
 		gbsim_debug("Module %d -> AP CPort %d I2S SET_SAMPLES_PER_MESSAGE response\n  ",
 			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, op_rsp->header.size);
-		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+			gbsim_dump((__u8 *)op_rsp, sz);
+		write(cport_in, cport_rsp, sz + 1);
 		break;
 	case GB_I2S_MGMT_TYPE_SET_START_DELAY:
 		sz = sizeof(struct op_header);
@@ -90,8 +90,8 @@ void i2s_mgmt_handler(__u8 *rbuf, size_t size)
 		gbsim_debug("Module %d -> AP CPort %d I2S SET_START_DELAY response\n  ",
 			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, op_rsp->header.size);
-		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+			gbsim_dump((__u8 *)op_rsp, sz);
+		write(cport_in, cport_rsp, sz + 1);
 		break;
 	case GB_I2S_MGMT_TYPE_ACTIVATE_CPORT:
 		sz = sizeof(struct op_header);
@@ -104,8 +104,8 @@ void i2s_mgmt_handler(__u8 *rbuf, size_t size)
 		gbsim_debug("Module %d -> AP CPort %d I2S ACTIVATE_CPORT response\n  ",
 			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, op_rsp->header.size);
-		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+			gbsim_dump((__u8 *)op_rsp, sz);
+		write(cport_in, cport_rsp, sz + 1);
 		break;
 	case GB_I2S_MGMT_TYPE_DEACTIVATE_CPORT:
 		sz = sizeof(struct op_header);
@@ -118,8 +118,8 @@ void i2s_mgmt_handler(__u8 *rbuf, size_t size)
 		gbsim_debug("Module %d -> AP CPort %d I2S DEACTIVATE_CPORT response\n  ",
 			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, op_rsp->header.size);
-		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+			gbsim_dump((__u8 *)op_rsp, sz);
+		write(cport_in, cport_rsp, sz + 1);
 		break;
 	default:
 		gbsim_error("i2s mgmt operation type %02x not supported\n", oph->type);
@@ -161,8 +161,8 @@ void i2s_data_handler(__u8 *rbuf, size_t size)
 		gbsim_debug("Module %d -> AP CPort %d I2S SEND_DATA response\n  ",
 			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, op_rsp->header.size);
-		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+			gbsim_dump((__u8 *)op_rsp, sz);
+		write(cport_in, cport_rsp, sz + 1);
 		break;
 	default:
 		gbsim_error("i2s data operation type %02x not supported\n", oph->type);
