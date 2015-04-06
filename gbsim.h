@@ -14,6 +14,8 @@
 
 #include <svc_msg.h>
 
+#include "i2s.h"
+
 extern int bbb_backend;
 extern int i2c_adapter;
 extern int verbose;
@@ -229,6 +231,8 @@ struct op_msg {
 		struct pwm_polarity_req			pwm_pol_req;
 		struct pwm_enable_req			pwm_enb_req;
 		struct pwm_disable_req			pwm_dis_req;
+		struct gb_i2s_mgmt_get_supported_configurations_response i2s_mgmt_get_sup_conf_rsp;
+		struct gb_i2s_mgmt_get_processing_delay_response i2s_mgmt_get_proc_delay_rsp;
 	};
 };
 

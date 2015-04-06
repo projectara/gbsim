@@ -18,17 +18,7 @@
 
 #include "gbsim.h"
 
-#define GB_I2S_MGMT_TYPE_PROTOCOL_VERSION               0x01
-#define GB_I2S_MGMT_TYPE_GET_SUPPORTED_CONFIGURATIONS   0x02
-#define GB_I2S_MGMT_TYPE_SET_CONFIGURATION              0x03
-#define GB_I2S_MGMT_TYPE_SET_SAMPLES_PER_MESSAGE        0x04
-#define GB_I2S_MGMT_TYPE_GET_PROCESSING_DELAY           0x05
-#define GB_I2S_MGMT_TYPE_SET_START_DELAY                0x06
-#define GB_I2S_MGMT_TYPE_ACTIVATE_CPORT                 0x07
-#define GB_I2S_MGMT_TYPE_DEACTIVATE_CPORT               0x08
-#define GB_I2S_MGMT_TYPE_REPORT_EVENT                   0x09
-
-#define GB_I2S_DATA_TYPE_SEND_DATA			0x02
+#define CONFIG_COUNT_MAX 32
 
 void i2s_mgmt_handler(__u8 *rbuf, size_t size)
 {
@@ -36,6 +26,7 @@ void i2s_mgmt_handler(__u8 *rbuf, size_t size)
 	char *tbuf;
 	struct op_msg *op_req, *op_rsp;
 	struct cport_msg *cport_req, *cport_rsp;
+	struct gb_i2s_mgmt_configuration *conf;
 	size_t sz;
 
 	tbuf = malloc(4 * 1024);
@@ -51,6 +42,45 @@ void i2s_mgmt_handler(__u8 *rbuf, size_t size)
 	oph = (struct op_header *)&op_req->header;
 
 	switch (oph->type) {
+	case GB_I2S_MGMT_TYPE_GET_SUPPORTED_CONFIGURATIONS:
+		sz = sizeof(struct op_header) +
+			sizeof(struct gb_i2s_mgmt_get_supported_configurations_response) +
+			sizeof(struct gb_i2s_mgmt_configuration) * CONFIG_COUNT_MAX;
+
+		printf("JDB: sz=%i\n", sz);
+		op_rsp->header.size = htole16((__u16)sz);
+		op_rsp->header.id = oph->id;
+
+		op_rsp->header.type = OP_RESPONSE | GB_I2S_MGMT_TYPE_GET_SUPPORTED_CONFIGURATIONS;
+		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
+
+		op_rsp->i2s_mgmt_get_sup_conf_rsp.config_count = 1;
+
+		conf = &op_rsp->i2s_mgmt_get_sup_conf_rsp.config[0];
+		conf->sample_frequency = htole32(48000);
+		conf->num_channels = 2;
+		conf->bytes_per_channel = 2;
+		conf->byte_order = GB_I2S_MGMT_BYTE_ORDER_LE;
+		conf->spatial_locations = htole32(
+						GB_I2S_MGMT_SPATIAL_LOCATION_FL |
+						GB_I2S_MGMT_SPATIAL_LOCATION_FR);
+		conf->ll_protocol = htole32(GB_I2S_MGMT_PROTOCOL_I2S);
+		conf->ll_bclk_role = GB_I2S_MGMT_ROLE_MASTER;
+		conf->ll_wclk_role = GB_I2S_MGMT_ROLE_MASTER;
+		conf->ll_wclk_polarity = GB_I2S_MGMT_POLARITY_NORMAL;
+		conf->ll_wclk_change_edge = GB_I2S_MGMT_EDGE_FALLING;
+		conf->ll_wclk_tx_edge = GB_I2S_MGMT_EDGE_FALLING;
+		conf->ll_wclk_rx_edge = GB_I2S_MGMT_EDGE_RISING;
+		conf->ll_data_offset = 1;
+
+
+
+		gbsim_debug("Module %d -> AP CPort %d I2S GET_CONFIGURATION response\n  ",
+			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
+		if (verbose)
+			gbsim_dump((__u8 *)op_rsp, sz);
+		write(cport_in, cport_rsp, sz + 1);
+		break;
 	case GB_I2S_MGMT_TYPE_SET_CONFIGURATION:
 		sz = sizeof(struct op_header);
 		op_rsp->header.size = htole16((__u16)sz);
