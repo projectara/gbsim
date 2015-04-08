@@ -50,7 +50,7 @@ void i2c_handler(__u8 *rbuf, size_t size)
 	cport_req = (struct cport_msg *)rbuf;
 	op_req = (struct op_msg *)cport_req->data;
 	cport_rsp = (struct cport_msg *)tbuf;
-	cport_rsp->cport = 0;	/* FIXME hardcoded until we have connections */
+	cport_rsp->cport = cport_req->cport;
 	op_rsp = (struct op_msg *)cport_rsp->data;
 	oph = (struct op_header *)&op_req->header;
 	
