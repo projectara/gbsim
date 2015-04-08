@@ -63,7 +63,7 @@ static int identify_descriptor(struct greybus_descriptor *desc, size_t size)
 	case GREYBUS_TYPE_CPORT:
 		expected_size += sizeof(struct greybus_descriptor_cport);
 		cport = malloc(sizeof(struct gbsim_cport));
-		cport->id = desc->cport.id;
+		cport->id = le16toh(desc->cport.id);
 		cport->protocol = desc->cport.protocol_id;
 		TAILQ_INSERT_TAIL(&info.cports, cport, cnode);
 		break;

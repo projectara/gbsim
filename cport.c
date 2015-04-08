@@ -18,7 +18,7 @@
 
 #define ES1_MSG_SIZE	(4 * 1024)
 
-static char *get_protocol(__le16 id)
+static char *get_protocol(unsigned int id)
 {
 	struct gbsim_cport *cport;
 
@@ -43,7 +43,7 @@ static char *get_protocol(__le16 id)
 	return "N/A";
 }
 
-static void exec_subdev_handler(__le16 id, __u8 *rbuf, size_t size)
+static void exec_subdev_handler(unsigned int id, __u8 *rbuf, size_t size)
 {
 	struct gbsim_cport *cport;
 
@@ -77,16 +77,19 @@ void cport_handler(__u8 *rbuf, size_t size)
 {
 	/* FIXME pass cport_msg directly? */
 	struct cport_msg *cmsg = (struct cport_msg *)rbuf;
+	unsigned int id;
+
+	id = cmsg->cport;
 
 	/* FIXME: can identify module from our cport connection */
 	gbsim_debug("AP -> Module %d CPort %d %s request\n  ",
-		    cport_to_module_id(cmsg->cport),
-		    cmsg->cport,
-		    get_protocol(cmsg->cport));
+		    cport_to_module_id(id),
+		    id,
+		    get_protocol(id));
 	if (verbose)
 		gbsim_dump(cmsg->data, size - 1);
 
-	exec_subdev_handler(cmsg->cport, rbuf, size);
+	exec_subdev_handler(id, rbuf, size);
 
 	free(rbuf);
 }
