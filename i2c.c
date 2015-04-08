@@ -41,6 +41,7 @@ void i2c_handler(__u8 *rbuf, size_t size)
 	int read_count = 0;
 	bool write_fail = false;
 	size_t sz;
+	unsigned int cport;
 
 	tbuf = malloc(4 * 1024);
 	if (!tbuf) {
@@ -49,8 +50,9 @@ void i2c_handler(__u8 *rbuf, size_t size)
 	}
 	cport_req = (struct cport_msg *)rbuf;
 	op_req = (struct op_msg *)cport_req->data;
+	cport = cport_req->cport;
 	cport_rsp = (struct cport_msg *)tbuf;
-	cport_rsp->cport = cport_req->cport;
+	cport_rsp->cport = cport;
 	op_rsp = (struct op_msg *)cport_rsp->data;
 	oph = (struct op_header *)&op_req->header;
 	
@@ -65,7 +67,7 @@ void i2c_handler(__u8 *rbuf, size_t size)
 		op_rsp->pv_rsp.version_major = GREYBUS_VERSION_MAJOR;
 		op_rsp->pv_rsp.version_minor = GREYBUS_VERSION_MINOR;
 		gbsim_debug("Module %d -> AP CPort %d I2C protocol version response\n  ",
-			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
+			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
 		write(cport_in, cport_rsp, sz + 1);
@@ -79,7 +81,7 @@ void i2c_handler(__u8 *rbuf, size_t size)
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 		op_rsp->i2c_fcn_rsp.functionality = htole32(I2C_FUNC_I2C);
 		gbsim_debug("Module %d -> AP CPort %d I2C protocol functionality response\n  ",
-			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
+			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
 		write(cport_in, cport_rsp, sz + 1);
@@ -91,7 +93,7 @@ void i2c_handler(__u8 *rbuf, size_t size)
 		op_rsp->header.type = OP_RESPONSE | OP_I2C_PROTOCOL_TIMEOUT;
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 		gbsim_debug("Module %d -> AP CPort %d I2C protocol timeout response\n  ",
-			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
+			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
 		write(cport_in, cport_rsp, sz + 1);
@@ -103,7 +105,7 @@ void i2c_handler(__u8 *rbuf, size_t size)
 		op_rsp->header.type = OP_RESPONSE | OP_I2C_PROTOCOL_RETRIES;
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 		gbsim_debug("Module %d -> AP CPort %d I2C protocol retries response\n  ",
-			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
+			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
 		write(cport_in, cport_rsp, sz + 1);
@@ -171,7 +173,7 @@ void i2c_handler(__u8 *rbuf, size_t size)
 
 		op_rsp->header.size = htole16((__u16)sz);
 		gbsim_debug("Module %d -> AP CPort %d I2C transfer response\n  ",
-			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
+			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
 		write(cport_in, cport_rsp, sz + 1);

@@ -41,6 +41,7 @@ void pwm_handler(__u8 *rbuf, size_t size)
 	size_t sz;
 	__u32 duty;
 	__u32 period;
+	unsigned int cport;
 
 	tbuf = malloc(4 * 1024);
 	if (!tbuf) {
@@ -49,8 +50,9 @@ void pwm_handler(__u8 *rbuf, size_t size)
 	}
 	cport_req = (struct cport_msg *)rbuf;
 	op_req = (struct op_msg *)cport_req->data;
+	cport = cport_req->cport;
 	cport_rsp = (struct cport_msg *)tbuf;
-	cport_rsp->cport = cport_req->cport;
+	cport_rsp->cport = cport;
 	op_rsp = (struct op_msg *)cport_rsp->data;
 	oph = (struct op_header *)&op_req->header;
 	
@@ -65,7 +67,7 @@ void pwm_handler(__u8 *rbuf, size_t size)
 		op_rsp->pv_rsp.version_major = GREYBUS_VERSION_MAJOR;
 		op_rsp->pv_rsp.version_minor = GREYBUS_VERSION_MINOR;
 		gbsim_debug("Module %d -> AP CPort %d PWM protocol version response\n  ",
-			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
+			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
 		write(cport_in, cport_rsp, sz + 1);
@@ -78,7 +80,7 @@ void pwm_handler(__u8 *rbuf, size_t size)
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 		op_rsp->pwm_cnt_rsp.count = 1; /* Something arbitrary, but useful */
 		gbsim_debug("Module %d -> AP CPort %d PWM count response\n  ",
-			    cport_to_module_id(cport_req->cport), cport_rsp->cport);
+			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
 		write(cport_in, cport_rsp, sz + 1);
@@ -90,7 +92,7 @@ void pwm_handler(__u8 *rbuf, size_t size)
 		op_rsp->header.type = OP_RESPONSE | GB_PWM_TYPE_ACTIVATE;
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 		gbsim_debug("AP -> Module %d CPort %d PWM %d activate request\n  ",
-			    cport_to_module_id(cport_req->cport), cport_req->cport, op_req->pwm_act_req.which);
+			    cport_to_module_id(cport), cport, op_req->pwm_act_req.which);
 		if (verbose)
 			gbsim_dump((__u8 *)op_req, sz);
 		write(cport_in, cport_rsp, sz + 1);
@@ -102,7 +104,7 @@ void pwm_handler(__u8 *rbuf, size_t size)
 		op_rsp->header.type = OP_RESPONSE | GB_PWM_TYPE_DEACTIVATE;
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 		gbsim_debug("AP -> Module %d CPort %d PWM %d deactivate request\n  ",
-			    cport_to_module_id(cport_req->cport), cport_req->cport, op_req->pwm_deact_req.which);
+			    cport_to_module_id(cport), cport, op_req->pwm_deact_req.which);
 		if (verbose)
 			gbsim_dump((__u8 *)op_req, sz);
 		write(cport_in, cport_rsp, sz + 1);
@@ -120,7 +122,7 @@ void pwm_handler(__u8 *rbuf, size_t size)
 			libsoc_pwm_set_period(pwms[op_req->pwm_cfg_req.which], period);
 		}
 		gbsim_debug("AP -> Module %d CPort %d PWM %d config (%dns/%dns) request\n  ",
-			    cport_to_module_id(cport_req->cport), cport_rsp->cport, op_req->pwm_cfg_req.which, duty, period);
+			    cport_to_module_id(cport), cport, op_req->pwm_cfg_req.which, duty, period);
 		if (verbose)
 			gbsim_dump((__u8 *)op_req, op_req->header.size);
 		write(cport_in, cport_rsp, op_rsp->header.size + 1);
@@ -139,8 +141,8 @@ void pwm_handler(__u8 *rbuf, size_t size)
 						    op_req->pwm_pol_req.polarity);
 		}
 		gbsim_debug("AP -> Module %d CPort %d PWM %d polarity (%s) request\n  ",
-			    cport_to_module_id(cport_req->cport),
-			    cport_rsp->cport, op_req->pwm_cfg_req.which,
+			    cport_to_module_id(cport),
+			    cport, op_req->pwm_cfg_req.which,
 			    op_req->pwm_pol_req.polarity ? "inverse" : "normal");
 		if (verbose)
 			gbsim_dump((__u8 *)op_req, sz);
@@ -156,7 +158,7 @@ void pwm_handler(__u8 *rbuf, size_t size)
 		if (bbb_backend)
 			libsoc_pwm_set_enabled(pwms[op_req->pwm_enb_req.which], ENABLED);
 		gbsim_debug("AP -> Module %d CPort %d PWM %d enable request\n  ",
-			    cport_to_module_id(cport_req->cport), cport_req->cport, op_req->pwm_enb_req.which);
+			    cport_to_module_id(cport), cport, op_req->pwm_enb_req.which);
 		if (verbose)
 			gbsim_dump((__u8 *)op_req, sz);
 		write(cport_in, cport_rsp, sz + 1);
@@ -171,7 +173,7 @@ void pwm_handler(__u8 *rbuf, size_t size)
 		if (bbb_backend)
 			libsoc_pwm_set_enabled(pwms[op_req->pwm_dis_req.which], DISABLED);
 		gbsim_debug("AP -> Module %d CPort %d PWM %d disable request\n  ",
-			    cport_to_module_id(cport_req->cport), cport_req->cport, op_req->pwm_dis_req.which);
+			    cport_to_module_id(cport), cport, op_req->pwm_dis_req.which);
 		if (verbose)
 			gbsim_dump((__u8 *)op_req, sz);
 		write(cport_in, cport_rsp, sz + 1);
