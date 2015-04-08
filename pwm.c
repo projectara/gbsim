@@ -32,7 +32,7 @@
 static int pwm_on[2];
 static pwm *pwms[2];
 
-void pwm_handler(__u8 *rbuf, size_t size)
+void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 {
 	struct op_header *oph;
 	char *tbuf;
@@ -41,7 +41,6 @@ void pwm_handler(__u8 *rbuf, size_t size)
 	size_t sz;
 	__u32 duty;
 	__u32 period;
-	unsigned int cport;
 
 	tbuf = malloc(4 * 1024);
 	if (!tbuf) {
@@ -50,7 +49,6 @@ void pwm_handler(__u8 *rbuf, size_t size)
 	}
 	cport_req = (struct cport_msg *)rbuf;
 	op_req = (struct op_msg *)cport_req->data;
-	cport = cport_req->cport;
 	cport_rsp = (struct cport_msg *)tbuf;
 	cport_rsp->cport = cport;
 	op_rsp = (struct op_msg *)cport_rsp->data;

@@ -40,13 +40,12 @@
 static int gpio_dir[6];
 static gpio *gpios[6];
 
-void gpio_handler(__u8 *rbuf, size_t size)
+void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 {
 	struct op_header *oph;
 	char *tbuf;
 	struct op_msg *op_req, *op_rsp;
 	struct cport_msg *cport_req, *cport_rsp;
-	unsigned int cport;
 
 	tbuf = malloc(4 * 1024);
 	if (!tbuf) {
@@ -55,7 +54,6 @@ void gpio_handler(__u8 *rbuf, size_t size)
 	}
 	cport_req = (struct cport_msg *)rbuf;
 	op_req = (struct op_msg *)cport_req->data;
-	cport = cport_req->cport;
 	cport_rsp = (struct cport_msg *)tbuf;
 	cport_rsp->cport = cport;
 	op_rsp = (struct op_msg *)cport_rsp->data;

@@ -21,7 +21,7 @@
 
 #define CONFIG_COUNT_MAX 32
 
-void i2s_mgmt_handler(__u8 *rbuf, size_t size)
+void i2s_mgmt_handler(unsigned int cport, __u8 *rbuf, size_t size)
 {
 	struct op_header *oph;
 	char *tbuf;
@@ -29,7 +29,6 @@ void i2s_mgmt_handler(__u8 *rbuf, size_t size)
 	struct cport_msg *cport_req, *cport_rsp;
 	struct gb_i2s_mgmt_configuration *conf;
 	size_t sz;
-	unsigned int cport;
 
 	tbuf = malloc(4 * 1024);
 	if (!tbuf) {
@@ -38,7 +37,6 @@ void i2s_mgmt_handler(__u8 *rbuf, size_t size)
 	}
 	cport_req = (struct cport_msg *)rbuf;
 	op_req = (struct op_msg *)cport_req->data;
-	cport = cport_req->cport;
 	cport_rsp = (struct cport_msg *)tbuf;
 	cport_rsp->cport = cport;
 	op_rsp = (struct op_msg *)cport_rsp->data;
@@ -161,14 +159,13 @@ void i2s_mgmt_handler(__u8 *rbuf, size_t size)
 }
 
 
-void i2s_data_handler(__u8 *rbuf, size_t size)
+void i2s_data_handler(unsigned int cport, __u8 *rbuf, size_t size)
 {
 	struct op_header *oph;
 	char *tbuf;
 	struct op_msg *op_req, *op_rsp;
 	struct cport_msg *cport_req, *cport_rsp;
 	size_t sz;
-	unsigned int cport;
 
 	tbuf = malloc(4 * 1024);
 	if (!tbuf) {
@@ -177,7 +174,6 @@ void i2s_data_handler(__u8 *rbuf, size_t size)
 	}
 	cport_req = (struct cport_msg *)rbuf;
 	op_req = (struct op_msg *)cport_req->data;
-	cport = cport_req->cport;
 	cport_rsp = (struct cport_msg *)tbuf;
 	cport_rsp->cport = cport;
 	op_rsp = (struct op_msg *)cport_rsp->data;
