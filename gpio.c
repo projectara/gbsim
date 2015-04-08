@@ -107,7 +107,7 @@ void gpio_handler(__u8 *rbuf, size_t size)
 			    cport_to_module_id(cport_req->cport), cport_req->cport, op_req->gpio_deact_req.which);
 		if (verbose)
 			gbsim_dump((__u8 *)op_req, op_req->header.size);
-		write(cport_in, cport_rsp, op_req->header.size + 1);
+		write(cport_in, cport_rsp, op_rsp->header.size + 1);
 		break;
 	case GB_GPIO_TYPE_GET_DIRECTION:
 		op_rsp->header.size = sizeof(struct op_header) +
