@@ -76,7 +76,7 @@ void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 		break;
 	case GB_GPIO_TYPE_LINE_COUNT:
 		op_rsp->header.size = sizeof(struct op_header) +
-				   sizeof(struct gpio_line_count_rsp);
+				   sizeof(struct gb_gpio_line_count_response);
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | GB_GPIO_TYPE_LINE_COUNT;
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
@@ -111,7 +111,7 @@ void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 		break;
 	case GB_GPIO_TYPE_GET_DIRECTION:
 		op_rsp->header.size = sizeof(struct op_header) +
-				   sizeof(struct gpio_get_direction_rsp);
+				   sizeof(struct gb_gpio_get_direction_response);
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | GB_GPIO_TYPE_GET_DIRECTION;
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
@@ -157,7 +157,7 @@ void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 		break;
 	case GB_GPIO_TYPE_GET_VALUE:
 		op_rsp->header.size = sizeof(struct op_header) +
-				   sizeof(struct gpio_get_value_rsp);
+				   sizeof(struct gb_gpio_get_value_response);
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | GB_GPIO_TYPE_GET_VALUE;
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;

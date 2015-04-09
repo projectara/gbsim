@@ -18,17 +18,6 @@
 
 #include "gbsim.h"
 
-#define GB_PWM_TYPE_INVALID		0x00
-#define GB_PWM_TYPE_PROTOCOL_VERSION	0x01
-#define GB_PWM_TYPE_PWM_COUNT		0x02
-#define GB_PWM_TYPE_ACTIVATE		0x03
-#define GB_PWM_TYPE_DEACTIVATE		0x04
-#define GB_PWM_TYPE_CONFIG		0x05
-#define GB_PWM_TYPE_POLARITY		0x06
-#define GB_PWM_TYPE_ENABLE		0x07
-#define GB_PWM_TYPE_DISABLE		0x08
-#define GB_PWM_TYPE_RESPONSE		0x80
-
 static int pwm_on[2];
 static pwm *pwms[2];
 
@@ -72,7 +61,7 @@ void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 		write(cport_in, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_PWM_COUNT:
-		sz = sizeof(struct op_header) + sizeof(struct pwm_count_rsp);
+		sz = sizeof(struct op_header) + sizeof(struct gb_pwm_count_response);
 		op_rsp->header.size = htole16((__u16)sz);
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | GB_PWM_TYPE_PWM_COUNT;

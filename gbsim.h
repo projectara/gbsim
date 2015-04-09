@@ -15,7 +15,7 @@
 #include <svc_msg.h>
 #define __packed  __attribute__((__packed__))
 
-#include "i2s.h"
+#include "gpbridge.h"
 
 extern int bbb_backend;
 extern int i2c_adapter;
@@ -68,165 +68,37 @@ struct protocol_version_rsp {
 	__u8	version_minor;
 };
 
-/* GPIO */
-struct gpio_line_count_rsp {
-	__u8	count;
-};
-
-struct gpio_activate_req {
-	__u8	which;
-};
-
-struct gpio_deactivate_req {
-	__u8	which;
-};
-
-struct gpio_get_direction_req {
-	__u8	which;
-};
-
-struct gpio_get_direction_rsp {
-	__u8	direction;
-};
-
-struct gpio_direction_input_req {
-	__u8	which;
-};
-
-struct gpio_direction_output_req {
-	__u8	which;
-	__u8	value;
-};
-
-struct gpio_get_value_req {
-	__u8	which;
-};
-
-struct gpio_get_value_rsp {
-	__u8	value;
-};
-
-struct gpio_set_value_req {
-	__u8	which;
-	__u8	value;
-};
-
-struct gpio_set_debounce_req {
-	__u8	which;
-	__le16	usec __attribute__((__packed__));
-};
-
-struct gpio_irq_type_request {
-	__u8	which;
-	__u8	type;
-};
-/* irq type response has no payload */
-
-struct gpio_irq_mask_request {
-	__u8	which;
-};
-/* irq mask response has no payload */
-
-struct gpio_irq_unmask_request {
-	__u8	which;
-};
-/* irq unmask response has no payload */
-
-struct gpio_irq_ack_request {
-	__u8	which;
-};
-/* irq ack response has no payload */
-
-/* irq event requests originate on another module and are handled on the AP */
-struct gpio_irq_event_request {
-	__u8	which;
-};
-/* irq event response has no payload */
-
-
-/* I2C */
-struct i2c_functionality_rsp {
-	__le32	functionality;
-};
-
-struct i2c_transfer_desc {
-	__le16	addr;
-	__le16	flags;
-	__le16	size;
-};
-
-struct i2c_transfer_req {
-	__le16	op_count;
-	struct i2c_transfer_desc desc[0];
-};
-
-struct i2c_transfer_rsp {
-	__u8	data[0];
-};
-
-/* PWM */
-struct pwm_count_rsp {
-	__u8	count;
-};
-
-struct pwm_activate_req {
-	__u8	which;
-};
-
-struct pwm_deactivate_req {
-	__u8	which;
-};
-
-struct pwm_config_req {
-	__u8	which;
-	__le32	duty __attribute__((__packed__));
-	__le32	period __attribute__((__packed__));
-};
-
-struct pwm_polarity_req {
-	__u8	which;
-	__u8	polarity;
-};
-
-struct pwm_enable_req {
-	__u8	which;
-};
-
-struct pwm_disable_req {
-	__u8	which;
-};
-
 /* Ops */
 struct op_msg {
 	struct op_header	header;
 	union {
 		struct protocol_version_rsp		pv_rsp;
-		struct gpio_line_count_rsp		gpio_lc_rsp;
-		struct gpio_activate_req		gpio_act_req;
-		struct gpio_deactivate_req		gpio_deact_req;
-		struct gpio_get_direction_req		gpio_get_dir_req;
-		struct gpio_get_direction_rsp		gpio_get_dir_rsp;
-		struct gpio_direction_input_req		gpio_dir_input_req;
-		struct gpio_direction_output_req	gpio_dir_output_req;
-		struct gpio_get_value_req		gpio_get_val_req;
-		struct gpio_get_value_rsp		gpio_get_val_rsp;
-		struct gpio_set_value_req		gpio_set_val_req;
-		struct gpio_set_debounce_req		gpio_set_db_req;
-		struct gpio_irq_type_request		gpio_irq_type_req;
-		struct gpio_irq_mask_request		gpio_irq_mask_req;
-		struct gpio_irq_unmask_request		gpio_irq_unmask_req;
-		struct gpio_irq_ack_request		gpio_irq_ack_req;
-		struct gpio_irq_event_request		gpio_irq_event_req;
-		struct i2c_functionality_rsp		i2c_fcn_rsp;
-		struct i2c_transfer_req			i2c_xfer_req;
-		struct i2c_transfer_rsp			i2c_xfer_rsp;
-		struct pwm_count_rsp			pwm_cnt_rsp;
-		struct pwm_activate_req			pwm_act_req;
-		struct pwm_deactivate_req		pwm_deact_req;
-		struct pwm_config_req			pwm_cfg_req;
-		struct pwm_polarity_req			pwm_pol_req;
-		struct pwm_enable_req			pwm_enb_req;
-		struct pwm_disable_req			pwm_dis_req;
+		struct gb_gpio_line_count_response	gpio_lc_rsp;
+		struct gb_gpio_activate_request		gpio_act_req;
+		struct gb_gpio_deactivate_request	gpio_deact_req;
+		struct gb_gpio_get_direction_request	gpio_get_dir_req;
+		struct gb_gpio_get_direction_response	gpio_get_dir_rsp;
+		struct gb_gpio_direction_in_request	gpio_dir_input_req;
+		struct gb_gpio_direction_out_request	gpio_dir_output_req;
+		struct gb_gpio_get_value_request	gpio_get_val_req;
+		struct gb_gpio_get_value_response	gpio_get_val_rsp;
+		struct gb_gpio_set_value_request	gpio_set_val_req;
+		struct gb_gpio_set_debounce_request	gpio_set_db_req;
+		struct gb_gpio_irq_type_request		gpio_irq_type_req;
+		struct gb_gpio_irq_mask_request		gpio_irq_mask_req;
+		struct gb_gpio_irq_unmask_request	gpio_irq_unmask_req;
+		struct gb_gpio_irq_ack_request		gpio_irq_ack_req;
+		struct gb_gpio_irq_event_request	gpio_irq_event_req;
+		struct gb_i2c_functionality_response	i2c_fcn_rsp;
+		struct gb_i2c_transfer_request		i2c_xfer_req;
+		struct gb_i2c_transfer_response		i2c_xfer_rsp;
+		struct gb_pwm_count_response		pwm_cnt_rsp;
+		struct gb_pwm_activate_request		pwm_act_req;
+		struct gb_pwm_deactivate_request	pwm_deact_req;
+		struct gb_pwm_config_request		pwm_cfg_req;
+		struct gb_pwm_polarity_request		pwm_pol_req;
+		struct gb_pwm_enable_request		pwm_enb_req;
+		struct gb_pwm_disable_request		pwm_dis_req;
 		struct gb_i2s_mgmt_get_supported_configurations_response i2s_mgmt_get_sup_conf_rsp;
 		struct gb_i2s_mgmt_get_processing_delay_response i2s_mgmt_get_proc_delay_rsp;
 	};

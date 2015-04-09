@@ -72,7 +72,7 @@ void i2c_handler(unsigned int cport, __u8 *rbuf, size_t size)
 		break;
 	case OP_I2C_PROTOCOL_FUNCTIONALITY:
 		sz = sizeof(struct op_header) +
-				   sizeof(struct i2c_functionality_rsp);
+				   sizeof(struct gb_i2c_functionality_response);
 		op_rsp->header.size = htole16((__u16)sz);
 		op_rsp->header.id = oph->id;
 		op_rsp->header.type = OP_RESPONSE | OP_I2C_PROTOCOL_FUNCTIONALITY;
@@ -110,18 +110,18 @@ void i2c_handler(unsigned int cport, __u8 *rbuf, size_t size)
 		break;
 	case OP_I2C_PROTOCOL_TRANSFER:
 		op_count = le16toh(op_req->i2c_xfer_req.op_count);
-		write_data = (__u8 *)&op_req->i2c_xfer_req.desc[op_count];
+		write_data = (__u8 *)&op_req->i2c_xfer_req.ops[op_count];
 		gbsim_debug("Number of transfer ops %d\n", op_count);
 		for (i = 0; i < op_count; i++) {
-			struct i2c_transfer_desc *desc;
+			struct gb_i2c_transfer_op *op;
 			__u16 addr;
 			__u16 flags;
 			__u16 size;
 
-			desc = &op_req->i2c_xfer_req.desc[i];
-			addr = le16toh(desc->addr);
-			flags = le16toh(desc->flags);
-			size = le16toh(desc->size);
+			op = &op_req->i2c_xfer_req.ops[i];
+			addr = le16toh(op->addr);
+			flags = le16toh(op->flags);
+			size = le16toh(op->size);
 			read_op = (flags & I2C_M_RD) ? true : false;
 			gbsim_debug("op %d: %s address %04x size %04x\n",
 				    i, (read_op ? "read" : "write"),
