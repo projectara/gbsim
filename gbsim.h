@@ -13,6 +13,7 @@
 #include <usbg/usbg.h>
 
 #include <svc_msg.h>
+#define __packed  __attribute__((__packed__))
 
 #include "i2s.h"
 
