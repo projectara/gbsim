@@ -47,7 +47,6 @@ void i2s_mgmt_handler(__u8 *rbuf, size_t size)
 			sizeof(struct gb_i2s_mgmt_get_supported_configurations_response) +
 			sizeof(struct gb_i2s_mgmt_configuration) * CONFIG_COUNT_MAX;
 
-		printf("JDB: sz=%i\n", sz);
 		op_rsp->header.size = htole16((__u16)sz);
 		op_rsp->header.id = oph->id;
 
