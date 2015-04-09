@@ -34,7 +34,6 @@ void i2c_handler(unsigned int cport, __u8 *rbuf, size_t size)
 	struct op_header *oph;
 	char *tbuf;
 	struct op_msg *op_req, *op_rsp;
-	struct cport_msg *cport_req, *cport_rsp;
 	int i, op_count;
 	__u8 *write_data;
 	bool read_op;
@@ -47,12 +46,13 @@ void i2c_handler(unsigned int cport, __u8 *rbuf, size_t size)
 		gbsim_error("failed to allocate i2c handler tx buf\n");
 		return;
 	}
-	cport_req = (struct cport_msg *)rbuf;
-	op_req = (struct op_msg *)cport_req->data;
-	cport_rsp = (struct cport_msg *)tbuf;
-	cport_rsp->cport = cport;
-	op_rsp = (struct op_msg *)cport_rsp->data;
+	op_req = (struct op_msg *)rbuf;
+	op_rsp = (struct op_msg *)tbuf;
 	oph = (struct op_header *)&op_req->header;
+
+	/* Store the cport id in the header pad bytes */
+	op_rsp->header.pad[0] = cport & 0xff;
+	op_rsp->header.pad[1] = (cport >> 8) & 0xff;
 	
 	switch (oph->type) {
 	case OP_I2C_PROTOCOL_VERSION:
@@ -68,7 +68,7 @@ void i2c_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, cport_rsp, sz + 1);
+		write(cport_in, op_rsp, sz);
 		break;
 	case OP_I2C_PROTOCOL_FUNCTIONALITY:
 		sz = sizeof(struct op_header) +
@@ -82,7 +82,7 @@ void i2c_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, cport_rsp, sz + 1);
+		write(cport_in, op_rsp, sz);
 		break;
 	case OP_I2C_PROTOCOL_TIMEOUT:
 		sz = sizeof(struct op_header) + 0;
@@ -94,7 +94,7 @@ void i2c_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, cport_rsp, sz + 1);
+		write(cport_in, op_rsp, sz);
 		break;
 	case OP_I2C_PROTOCOL_RETRIES:
 		sz = sizeof(struct op_header) + 0;
@@ -106,7 +106,7 @@ void i2c_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, cport_rsp, sz + 1);
+		write(cport_in, op_rsp, sz);
 		break;
 	case OP_I2C_PROTOCOL_TRANSFER:
 		op_count = le16toh(op_req->i2c_xfer_req.op_count);
@@ -174,7 +174,7 @@ void i2c_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, cport_rsp, sz + 1);
+		write(cport_in, op_rsp, sz);
 
 		break;
 	default:

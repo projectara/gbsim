@@ -53,11 +53,6 @@ extern struct gbsim_info info;
 #define PROTOCOL_STATUS_RETRY	0x04
 #define PROTOCOL_STATUS_BAD	0xff
 
-struct cport_msg {
-	__u8	cport;
-	__u8	data[0];
-};
-
 struct op_header {
 	__le16	size;
 	__le16	id;

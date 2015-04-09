@@ -37,7 +37,6 @@ void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 	struct op_header *oph;
 	char *tbuf;
 	struct op_msg *op_req, *op_rsp;
-	struct cport_msg *cport_req, *cport_rsp;
 	size_t sz;
 	__u32 duty;
 	__u32 period;
@@ -47,13 +46,15 @@ void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 		gbsim_error("failed to allocate i2c handler tx buf\n");
 		return;
 	}
-	cport_req = (struct cport_msg *)rbuf;
-	op_req = (struct op_msg *)cport_req->data;
-	cport_rsp = (struct cport_msg *)tbuf;
-	cport_rsp->cport = cport;
-	op_rsp = (struct op_msg *)cport_rsp->data;
+
+	op_req = (struct op_msg *)rbuf;
+	op_rsp = (struct op_msg *)tbuf;
 	oph = (struct op_header *)&op_req->header;
-	
+
+	/* Store the cport id in the header pad bytes */
+	op_rsp->header.pad[0] = cport & 0xff;
+	op_rsp->header.pad[1] = (cport >> 8) & 0xff;
+
 	switch (oph->type) {
 	case GB_PWM_TYPE_PROTOCOL_VERSION:
 		sz = sizeof(struct op_header) +
@@ -68,7 +69,7 @@ void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, cport_rsp, sz + 1);
+		write(cport_in, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_PWM_COUNT:
 		sz = sizeof(struct op_header) + sizeof(struct pwm_count_rsp);
@@ -81,7 +82,7 @@ void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, cport_rsp, sz + 1);
+		write(cport_in, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_ACTIVATE:
 		sz = sizeof(struct op_header) + 0;
@@ -93,7 +94,7 @@ void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport, op_req->pwm_act_req.which);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, cport_rsp, sz + 1);
+		write(cport_in, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_DEACTIVATE:
 		sz = sizeof(struct op_header) + 0;
@@ -105,7 +106,7 @@ void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport, op_req->pwm_deact_req.which);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, cport_rsp, sz + 1);
+		write(cport_in, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_CONFIG:
 		sz = sizeof(struct op_header) + 0;
@@ -123,7 +124,7 @@ void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport, op_req->pwm_cfg_req.which, duty, period);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, cport_rsp, op_rsp->header.size + 1);
+		write(cport_in, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_POLARITY:
 		sz = sizeof(struct op_header) + 0;
@@ -144,7 +145,7 @@ void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    op_req->pwm_pol_req.polarity ? "inverse" : "normal");
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, cport_rsp, sz + 1);
+		write(cport_in, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_ENABLE:
 		sz = sizeof(struct op_header) + 0;
@@ -159,7 +160,7 @@ void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport, op_req->pwm_enb_req.which);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, cport_rsp, sz + 1);
+		write(cport_in, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_DISABLE:
 		sz = sizeof(struct op_header) + 0;
@@ -174,7 +175,7 @@ void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport, op_req->pwm_dis_req.which);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, cport_rsp, sz + 1);
+		write(cport_in, op_rsp, sz);
 		break;
 	default:
 		gbsim_error("pwm operation type %02x not supported\n", oph->type);

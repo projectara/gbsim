@@ -75,19 +75,29 @@ static void exec_subdev_handler(unsigned int id, __u8 *rbuf, size_t size)
 
 void cport_handler(__u8 *rbuf, size_t size)
 {
-	/* FIXME pass cport_msg directly? */
-	struct cport_msg *cmsg = (struct cport_msg *)rbuf;
+	struct op_header *hdr = (void *)rbuf;
 	unsigned int id;
 
-	id = cmsg->cport;
+	if (size < sizeof(*hdr)) {
+		gbsim_error("short message received\n");
+		return;
+	}
+
+	/*
+	 * Retreive and clear the cport id stored in the header pad bytes.
+	 */
+	id = hdr->pad[1] << 8 | hdr->pad[0];
+	hdr->pad[0] = 0;
+	hdr->pad[1] = 0;
 
 	/* FIXME: can identify module from our cport connection */
 	gbsim_debug("AP -> Module %d CPort %d %s request\n  ",
 		    cport_to_module_id(id),
 		    id,
 		    get_protocol(id));
+
 	if (verbose)
-		gbsim_dump(cmsg->data, size - 1);
+		gbsim_dump(rbuf, size);
 
 	exec_subdev_handler(id, rbuf, size);
 
