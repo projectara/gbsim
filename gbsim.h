@@ -15,6 +15,10 @@
 #include <svc_msg.h>
 #define __packed  __attribute__((__packed__))
 
+#ifndef BIT
+#define BIT(n)	(1UL << (n))
+#endif
+
 #include "gpbridge.h"
 
 extern int bbb_backend;
