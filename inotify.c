@@ -20,8 +20,6 @@
 
 #include <linux/types.h>
 
-#include <greybus_manifest.h>
-
 #include "gbsim.h"
 
 #define MAX_NAME 256

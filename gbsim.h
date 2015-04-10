@@ -7,13 +7,17 @@
  * Provided under the three clause BSD license found in the LICENSE file.
  */
 
+/* Required for build, as greybus core uses __packed */
+#define __packed  __attribute__((__packed__))
+
 #include <endian.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <usbg/usbg.h>
 
+#include <greybus.h>
+#include <greybus_manifest.h>
 #include <svc_msg.h>
-#define __packed  __attribute__((__packed__))
 
 #ifndef BIT
 #define BIT(n)	(1UL << (n))

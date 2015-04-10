@@ -12,8 +12,6 @@
 #include <linux/types.h>
 #include <unistd.h>
 
-#include <greybus_manifest.h>
-
 #include "gbsim.h"
 
 #define ES1_MSG_SIZE	(4 * 1024)

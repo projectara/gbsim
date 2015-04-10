@@ -13,9 +13,6 @@
 #include <stdlib.h>
 #include <linux/types.h>
 
-#include <greybus.h>
-#include <greybus_manifest.h>
-
 #include "gbsim.h"
 
 /*

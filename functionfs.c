@@ -24,9 +24,6 @@
 
 #include <linux/usb/functionfs.h>
 
-#include <svc_msg.h>
-#include <greybus_manifest.h>
-
 #include "gbsim.h"
 
 /* #define USE_DEPRECATED_DESC_HEAD */
