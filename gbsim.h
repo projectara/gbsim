@@ -38,8 +38,8 @@ extern int verbose;
 
 extern int control;
 extern int svc_int;
-extern int cport_in;
-extern int cport_out;
+extern int to_ap;
+extern int from_ap;
 
 struct gbsim_cport {
 	TAILQ_ENTRY(gbsim_cport) cnode;

@@ -105,13 +105,13 @@ void cport_handler(__u8 *rbuf, size_t size)
 void cport_thread_cleanup(void *arg)
 {
 	cleanup_endpoint(svc_int, "svc_int");
-	cleanup_endpoint(cport_in, "cport_in");
-	cleanup_endpoint(cport_out, "cport_out");
+	cleanup_endpoint(to_ap, "to_ap");
+	cleanup_endpoint(from_ap, "from_ap");
 }
 
 void *cport_thread(void *param)
 {
-	size_t size;
+	ssize_t size;
 	__u8 *rbuf;
 
 	do {
@@ -121,9 +121,9 @@ void *cport_thread(void *param)
 			return NULL;
 		}
 		/* blocking read for our max buf size */
-		size = read(cport_out, rbuf, ES1_MSG_SIZE);
+		size = read(from_ap, rbuf, ES1_MSG_SIZE);
 		if (size < 0) {
-			gbsim_error("failed to read from CPort OUT endpoint\n");
+			gbsim_error("error %zd receiving from AP\n", size);
 			return NULL;
 		}
 

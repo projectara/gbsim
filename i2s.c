@@ -77,7 +77,7 @@ void i2s_mgmt_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, op_rsp, sz);
+		write(to_ap, op_rsp, sz);
 		break;
 	case GB_I2S_MGMT_TYPE_SET_CONFIGURATION:
 		sz = sizeof(struct op_header);
@@ -91,7 +91,7 @@ void i2s_mgmt_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, op_rsp, sz);
+		write(to_ap, op_rsp, sz);
 		break;
 	case GB_I2S_MGMT_TYPE_SET_SAMPLES_PER_MESSAGE:
 		sz = sizeof(struct op_header);
@@ -105,7 +105,7 @@ void i2s_mgmt_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, op_rsp, sz);
+		write(to_ap, op_rsp, sz);
 		break;
 	case GB_I2S_MGMT_TYPE_SET_START_DELAY:
 		sz = sizeof(struct op_header);
@@ -119,7 +119,7 @@ void i2s_mgmt_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, op_rsp, sz);
+		write(to_ap, op_rsp, sz);
 		break;
 	case GB_I2S_MGMT_TYPE_ACTIVATE_CPORT:
 		sz = sizeof(struct op_header);
@@ -133,7 +133,7 @@ void i2s_mgmt_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, op_rsp, sz);
+		write(to_ap, op_rsp, sz);
 		break;
 	case GB_I2S_MGMT_TYPE_DEACTIVATE_CPORT:
 		sz = sizeof(struct op_header);
@@ -147,7 +147,7 @@ void i2s_mgmt_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, op_rsp, sz);
+		write(to_ap, op_rsp, sz);
 		break;
 	default:
 		gbsim_error("i2s mgmt operation type %02x not supported\n", oph->type);
@@ -190,7 +190,7 @@ void i2s_data_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, op_rsp, sz);
+		write(to_ap, op_rsp, sz);
 		break;
 	default:
 		gbsim_error("i2s data operation type %02x not supported\n", oph->type);

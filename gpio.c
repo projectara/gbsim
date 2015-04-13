@@ -72,7 +72,7 @@ void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, op_rsp->header.size);
-		write(cport_in, op_rsp, op_rsp->header.size);
+		write(to_ap, op_rsp, op_rsp->header.size);
 		break;
 	case GB_GPIO_TYPE_LINE_COUNT:
 		op_rsp->header.size = sizeof(struct op_header) +
@@ -85,7 +85,7 @@ void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, op_rsp->header.size);
-		write(cport_in, op_rsp, op_rsp->header.size);
+		write(to_ap, op_rsp, op_rsp->header.size);
 		break;
 	case GB_GPIO_TYPE_ACTIVATE:
 		op_rsp->header.size = sizeof(struct op_header) + 0;
@@ -96,7 +96,7 @@ void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport, op_req->gpio_act_req.which);
 		if (verbose)
 			gbsim_dump((__u8 *)op_req, op_req->header.size);
-		write(cport_in, op_rsp, op_rsp->header.size);
+		write(to_ap, op_rsp, op_rsp->header.size);
 		break;
 	case GB_GPIO_TYPE_DEACTIVATE:
 		op_rsp->header.size = sizeof(struct op_header) + 0;
@@ -107,7 +107,7 @@ void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport, op_req->gpio_deact_req.which);
 		if (verbose)
 			gbsim_dump((__u8 *)op_req, op_req->header.size);
-		write(cport_in, op_rsp, op_rsp->header.size);
+		write(to_ap, op_rsp, op_rsp->header.size);
 		break;
 	case GB_GPIO_TYPE_GET_DIRECTION:
 		op_rsp->header.size = sizeof(struct op_header) +
@@ -123,7 +123,7 @@ void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport, op_req->gpio_get_dir_req.which, op_rsp->gpio_get_dir_rsp.direction);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, op_rsp->header.size);
-		write(cport_in, op_rsp, op_rsp->header.size);
+		write(to_ap, op_rsp, op_rsp->header.size);
 		break;
 	case GB_GPIO_TYPE_DIRECTION_IN:
 		op_rsp->header.size = sizeof(struct op_header) + 0;
@@ -138,7 +138,7 @@ void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			libsoc_gpio_set_direction(gpios[op_req->gpio_dir_output_req.which], INPUT);
 		else
 			gpio_dir[op_req->gpio_dir_output_req.which] = 0;
-		write(cport_in, op_rsp, op_rsp->header.size);
+		write(to_ap, op_rsp, op_rsp->header.size);
 		break;
 	case GB_GPIO_TYPE_DIRECTION_OUT:
 		op_rsp->header.size = sizeof(struct op_header) + 0;
@@ -153,7 +153,7 @@ void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			libsoc_gpio_set_direction(gpios[op_req->gpio_dir_output_req.which], OUTPUT);
 		else
 			gpio_dir[op_req->gpio_dir_output_req.which] = 1;
-		write(cport_in, op_rsp, op_rsp->header.size);
+		write(to_ap, op_rsp, op_rsp->header.size);
 		break;
 	case GB_GPIO_TYPE_GET_VALUE:
 		op_rsp->header.size = sizeof(struct op_header) +
@@ -169,7 +169,7 @@ void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport, op_req->gpio_get_val_req.which, op_rsp->gpio_get_val_rsp.value);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, op_rsp->header.size);
-		write(cport_in, op_rsp, op_rsp->header.size);
+		write(to_ap, op_rsp, op_rsp->header.size);
 		break;
 	case GB_GPIO_TYPE_SET_VALUE:
 		op_rsp->header.size = sizeof(struct op_header) + 0;
@@ -182,7 +182,7 @@ void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			gbsim_dump((__u8 *)op_req, op_req->header.size);
 		if (bbb_backend)
 			libsoc_gpio_set_level(gpios[op_req->gpio_set_val_req.which], op_req->gpio_set_val_req.value);
-		write(cport_in, op_rsp, op_rsp->header.size);
+		write(to_ap, op_rsp, op_rsp->header.size);
 		break;
 	case GB_GPIO_TYPE_SET_DEBOUNCE:
 		op_rsp->header.size = sizeof(struct op_header) + 0;
@@ -193,7 +193,7 @@ void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport, op_req->gpio_set_db_req.which, op_req->gpio_set_db_req.usec);
 		if (verbose)
 			gbsim_dump((__u8 *)op_req, op_req->header.size);
-		write(cport_in, op_rsp, op_rsp->header.size);
+		write(to_ap, op_rsp, op_rsp->header.size);
 		break;
 	case GB_GPIO_TYPE_IRQ_TYPE:
 		op_rsp->header.size = sizeof(struct op_header) + 0;
@@ -205,7 +205,7 @@ void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    op_req->gpio_irq_type_req.type);
 		if (verbose)
 			gbsim_dump((__u8 *)op_req, op_req->header.size);
-		write(cport_in, op_rsp, op_rsp->header.size);
+		write(to_ap, op_rsp, op_rsp->header.size);
 		break;
 	case GB_GPIO_TYPE_IRQ_ACK:
 		op_rsp->header.size = sizeof(struct op_header) + 0;
@@ -216,7 +216,7 @@ void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport, cport_to_module_id(cport));
 		if (verbose)
 			gbsim_dump((__u8 *)op_req, op_req->header.size);
-		write(cport_in, op_rsp, op_rsp->header.size);
+		write(to_ap, op_rsp, op_rsp->header.size);
 		break;
 	case GB_GPIO_TYPE_IRQ_MASK:
 		op_rsp->header.size = sizeof(struct op_header) + 0;
@@ -227,7 +227,7 @@ void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport, cport_to_module_id(cport));
 		if (verbose)
 			gbsim_dump((__u8 *)op_req, op_req->header.size);
-		write(cport_in, op_rsp, op_rsp->header.size);
+		write(to_ap, op_rsp, op_rsp->header.size);
 		break;
 	case GB_GPIO_TYPE_IRQ_UNMASK:
 		op_rsp->header.size = sizeof(struct op_header) + 0;
@@ -238,7 +238,7 @@ void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport, cport_to_module_id(cport));
 		if (verbose)
 			gbsim_dump((__u8 *)op_req, op_req->header.size);
-		write(cport_in, op_rsp, op_rsp->header.size);
+		write(to_ap, op_rsp, op_rsp->header.size);
 #define TEST_HACK
 #ifdef TEST_HACK
 		/* Store the cport id in the header pad bytes */
@@ -253,7 +253,7 @@ void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 		op_req->gpio_irq_event_req.which = 1;	/* XXX HACK */
 		gbsim_debug("Module %d -> AP CPort %d GPIO protocol IRQ event request\n  ",
 			    cport_to_module_id(cport), cport);
-		write(cport_in, op_req, op_req->header.size);
+		write(to_ap, op_req, op_req->header.size);
 #endif
 		break;
 	case OP_RESPONSE | GB_GPIO_TYPE_IRQ_EVENT:

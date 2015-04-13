@@ -58,7 +58,7 @@ void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, op_rsp, sz);
+		write(to_ap, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_PWM_COUNT:
 		sz = sizeof(struct op_header) + sizeof(struct gb_pwm_count_response);
@@ -71,7 +71,7 @@ void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, op_rsp, sz);
+		write(to_ap, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_ACTIVATE:
 		sz = sizeof(struct op_header) + 0;
@@ -83,7 +83,7 @@ void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport, op_req->pwm_act_req.which);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, op_rsp, sz);
+		write(to_ap, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_DEACTIVATE:
 		sz = sizeof(struct op_header) + 0;
@@ -95,7 +95,7 @@ void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport, op_req->pwm_deact_req.which);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, op_rsp, sz);
+		write(to_ap, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_CONFIG:
 		sz = sizeof(struct op_header) + 0;
@@ -113,7 +113,7 @@ void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport, op_req->pwm_cfg_req.which, duty, period);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, op_rsp, sz);
+		write(to_ap, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_POLARITY:
 		sz = sizeof(struct op_header) + 0;
@@ -134,7 +134,7 @@ void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    op_req->pwm_pol_req.polarity ? "inverse" : "normal");
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, op_rsp, sz);
+		write(to_ap, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_ENABLE:
 		sz = sizeof(struct op_header) + 0;
@@ -149,7 +149,7 @@ void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport, op_req->pwm_enb_req.which);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, op_rsp, sz);
+		write(to_ap, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_DISABLE:
 		sz = sizeof(struct op_header) + 0;
@@ -164,7 +164,7 @@ void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			    cport_to_module_id(cport), cport, op_req->pwm_dis_req.which);
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
-		write(cport_in, op_rsp, sz);
+		write(to_ap, op_rsp, sz);
 		break;
 	default:
 		gbsim_error("pwm operation type %02x not supported\n", oph->type);

@@ -62,8 +62,8 @@ enum gbsim_state {
 
 int control = -ENXIO;
 int svc_int = -ENXIO;
-int cport_in = -ENXIO;
-int cport_out = -ENXIO;
+int to_ap = -ENXIO;
+int from_ap = -ENXIO;
 
 static pthread_t cport_pthread;
 
@@ -90,8 +90,8 @@ static const struct {
 	struct {
 		struct usb_interface_descriptor intf;
 		struct usb_endpoint_descriptor_no_audio svc_in;
-		struct usb_endpoint_descriptor_no_audio cport_in;
-		struct usb_endpoint_descriptor_no_audio cport_out;
+		struct usb_endpoint_descriptor_no_audio to_ap;
+		struct usb_endpoint_descriptor_no_audio from_ap;
 	} __attribute__((packed)) fs_descs, hs_descs;
 } __attribute__((packed)) descriptors = {
 	.header = {
@@ -122,15 +122,15 @@ static const struct {
 			.bInterval = 10,
 			.wMaxPacketSize = 64
 		},
-		.cport_in = {
-			.bLength = sizeof descriptors.fs_descs.cport_in,
+		.to_ap = {
+			.bLength = sizeof descriptors.fs_descs.to_ap,
 			.bDescriptorType = USB_DT_ENDPOINT,
 			.bEndpointAddress = 2 | USB_DIR_IN,
 			.bmAttributes = USB_ENDPOINT_XFER_BULK,
 			.wMaxPacketSize = 64
 		},
-		.cport_out = {
-			.bLength = sizeof descriptors.fs_descs.cport_out,
+		.from_ap = {
+			.bLength = sizeof descriptors.fs_descs.from_ap,
 			.bDescriptorType = USB_DT_ENDPOINT,
 			.bEndpointAddress = 3 | USB_DIR_OUT,
 			.bmAttributes = USB_ENDPOINT_XFER_BULK,
@@ -153,15 +153,15 @@ static const struct {
 			.bInterval = 10,
 			.wMaxPacketSize = 512,
 		},
-		.cport_in = {
-			.bLength = sizeof descriptors.hs_descs.cport_in,
+		.to_ap = {
+			.bLength = sizeof descriptors.hs_descs.to_ap,
 			.bDescriptorType = USB_DT_ENDPOINT,
 			.bEndpointAddress = 2 | USB_DIR_IN,
 			.bmAttributes = USB_ENDPOINT_XFER_BULK,
 			.wMaxPacketSize = 512,
 		},
-		.cport_out = {
-			.bLength = sizeof descriptors.hs_descs.cport_out,
+		.from_ap = {
+			.bLength = sizeof descriptors.hs_descs.from_ap,
 			.bDescriptorType = USB_DT_ENDPOINT,
 			.bEndpointAddress = 3 | USB_DIR_OUT,
 			.bmAttributes = USB_ENDPOINT_XFER_BULK,
@@ -317,13 +317,13 @@ static int enable_endpoints(void)
 	if (svc_int < 0)
 		return svc_int;
 
-	cport_in = open(FFS_GBEMU_IN, O_RDWR);
-	if (cport_in < 0)
-		return cport_in;
+	to_ap = open(FFS_GBEMU_IN, O_RDWR);
+	if (to_ap < 0)
+		return to_ap;
 
-	cport_out = open(FFS_GBEMU_OUT, O_RDWR);
-	if (cport_out < 0)
-		return cport_out;
+	from_ap = open(FFS_GBEMU_OUT, O_RDWR);
+	if (from_ap < 0)
+		return from_ap;
 
 	ret = pthread_create(&cport_pthread, NULL, cport_thread, NULL);
 	if (ret < 0) {
@@ -340,7 +340,7 @@ static void disable_endpoints(void)
 {
 	gbsim_debug("Disable SVC/CPort endpoints\n");
 
-	if (cport_in < 0 || cport_out < 0)
+	if (to_ap < 0 || from_ap < 0)
 		return;
 
 	pthread_cancel(cport_pthread);
@@ -348,10 +348,10 @@ static void disable_endpoints(void)
 
 	state = GBEMU_IDLE;
 
-	close(cport_out);
-	cport_out = -EINVAL;
-	close(cport_in);
-	cport_in = -EINVAL;
+	close(from_ap);
+	from_ap = -EINVAL;
+	close(to_ap);
+	to_ap = -EINVAL;
 
 	close(svc_int);
 	svc_int = -EINVAL;
