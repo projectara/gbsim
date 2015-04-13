@@ -165,9 +165,9 @@ void i2c_handler(unsigned int cport, __u8 *rbuf, size_t size)
 			op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 
 		if (read_op)
-			sz = sizeof(struct op_header) + 1 + read_count;
+			sz = sizeof(struct op_header) + read_count;
 		else
-			sz = sizeof(struct op_header) + 1;
+			sz = sizeof(struct op_header);
 
 		op_rsp->header.size = htole16((__u16)sz);
 		gbsim_debug("Module %d -> AP CPort %d I2C transfer response\n  ",
