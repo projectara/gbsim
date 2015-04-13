@@ -11,10 +11,14 @@
 #include <stdio.h>
 #include <linux/types.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "gbsim.h"
 
 #define ES1_MSG_SIZE	(4 * 1024)
+
+/* Receive buffer for all data arriving from the AP */
+static char cport_rbuf[ES1_MSG_SIZE];
 
 static char *get_protocol(unsigned int id)
 {
@@ -98,8 +102,6 @@ static void cport_handler(void *rbuf, size_t size)
 		gbsim_dump(rbuf, size);
 
 	exec_subdev_handler(id, rbuf, size);
-
-	free(rbuf);
 }
 
 void cport_thread_cleanup(void *arg)
@@ -109,24 +111,22 @@ void cport_thread_cleanup(void *arg)
 	cleanup_endpoint(from_ap, "from_ap");
 }
 
+/*
+ * Repeatedly perform blocking reads to receive messages arriving
+ * from the AP.
+ */
 void *cport_thread(void *param)
 {
-	ssize_t size;
-	void *rbuf;
+	while (1) {
+		ssize_t size;
 
-	do {
-		rbuf = malloc(ES1_MSG_SIZE);
-		if (!rbuf) {
-			gbsim_error("failed to allocate receive buffer\n");
-			return NULL;
-		}
-		/* blocking read for our max buf size */
-		size = read(from_ap, rbuf, ES1_MSG_SIZE);
+		size = read(from_ap, cport_rbuf, ES1_MSG_SIZE);
 		if (size < 0) {
 			gbsim_error("error %zd receiving from AP\n", size);
 			return NULL;
 		}
 
-		cport_handler(rbuf, size);
-	} while (1);
+		cport_handler(cport_rbuf, size);
+		memset(cport_rbuf, 0, sizeof(cport_rbuf));
+	}
 }
