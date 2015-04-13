@@ -59,29 +59,25 @@ static char *get_protocol(uint16_t cport_id)
 	}
 }
 
-static void cport_recv_handler(struct gbsim_cport *cport,
+static int cport_recv_handler(struct gbsim_cport *cport,
 				void *rbuf, size_t rsize,
 				void *tbuf, size_t tsize)
 {
 	switch (cport->protocol) {
 	case GREYBUS_PROTOCOL_GPIO:
-		gpio_handler(cport->id, rbuf, rsize, tbuf, tsize);
-		break;
+		return gpio_handler(cport->id, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_I2C:
-		i2c_handler(cport->id, rbuf, rsize, tbuf, tsize);
-		break;
+		return i2c_handler(cport->id, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_PWM:
-		pwm_handler(cport->id, rbuf, rsize, tbuf, tsize);
-		break;
+		return pwm_handler(cport->id, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_I2S_MGMT:
-		i2s_mgmt_handler(cport->id, rbuf, rsize, tbuf, tsize);
-		break;
+		return i2s_mgmt_handler(cport->id, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_I2S_RECEIVER:
 	case GREYBUS_PROTOCOL_I2S_TRANSMITTER:
-		i2s_data_handler(cport->id, rbuf, rsize, tbuf, tsize);
-		break;
+		return i2s_data_handler(cport->id, rbuf, rsize, tbuf, tsize);
 	default:
 		gbsim_error("handler not found for cport %u\n", cport->id);
+		return -EINVAL;
 	}
 }
 
@@ -90,6 +86,7 @@ static void recv_handler(void *rbuf, size_t rsize, void *tbuf, size_t tsize)
 	struct op_header *hdr = rbuf;
 	uint16_t cport_id;
 	struct gbsim_cport *cport;
+	int ret;
 
 	if (rsize < sizeof(*hdr)) {
 		gbsim_error("short message received\n");
@@ -118,7 +115,9 @@ static void recv_handler(void *rbuf, size_t rsize, void *tbuf, size_t tsize)
 	if (verbose)
 		gbsim_dump(rbuf, rsize);
 
-	cport_recv_handler(cport, rbuf, rsize, tbuf, tsize);
+	ret = cport_recv_handler(cport, rbuf, rsize, tbuf, tsize);
+	if (ret)
+		gbsim_debug("cport_recv_handler() returned %d\n", ret);
 }
 
 void recv_thread_cleanup(void *arg)

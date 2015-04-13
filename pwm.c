@@ -15,13 +15,14 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "gbsim.h"
 
 static int pwm_on[2];
 static pwm *pwms[2];
 
-void pwm_handler(uint16_t cport_id, void *rbuf, size_t rsize,
+int pwm_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 					void *tbuf, size_t tsize)
 {
 	struct op_header *oph;
@@ -165,7 +166,10 @@ void pwm_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		break;
 	default:
 		gbsim_error("pwm operation type %02x not supported\n", oph->type);
+		return -EINVAL;
 	}
+
+	return 0;
 }
 
 void pwm_init(void)

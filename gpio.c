@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "gbsim.h"
 
@@ -40,7 +41,7 @@
 static int gpio_dir[6];
 static gpio *gpios[6];
 
-void gpio_handler(uint16_t cport_id, void *rbuf, size_t rsize,
+int gpio_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 					void *tbuf, size_t tsize)
 {
 	struct op_header *oph;
@@ -259,7 +260,10 @@ void gpio_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		break;
 	default:
 		gbsim_error("gpio operation type %02x not supported\n", oph->type);
+		return -EINVAL;
 	}
+
+	return 0;
 }
 
 void gpio_init(void)

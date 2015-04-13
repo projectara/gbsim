@@ -16,12 +16,13 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "gbsim.h"
 
 #define CONFIG_COUNT_MAX 32
 
-void i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
+int i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 					void *tbuf, size_t tsize)
 {
 	struct op_header *oph;
@@ -149,11 +150,14 @@ void i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		break;
 	default:
 		gbsim_error("i2s mgmt operation type %02x not supported\n", oph->type);
+		return -EINVAL;
 	}
+
+	return 0;
 }
 
 
-void i2s_data_handler(uint16_t cport_id, void *rbuf, size_t rsize,
+int i2s_data_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 					void *tbuf, size_t tsize)
 {
 	struct op_header *oph;
@@ -188,7 +192,10 @@ void i2s_data_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		break;
 	default:
 		gbsim_error("i2s data operation type %02x not supported\n", oph->type);
+		return -EINVAL;
 	}
+
+	return 0;
 }
 
 void i2s_init(void)

@@ -17,6 +17,7 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "gbsim.h"
 
@@ -29,7 +30,7 @@
 static __u8 data_byte;
 static int ifd;
 
-void i2c_handler(uint16_t cport_id, void *rbuf, size_t rsize,
+int i2c_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 					void *tbuf, size_t tsize)
 {
 	struct op_header *oph;
@@ -177,7 +178,10 @@ void i2c_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		break;
 	default:
 		gbsim_error("i2c operation type %02x not supported\n", oph->type);
+		return -EINVAL;
 	}
+
+	return 0;
 }
 
 void i2c_init(void)
