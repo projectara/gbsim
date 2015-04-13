@@ -39,16 +39,20 @@ static void cleanup(void)
 	functionfs_cleanup();
 }
 
-static void signal_handler(int sig){
-    if (sig == SIGINT)
-	cleanup();
+static void signal_handler(int sig)
+{
+	if (sig == SIGINT || sig == SIGHUP || sig == SIGTERM)
+		cleanup();
 }
 
-static void signals_init(void) {
-    sigact.sa_handler = signal_handler;
-    sigemptyset(&sigact.sa_mask);
-    sigact.sa_flags = 0;
-    sigaction(SIGINT, &sigact, (struct sigaction *)NULL);
+static void signals_init(void)
+{
+	sigact.sa_handler = signal_handler;
+	sigemptyset(&sigact.sa_mask);
+	sigact.sa_flags = 0;
+	sigaction(SIGINT, &sigact, (struct sigaction *)NULL);
+	sigaction(SIGHUP, &sigact, (struct sigaction *)NULL);
+	sigaction(SIGTERM, &sigact, (struct sigaction *)NULL);
 }
 
 int main(int argc, char *argv[])
