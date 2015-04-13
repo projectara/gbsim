@@ -241,6 +241,10 @@ void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 		write(cport_in, op_rsp, op_rsp->header.size);
 #define TEST_HACK
 #ifdef TEST_HACK
+		/* Store the cport id in the header pad bytes */
+		op_req->header.pad[0] = cport & 0xff;
+		op_req->header.pad[1] = (cport >> 8) & 0xff;
+
 		op_req->header.size = sizeof(struct op_header) + 1;
 		op_req->header.id = 0x42;
 		op_req->header.type = GB_GPIO_TYPE_IRQ_EVENT;
