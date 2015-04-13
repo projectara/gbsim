@@ -132,7 +132,7 @@ static inline void gbsim_dump(__u8 *buf, size_t size)
 	fprintf(stdout, "\n");
 }
 
-static inline int cport_to_module_id(uint16_t cport)
+static inline uint8_t cport_to_module_id(uint16_t cport)
 {
 	/* FIXME can identify based on registered cport module */
 	return 1;

@@ -108,7 +108,7 @@ static void recv_handler(void *rbuf, size_t size)
 	}
 
 	/* FIXME: can identify module from our cport connection */
-	gbsim_debug("AP -> Module %d CPort %hu %s request\n  ",
+	gbsim_debug("AP -> Module %hhu CPort %hu %s request\n  ",
 		    cport_to_module_id(cport_id), cport_id,
 		    get_protocol(cport_id));
 
