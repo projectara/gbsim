@@ -20,7 +20,7 @@
 /* Receive buffer for all data arriving from the AP */
 static char cport_rbuf[ES1_MSG_SIZE];
 
-static struct gbsim_cport *cport_find(unsigned int cport_id)
+static struct gbsim_cport *cport_find(uint16_t cport_id)
 {
 	struct gbsim_cport *cport;
 
@@ -31,7 +31,7 @@ static struct gbsim_cport *cport_find(unsigned int cport_id)
 	return NULL;
 }
 
-static char *get_protocol(unsigned int cport_id)
+static char *get_protocol(uint16_t cport_id)
 {
 	struct gbsim_cport *cport;
 
@@ -85,7 +85,7 @@ static void cport_recv_handler(struct gbsim_cport *cport,
 static void recv_handler(void *rbuf, size_t size)
 {
 	struct op_header *hdr = rbuf;
-	unsigned int cport_id;
+	uint16_t cport_id;
 	struct gbsim_cport *cport;
 
 	if (size < sizeof(*hdr)) {
@@ -108,7 +108,7 @@ static void recv_handler(void *rbuf, size_t size)
 	}
 
 	/* FIXME: can identify module from our cport connection */
-	gbsim_debug("AP -> Module %d CPort %d %s request\n  ",
+	gbsim_debug("AP -> Module %d CPort %hu %s request\n  ",
 		    cport_to_module_id(cport_id), cport_id,
 		    get_protocol(cport_id));
 

@@ -43,7 +43,7 @@ extern int from_ap;
 
 struct gbsim_cport {
 	TAILQ_ENTRY(gbsim_cport) cnode;
-	int id;
+	uint16_t id;
 	int protocol;
 };
 
