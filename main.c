@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 	int o;
 	char *hotplug_basedir;
 
-	while ((o = getopt(argc, argv, "bh:i:v")) != -1) {
+	while ((o = getopt(argc, argv, ":bh:i:v")) != -1) {
 		switch (o) {
 		case 'b':
 			bbb_backend = 1;
@@ -79,13 +79,21 @@ int main(int argc, char *argv[])
 			verbose = 1;
 			printf("verbose %d\n", verbose);
 			break;
-		case '?':
+		case ':':
 			if (optopt == 'i')
-				gbsim_error("-%c needs an i2c adapter argument\n", optopt);
-			else if (isprint(optopt))
+				gbsim_error("i2c_adapter required\n");
+			else if (optopt == 'h')
+				gbsim_error("hotplug_basedir required\n");
+			else
+				gbsim_error("-%c requires an argument\n",
+					optopt);
+			return 1;
+		case '?':
+			if (isprint(optopt))
 				gbsim_error("unknown option -%c'\n", optopt);
 			else
-				gbsim_error("unknown option character `\\x%x'\n", optopt);
+				gbsim_error("unknown option character 0x%02x\n",
+					optopt);
 			return 1;
 		default:
 			abort();
