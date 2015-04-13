@@ -98,7 +98,7 @@ int gpio_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("AP -> Module %hhu CPort %hu GPIO %d activate request\n  ",
 			    module_id, cport_id, op_req->gpio_act_req.which);
 		if (verbose)
-			gbsim_dump((__u8 *)op_req, sz);
+			gbsim_dump((__u8 *)op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case GB_GPIO_TYPE_DEACTIVATE:
@@ -110,7 +110,7 @@ int gpio_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("AP -> Module %hhu CPort %hu GPIO %d deactivate request\n  ",
 			    module_id, cport_id, op_req->gpio_deact_req.which);
 		if (verbose)
-			gbsim_dump((__u8 *)op_req, sz);
+			gbsim_dump((__u8 *)op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case GB_GPIO_TYPE_GET_DIRECTION:
@@ -139,7 +139,7 @@ int gpio_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("AP -> Module %hhu CPort %hu GPIO %d direction input request\n  ",
 			    module_id, cport_id, op_req->gpio_dir_input_req.which);
 		if (verbose)
-			gbsim_dump((__u8 *)op_req, sz);
+			gbsim_dump((__u8 *)op_rsp, sz);
 		if (bbb_backend)
 			libsoc_gpio_set_direction(gpios[op_req->gpio_dir_output_req.which], INPUT);
 		else
@@ -155,7 +155,7 @@ int gpio_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("AP -> Module %hhu CPort %hu GPIO %d direction output request\n  ",
 			    module_id, cport_id, op_req->gpio_dir_output_req.which);
 		if (verbose)
-			gbsim_dump((__u8 *)op_req, sz);
+			gbsim_dump((__u8 *)op_rsp, sz);
 		if (bbb_backend)
 			libsoc_gpio_set_direction(gpios[op_req->gpio_dir_output_req.which], OUTPUT);
 		else
@@ -188,7 +188,7 @@ int gpio_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("AP -> Module %hhu CPort %hu GPIO %d set value (%d) request\n  ",
 			    module_id, cport_id, op_req->gpio_set_val_req.which, op_req->gpio_set_val_req.value);
 		if (verbose)
-			gbsim_dump((__u8 *)op_req, sz);
+			gbsim_dump((__u8 *)op_rsp, sz);
 		if (bbb_backend)
 			libsoc_gpio_set_level(gpios[op_req->gpio_set_val_req.which], op_req->gpio_set_val_req.value);
 		write(to_ap, op_rsp, sz);
@@ -202,7 +202,7 @@ int gpio_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("AP -> Module %hhu CPort %hu GPIO %d set debounce (%d us) request\n  ",
 			    module_id, cport_id, op_req->gpio_set_db_req.which, op_req->gpio_set_db_req.usec);
 		if (verbose)
-			gbsim_dump((__u8 *)op_req, sz);
+			gbsim_dump((__u8 *)op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case GB_GPIO_TYPE_IRQ_TYPE:
@@ -215,7 +215,7 @@ int gpio_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 			    cport_id, module_id,
 			    op_req->gpio_irq_type_req.type);
 		if (verbose)
-			gbsim_dump((__u8 *)op_req, sz);
+			gbsim_dump((__u8 *)op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case GB_GPIO_TYPE_IRQ_ACK:
@@ -227,7 +227,7 @@ int gpio_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("AP CPort %hu -> Module %hhu GPIO protocol IRQ ack request\n  ",
 			    cport_id, module_id);
 		if (verbose)
-			gbsim_dump((__u8 *)op_req, sz);
+			gbsim_dump((__u8 *)op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case GB_GPIO_TYPE_IRQ_MASK:
@@ -239,7 +239,7 @@ int gpio_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("AP CPort %hu -> Module %hhu GPIO protocol IRQ mask request\n  ",
 			    cport_id, module_id);
 		if (verbose)
-			gbsim_dump((__u8 *)op_req, sz);
+			gbsim_dump((__u8 *)op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case GB_GPIO_TYPE_IRQ_UNMASK:
@@ -251,7 +251,7 @@ int gpio_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("AP CPort %hu -> Module %hhu GPIO protocol IRQ unmask request\n  ",
 			    cport_id, module_id);
 		if (verbose)
-			gbsim_dump((__u8 *)op_req, sz);
+			gbsim_dump((__u8 *)op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 #define TEST_HACK
 #ifdef TEST_HACK
