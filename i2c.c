@@ -29,10 +29,10 @@
 static __u8 data_byte;
 static int ifd;
 
-void i2c_handler(uint16_t cport_id, void *rbuf, size_t size)
+void i2c_handler(uint16_t cport_id, void *rbuf, size_t rsize,
+					void *tbuf, size_t tsize)
 {
 	struct op_header *oph;
-	char *tbuf;
 	struct op_msg *op_req = rbuf;
 	struct op_msg *op_rsp;
 	int i, op_count;
@@ -42,12 +42,6 @@ void i2c_handler(uint16_t cport_id, void *rbuf, size_t size)
 	bool write_fail = false;
 	size_t sz;
 	uint8_t module_id;
-
-	tbuf = malloc(4 * 1024);
-	if (!tbuf) {
-		gbsim_error("failed to allocate i2c handler tx buf\n");
-		return;
-	}
 
 	module_id = cport_to_module_id(cport_id);
 
@@ -184,8 +178,6 @@ void i2c_handler(uint16_t cport_id, void *rbuf, size_t size)
 	default:
 		gbsim_error("i2c operation type %02x not supported\n", oph->type);
 	}
-
-	free(tbuf);
 }
 
 void i2c_init(void)

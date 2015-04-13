@@ -12,6 +12,7 @@
 #include <linux/types.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 
 #include "gbsim.h"
 
@@ -19,6 +20,7 @@
 
 /* Receive buffer for all data arriving from the AP */
 static char cport_rbuf[ES1_MSG_SIZE];
+static char cport_tbuf[ES1_MSG_SIZE];
 
 static struct gbsim_cport *cport_find(uint16_t cport_id)
 {
@@ -58,37 +60,38 @@ static char *get_protocol(uint16_t cport_id)
 }
 
 static void cport_recv_handler(struct gbsim_cport *cport,
-				void *rbuf, size_t size)
+				void *rbuf, size_t rsize,
+				void *tbuf, size_t tsize)
 {
 	switch (cport->protocol) {
 	case GREYBUS_PROTOCOL_GPIO:
-		gpio_handler(cport->id, rbuf, size);
+		gpio_handler(cport->id, rbuf, rsize, tbuf, tsize);
 		break;
 	case GREYBUS_PROTOCOL_I2C:
-		i2c_handler(cport->id, rbuf, size);
+		i2c_handler(cport->id, rbuf, rsize, tbuf, tsize);
 		break;
 	case GREYBUS_PROTOCOL_PWM:
-		pwm_handler(cport->id, rbuf, size);
+		pwm_handler(cport->id, rbuf, rsize, tbuf, tsize);
 		break;
 	case GREYBUS_PROTOCOL_I2S_MGMT:
-		i2s_mgmt_handler(cport->id, rbuf, size);
+		i2s_mgmt_handler(cport->id, rbuf, rsize, tbuf, tsize);
 		break;
 	case GREYBUS_PROTOCOL_I2S_RECEIVER:
 	case GREYBUS_PROTOCOL_I2S_TRANSMITTER:
-		i2s_data_handler(cport->id, rbuf, size);
+		i2s_data_handler(cport->id, rbuf, rsize, tbuf, tsize);
 		break;
 	default:
 		gbsim_error("handler not found for cport %u\n", cport->id);
 	}
 }
 
-static void recv_handler(void *rbuf, size_t size)
+static void recv_handler(void *rbuf, size_t rsize, void *tbuf, size_t tsize)
 {
 	struct op_header *hdr = rbuf;
 	uint16_t cport_id;
 	struct gbsim_cport *cport;
 
-	if (size < sizeof(*hdr)) {
+	if (rsize < sizeof(*hdr)) {
 		gbsim_error("short message received\n");
 		return;
 	}
@@ -113,9 +116,9 @@ static void recv_handler(void *rbuf, size_t size)
 		    get_protocol(cport_id));
 
 	if (verbose)
-		gbsim_dump(rbuf, size);
+		gbsim_dump(rbuf, rsize);
 
-	cport_recv_handler(cport, rbuf, size);
+	cport_recv_handler(cport, rbuf, rsize, tbuf, tsize);
 }
 
 void recv_thread_cleanup(void *arg)
@@ -132,15 +135,17 @@ void recv_thread_cleanup(void *arg)
 void *recv_thread(void *param)
 {
 	while (1) {
-		ssize_t size;
+		ssize_t rsize;
 
-		size = read(from_ap, cport_rbuf, ES1_MSG_SIZE);
-		if (size < 0) {
-			gbsim_error("error %zd receiving from AP\n", size);
+		rsize = read(from_ap, cport_rbuf, ES1_MSG_SIZE);
+		if (rsize < 0) {
+			gbsim_error("error %zd receiving from AP\n", rsize);
 			return NULL;
 		}
 
-		recv_handler(cport_rbuf, size);
+		recv_handler(cport_rbuf, rsize, cport_tbuf, sizeof(cport_tbuf));
+
 		memset(cport_rbuf, 0, sizeof(cport_rbuf));
+		memset(cport_tbuf, 0, sizeof(cport_tbuf));
 	}
 }
