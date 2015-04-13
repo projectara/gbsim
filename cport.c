@@ -45,7 +45,7 @@ static char *get_protocol(unsigned int cport_id)
 	return "N/A";
 }
 
-static void exec_subdev_handler(unsigned int cport_id, void *rbuf, size_t size)
+static void cport_recv_handler(unsigned int cport_id, void *rbuf, size_t size)
 {
 	struct gbsim_cport *cport;
 
@@ -69,13 +69,13 @@ static void exec_subdev_handler(unsigned int cport_id, void *rbuf, size_t size)
 				i2s_data_handler(cport_id, rbuf, size);
 				break;
 			default:
-				gbsim_error("subdev handler not found for cport %d\n",
+				gbsim_error("handler not found for cport %d\n",
 					     cport_id);
 			}
 	}
 }
 
-static void cport_handler(void *rbuf, size_t size)
+static void recv_handler(void *rbuf, size_t size)
 {
 	struct op_header *hdr = rbuf;
 	unsigned int cport_id;
@@ -100,10 +100,10 @@ static void cport_handler(void *rbuf, size_t size)
 	if (verbose)
 		gbsim_dump(rbuf, size);
 
-	exec_subdev_handler(cport_id, rbuf, size);
+	cport_recv_handler(cport_id, rbuf, size);
 }
 
-void cport_thread_cleanup(void *arg)
+void recv_thread_cleanup(void *arg)
 {
 	cleanup_endpoint(svc_int, "svc_int");
 	cleanup_endpoint(to_ap, "to_ap");
@@ -114,7 +114,7 @@ void cport_thread_cleanup(void *arg)
  * Repeatedly perform blocking reads to receive messages arriving
  * from the AP.
  */
-void *cport_thread(void *param)
+void *recv_thread(void *param)
 {
 	while (1) {
 		ssize_t size;
@@ -125,7 +125,7 @@ void *cport_thread(void *param)
 			return NULL;
 		}
 
-		cport_handler(cport_rbuf, size);
+		recv_handler(cport_rbuf, size);
 		memset(cport_rbuf, 0, sizeof(cport_rbuf));
 	}
 }

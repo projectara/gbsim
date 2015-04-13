@@ -154,8 +154,8 @@ void send_hot_unplug(int);
 
 void send_link_up(int, int);
 
-void *cport_thread(void *);
-void cport_thread_cleanup(void *);
+void *recv_thread(void *);
+void recv_thread_cleanup(void *);
 
 void gpio_handler(unsigned int, void *, size_t);
 void gpio_init(void);

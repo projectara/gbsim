@@ -65,7 +65,7 @@ int svc_int = -ENXIO;
 int to_ap = -ENXIO;
 int from_ap = -ENXIO;
 
-static pthread_t cport_pthread;
+static pthread_t recv_pthread;
 
 static int state = GBEMU_IDLE;
 
@@ -325,7 +325,7 @@ static int enable_endpoints(void)
 	if (from_ap < 0)
 		return from_ap;
 
-	ret = pthread_create(&cport_pthread, NULL, cport_thread, NULL);
+	ret = pthread_create(&recv_pthread, NULL, recv_thread, NULL);
 	if (ret < 0) {
 		perror("can't create cport thread");
 		return ret;
@@ -343,8 +343,8 @@ static void disable_endpoints(void)
 	if (to_ap < 0 || from_ap < 0)
 		return;
 
-	pthread_cancel(cport_pthread);
-	pthread_join(cport_pthread, NULL);
+	pthread_cancel(recv_pthread);
+	pthread_join(recv_pthread, NULL);
 
 	state = GBEMU_IDLE;
 
@@ -546,7 +546,7 @@ int functionfs_init(void)
 
 int functionfs_cleanup(void)
 {
-	cport_thread_cleanup(NULL);
+	recv_thread_cleanup(NULL);
 
 	return 0;
 }
