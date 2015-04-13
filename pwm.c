@@ -21,11 +21,12 @@
 static int pwm_on[2];
 static pwm *pwms[2];
 
-void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
+void pwm_handler(unsigned int cport, void *rbuf, size_t size)
 {
 	struct op_header *oph;
 	char *tbuf;
-	struct op_msg *op_req, *op_rsp;
+	struct op_msg *op_req = rbuf;
+	struct op_msg *op_rsp;
 	size_t sz;
 	__u32 duty;
 	__u32 period;
@@ -36,7 +37,6 @@ void pwm_handler(unsigned int cport, __u8 *rbuf, size_t size)
 		return;
 	}
 
-	op_req = (struct op_msg *)rbuf;
 	op_rsp = (struct op_msg *)tbuf;
 	oph = (struct op_header *)&op_req->header;
 

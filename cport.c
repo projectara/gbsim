@@ -41,7 +41,7 @@ static char *get_protocol(unsigned int id)
 	return "N/A";
 }
 
-static void exec_subdev_handler(unsigned int id, __u8 *rbuf, size_t size)
+static void exec_subdev_handler(unsigned int id, void *rbuf, size_t size)
 {
 	struct gbsim_cport *cport;
 
@@ -71,9 +71,9 @@ static void exec_subdev_handler(unsigned int id, __u8 *rbuf, size_t size)
 	}
 }
 
-void cport_handler(__u8 *rbuf, size_t size)
+static void cport_handler(void *rbuf, size_t size)
 {
-	struct op_header *hdr = (void *)rbuf;
+	struct op_header *hdr = rbuf;
 	unsigned int id;
 
 	if (size < sizeof(*hdr)) {
@@ -112,7 +112,7 @@ void cport_thread_cleanup(void *arg)
 void *cport_thread(void *param)
 {
 	ssize_t size;
-	__u8 *rbuf;
+	void *rbuf;
 
 	do {
 		rbuf = malloc(ES1_MSG_SIZE);

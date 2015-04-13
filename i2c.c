@@ -29,11 +29,12 @@
 static __u8 data_byte;
 static int ifd;
 
-void i2c_handler(unsigned int cport, __u8 *rbuf, size_t size)
+void i2c_handler(unsigned int cport, void *rbuf, size_t size)
 {
 	struct op_header *oph;
 	char *tbuf;
-	struct op_msg *op_req, *op_rsp;
+	struct op_msg *op_req = rbuf;
+	struct op_msg *op_rsp;
 	int i, op_count;
 	__u8 *write_data;
 	bool read_op;
@@ -46,7 +47,6 @@ void i2c_handler(unsigned int cport, __u8 *rbuf, size_t size)
 		gbsim_error("failed to allocate i2c handler tx buf\n");
 		return;
 	}
-	op_req = (struct op_msg *)rbuf;
 	op_rsp = (struct op_msg *)tbuf;
 	oph = (struct op_header *)&op_req->header;
 

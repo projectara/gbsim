@@ -21,11 +21,12 @@
 
 #define CONFIG_COUNT_MAX 32
 
-void i2s_mgmt_handler(unsigned int cport, __u8 *rbuf, size_t size)
+void i2s_mgmt_handler(unsigned int cport, void *rbuf, size_t size)
 {
 	struct op_header *oph;
 	char *tbuf;
-	struct op_msg *op_req, *op_rsp;
+	struct op_msg *op_req = rbuf;
+	struct op_msg *op_rsp;
 	struct gb_i2s_mgmt_configuration *conf;
 	size_t sz;
 
@@ -34,7 +35,6 @@ void i2s_mgmt_handler(unsigned int cport, __u8 *rbuf, size_t size)
 		gbsim_error("failed to allocate i2s handler tx buf\n");
 		return;
 	}
-	op_req = (struct op_msg *)rbuf;
 	op_rsp = (struct op_msg *)tbuf;
 	oph = (struct op_header *)&op_req->header;
 
@@ -157,11 +157,12 @@ void i2s_mgmt_handler(unsigned int cport, __u8 *rbuf, size_t size)
 }
 
 
-void i2s_data_handler(unsigned int cport, __u8 *rbuf, size_t size)
+void i2s_data_handler(unsigned int cport, void *rbuf, size_t size)
 {
 	struct op_header *oph;
 	char *tbuf;
-	struct op_msg *op_req, *op_rsp;
+	struct op_msg *op_req = rbuf;
+	struct op_msg *op_rsp;
 	size_t sz;
 
 	tbuf = malloc(4 * 1024);
@@ -169,7 +170,6 @@ void i2s_data_handler(unsigned int cport, __u8 *rbuf, size_t size)
 		gbsim_error("failed to allocate i2s handler tx buf\n");
 		return;
 	}
-	op_req = (struct op_msg *)rbuf;
 	op_rsp = (struct op_msg *)tbuf;
 	oph = (struct op_header *)&op_req->header;
 
