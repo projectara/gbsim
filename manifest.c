@@ -76,6 +76,12 @@ static int identify_descriptor(struct greybus_descriptor *desc, size_t size)
 		return -EINVAL;
 	}
 
+	/* Warn if there is a size mismatch */
+	if (desc_size != expected_size) {
+		gbsim_error("%d descriptor size mismatch, expected - %zu, actual - %zu)\n",
+			    desc_header->type, expected_size, desc_size);
+	}
+
 	return desc_size;
 }
 
