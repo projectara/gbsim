@@ -20,58 +20,70 @@
 /* Receive buffer for all data arriving from the AP */
 static char cport_rbuf[ES1_MSG_SIZE];
 
+static struct gbsim_cport *cport_find(unsigned int cport_id)
+{
+	struct gbsim_cport *cport;
+
+	TAILQ_FOREACH(cport, &info.cports, cnode)
+		if (cport->id == cport_id)
+			return cport;
+
+	return NULL;
+}
+
 static char *get_protocol(unsigned int cport_id)
 {
 	struct gbsim_cport *cport;
 
-	TAILQ_FOREACH(cport, &info.cports, cnode) {
-		if (cport->id == cport_id) {
-			switch (cport->protocol) {
-			case GREYBUS_PROTOCOL_GPIO:
-				return "GPIO";
-			case GREYBUS_PROTOCOL_I2C:
-				return "I2C";
-			case GREYBUS_PROTOCOL_PWM:
-				return "PWM";
-			case GREYBUS_PROTOCOL_I2S_MGMT:
-				return "I2S_MGMT";
-			case GREYBUS_PROTOCOL_I2S_RECEIVER:
-				return "I2S_RECEIVER";
-			case GREYBUS_PROTOCOL_I2S_TRANSMITTER:
-				return "I2S_TRANSMITTER";
-			}
-		}
+	cport = cport_find(cport_id);
+	if (!cport)
+		return "N/A";
+
+	switch (cport->protocol) {
+	case GREYBUS_PROTOCOL_GPIO:
+		return "GPIO";
+	case GREYBUS_PROTOCOL_I2C:
+		return "I2C";
+	case GREYBUS_PROTOCOL_PWM:
+		return "PWM";
+	case GREYBUS_PROTOCOL_I2S_MGMT:
+		return "I2S_MGMT";
+	case GREYBUS_PROTOCOL_I2S_RECEIVER:
+		return "I2S_RECEIVER";
+	case GREYBUS_PROTOCOL_I2S_TRANSMITTER:
+		return "I2S_TRANSMITTER";
+	default:
+		return "(Unknown protocol>";
 	}
-	return "N/A";
 }
 
 static void cport_recv_handler(unsigned int cport_id, void *rbuf, size_t size)
 {
 	struct gbsim_cport *cport;
 
-	TAILQ_FOREACH(cport, &info.cports, cnode) {
-		if (cport->id == cport_id)
-			switch (cport->protocol) {
-			case GREYBUS_PROTOCOL_GPIO:
-				gpio_handler(cport_id, rbuf, size);
-				break;
-			case GREYBUS_PROTOCOL_I2C:
-				i2c_handler(cport_id, rbuf, size);
-				break;
-			case GREYBUS_PROTOCOL_PWM:
-				pwm_handler(cport_id, rbuf, size);
-				break;
-			case GREYBUS_PROTOCOL_I2S_MGMT:
-				i2s_mgmt_handler(cport_id, rbuf, size);
-				break;
-			case GREYBUS_PROTOCOL_I2S_RECEIVER:
-			case GREYBUS_PROTOCOL_I2S_TRANSMITTER:
-				i2s_data_handler(cport_id, rbuf, size);
-				break;
-			default:
-				gbsim_error("handler not found for cport %d\n",
-					     cport_id);
-			}
+	cport = cport_find(cport_id);
+	if (!cport)
+		return;
+
+	switch (cport->protocol) {
+	case GREYBUS_PROTOCOL_GPIO:
+		gpio_handler(cport_id, rbuf, size);
+		break;
+	case GREYBUS_PROTOCOL_I2C:
+		i2c_handler(cport_id, rbuf, size);
+		break;
+	case GREYBUS_PROTOCOL_PWM:
+		pwm_handler(cport_id, rbuf, size);
+		break;
+	case GREYBUS_PROTOCOL_I2S_MGMT:
+		i2s_mgmt_handler(cport_id, rbuf, size);
+		break;
+	case GREYBUS_PROTOCOL_I2S_RECEIVER:
+	case GREYBUS_PROTOCOL_I2S_TRANSMITTER:
+		i2s_data_handler(cport_id, rbuf, size);
+		break;
+	default:
+		gbsim_error("handler not found for cport %u\n", cport_id);
 	}
 }
 
