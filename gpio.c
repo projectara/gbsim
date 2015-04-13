@@ -253,8 +253,19 @@ int gpio_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		if (verbose)
 			gbsim_dump((__u8 *)op_rsp, sz);
 		write(to_ap, op_rsp, sz);
+		break;
+	case OP_RESPONSE | GB_GPIO_TYPE_IRQ_EVENT:
+		gbsim_debug("gpio irq event response received\n");
+		return 0;
+	default:
+		gbsim_error("gpio operation type %02x not supported\n", oph->type);
+		return -EINVAL;
+	}
+
 #define TEST_HACK
 #ifdef TEST_HACK
+	/* Test GPIO interrupts by sending one when they become unmasked */
+	if (oph->type == GB_GPIO_TYPE_IRQ_UNMASK) {
 		/* Store the cport id in the header pad bytes */
 		op_req->header.pad[0] = cport_id & 0xff;
 		op_req->header.pad[1] = (cport_id >> 8) & 0xff;
@@ -269,15 +280,8 @@ int gpio_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("Module %hhu -> AP CPort %hu GPIO protocol IRQ event request\n  ",
 			    module_id, cport_id);
 		write(to_ap, op_req, sz);
-#endif
-		break;
-	case OP_RESPONSE | GB_GPIO_TYPE_IRQ_EVENT:
-		gbsim_debug("gpio irq event response received\n");
-		break;
-	default:
-		gbsim_error("gpio operation type %02x not supported\n", oph->type);
-		return -EINVAL;
 	}
+#endif
 
 	return 0;
 }
