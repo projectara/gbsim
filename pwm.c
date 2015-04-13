@@ -55,7 +55,7 @@ int pwm_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("Module %hhu -> AP CPort %hu PWM protocol version response\n  ",
 			    module_id, cport_id);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, sz);
+			gbsim_dump(op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_PWM_COUNT:
@@ -68,7 +68,7 @@ int pwm_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("Module %hhu -> AP CPort %hu PWM count response\n  ",
 			    module_id, cport_id);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, sz);
+			gbsim_dump(op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_ACTIVATE:
@@ -80,7 +80,7 @@ int pwm_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("AP -> Module %hhu CPort %hu PWM %d activate request\n  ",
 			    module_id, cport_id, op_req->pwm_act_req.which);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, sz);
+			gbsim_dump(op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_DEACTIVATE:
@@ -92,7 +92,7 @@ int pwm_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("AP -> Module %hhu CPort %hu PWM %d deactivate request\n  ",
 			    module_id, cport_id, op_req->pwm_deact_req.which);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, sz);
+			gbsim_dump(op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_CONFIG:
@@ -110,7 +110,7 @@ int pwm_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("AP -> Module %hhu CPort %hu PWM %d config (%dns/%dns) request\n  ",
 			    module_id, cport_id, op_req->pwm_cfg_req.which, duty, period);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, sz);
+			gbsim_dump(op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_POLARITY:
@@ -131,7 +131,7 @@ int pwm_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 			    cport_id, op_req->pwm_cfg_req.which,
 			    op_req->pwm_pol_req.polarity ? "inverse" : "normal");
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, sz);
+			gbsim_dump(op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_ENABLE:
@@ -146,7 +146,7 @@ int pwm_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("AP -> Module %hhu CPort %hu PWM %d enable request\n  ",
 			    module_id, cport_id, op_req->pwm_enb_req.which);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, sz);
+			gbsim_dump(op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case GB_PWM_TYPE_DISABLE:
@@ -161,7 +161,7 @@ int pwm_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("AP -> Module %hhu CPort %hu PWM %d disable request\n  ",
 			    module_id, cport_id, op_req->pwm_dis_req.which);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, sz);
+			gbsim_dump(op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	default:

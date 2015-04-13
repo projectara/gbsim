@@ -66,7 +66,7 @@ int i2c_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("Module %hhu -> AP CPort %hu I2C protocol version response\n  ",
 			    module_id, cport_id);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, sz);
+			gbsim_dump(op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case OP_I2C_PROTOCOL_FUNCTIONALITY:
@@ -80,7 +80,7 @@ int i2c_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("Module %hhu -> AP CPort %hu I2C protocol functionality response\n  ",
 			    module_id, cport_id);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, sz);
+			gbsim_dump(op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case OP_I2C_PROTOCOL_TIMEOUT:
@@ -92,7 +92,7 @@ int i2c_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("Module %hhu -> AP CPort %hu I2C protocol timeout response\n  ",
 			    module_id, cport_id);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, sz);
+			gbsim_dump(op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case OP_I2C_PROTOCOL_RETRIES:
@@ -104,7 +104,7 @@ int i2c_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("Module %hhu -> AP CPort %hu I2C protocol retries response\n  ",
 			    module_id, cport_id);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, sz);
+			gbsim_dump(op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case OP_I2C_PROTOCOL_TRANSFER:
@@ -172,7 +172,7 @@ int i2c_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("Module %hhu -> AP CPort %hu I2C transfer response\n  ",
 			    module_id, cport_id);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, sz);
+			gbsim_dump(op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 
 		break;

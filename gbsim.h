@@ -123,8 +123,9 @@ struct op_msg {
 #define gbsim_error(fmt, ...)						\
         do { fprintf(stderr, "[E] GBSIM: " fmt, ##__VA_ARGS__); } while (0)
 
-static inline void gbsim_dump(__u8 *buf, size_t size)
+static inline void gbsim_dump(void *data, size_t size)
 {
+	char *buf = data;
 	int i;
 
 	for (i = 0; i < size; i++)

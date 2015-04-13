@@ -75,7 +75,7 @@ int i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("Module %hhu -> AP CPort %hu I2S GET_CONFIGURATION response\n  ",
 			    module_id, cport_id);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, sz);
+			gbsim_dump(op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case GB_I2S_MGMT_TYPE_SET_CONFIGURATION:
@@ -89,7 +89,7 @@ int i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("Module %hhu -> AP CPort %hu I2S SET_CONFIGURATION response\n  ",
 			    module_id, cport_id);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, sz);
+			gbsim_dump(op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case GB_I2S_MGMT_TYPE_SET_SAMPLES_PER_MESSAGE:
@@ -103,7 +103,7 @@ int i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("Module %hhu -> AP CPort %hu I2S SET_SAMPLES_PER_MESSAGE response\n  ",
 			    module_id, cport_id);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, sz);
+			gbsim_dump(op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case GB_I2S_MGMT_TYPE_SET_START_DELAY:
@@ -117,7 +117,7 @@ int i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("Module %hhu -> AP CPort %hu I2S SET_START_DELAY response\n  ",
 			    module_id, cport_id);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, sz);
+			gbsim_dump(op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case GB_I2S_MGMT_TYPE_ACTIVATE_CPORT:
@@ -131,7 +131,7 @@ int i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("Module %hhu -> AP CPort %hu I2S ACTIVATE_CPORT response\n  ",
 			    module_id, cport_id);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, sz);
+			gbsim_dump(op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	case GB_I2S_MGMT_TYPE_DEACTIVATE_CPORT:
@@ -145,7 +145,7 @@ int i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("Module %hhu -> AP CPort %hu I2S DEACTIVATE_CPORT response\n  ",
 			    module_id, cport_id);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, sz);
+			gbsim_dump(op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	default:
@@ -187,7 +187,7 @@ int i2s_data_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("Module %hhu -> AP CPort %hu I2S SEND_DATA response\n  ",
 			    module_id, cport_id);
 		if (verbose)
-			gbsim_dump((__u8 *)op_rsp, sz);
+			gbsim_dump(op_rsp, sz);
 		write(to_ap, op_rsp, sz);
 		break;
 	default:
