@@ -1,3 +1,4 @@
+
 /*
  * Greybus Simulator
  *
@@ -74,9 +75,6 @@ int i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 
 		gbsim_debug("Module %hhu -> AP CPort %hu I2S GET_CONFIGURATION response\n  ",
 			    module_id, cport_id);
-		if (verbose)
-			gbsim_dump(op_rsp, sz);
-		write(to_ap, op_rsp, sz);
 		break;
 	case GB_I2S_MGMT_TYPE_SET_CONFIGURATION:
 		sz = sizeof(struct op_header);
@@ -88,9 +86,6 @@ int i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 
 		gbsim_debug("Module %hhu -> AP CPort %hu I2S SET_CONFIGURATION response\n  ",
 			    module_id, cport_id);
-		if (verbose)
-			gbsim_dump(op_rsp, sz);
-		write(to_ap, op_rsp, sz);
 		break;
 	case GB_I2S_MGMT_TYPE_SET_SAMPLES_PER_MESSAGE:
 		sz = sizeof(struct op_header);
@@ -102,9 +97,6 @@ int i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 
 		gbsim_debug("Module %hhu -> AP CPort %hu I2S SET_SAMPLES_PER_MESSAGE response\n  ",
 			    module_id, cport_id);
-		if (verbose)
-			gbsim_dump(op_rsp, sz);
-		write(to_ap, op_rsp, sz);
 		break;
 	case GB_I2S_MGMT_TYPE_SET_START_DELAY:
 		sz = sizeof(struct op_header);
@@ -116,9 +108,6 @@ int i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 
 		gbsim_debug("Module %hhu -> AP CPort %hu I2S SET_START_DELAY response\n  ",
 			    module_id, cport_id);
-		if (verbose)
-			gbsim_dump(op_rsp, sz);
-		write(to_ap, op_rsp, sz);
 		break;
 	case GB_I2S_MGMT_TYPE_ACTIVATE_CPORT:
 		sz = sizeof(struct op_header);
@@ -130,9 +119,6 @@ int i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 
 		gbsim_debug("Module %hhu -> AP CPort %hu I2S ACTIVATE_CPORT response\n  ",
 			    module_id, cport_id);
-		if (verbose)
-			gbsim_dump(op_rsp, sz);
-		write(to_ap, op_rsp, sz);
 		break;
 	case GB_I2S_MGMT_TYPE_DEACTIVATE_CPORT:
 		sz = sizeof(struct op_header);
@@ -144,14 +130,15 @@ int i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 
 		gbsim_debug("Module %hhu -> AP CPort %hu I2S DEACTIVATE_CPORT response\n  ",
 			    module_id, cport_id);
-		if (verbose)
-			gbsim_dump(op_rsp, sz);
-		write(to_ap, op_rsp, sz);
 		break;
 	default:
 		gbsim_error("i2s mgmt operation type %02x not supported\n", oph->type);
 		return -EINVAL;
 	}
+
+	if (verbose)
+		gbsim_dump(op_rsp, sz);
+	write(to_ap, op_rsp, sz);
 
 	return 0;
 }
@@ -186,14 +173,15 @@ int i2s_data_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 
 		gbsim_debug("Module %hhu -> AP CPort %hu I2S SEND_DATA response\n  ",
 			    module_id, cport_id);
-		if (verbose)
-			gbsim_dump(op_rsp, sz);
-		write(to_ap, op_rsp, sz);
 		break;
 	default:
 		gbsim_error("i2s data operation type %02x not supported\n", oph->type);
 		return -EINVAL;
 	}
+
+	if (verbose)
+		gbsim_dump(op_rsp, sz);
+	write(to_ap, op_rsp, sz);
 
 	return 0;
 }

@@ -1,3 +1,4 @@
+
 /*
  * Greybus Simulator
  *
@@ -65,9 +66,6 @@ int i2c_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		op_rsp->pv_rsp.version_minor = GREYBUS_VERSION_MINOR;
 		gbsim_debug("Module %hhu -> AP CPort %hu I2C protocol version response\n  ",
 			    module_id, cport_id);
-		if (verbose)
-			gbsim_dump(op_rsp, sz);
-		write(to_ap, op_rsp, sz);
 		break;
 	case OP_I2C_PROTOCOL_FUNCTIONALITY:
 		sz = sizeof(struct op_header) +
@@ -79,9 +77,6 @@ int i2c_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		op_rsp->i2c_fcn_rsp.functionality = htole32(I2C_FUNC_I2C);
 		gbsim_debug("Module %hhu -> AP CPort %hu I2C protocol functionality response\n  ",
 			    module_id, cport_id);
-		if (verbose)
-			gbsim_dump(op_rsp, sz);
-		write(to_ap, op_rsp, sz);
 		break;
 	case OP_I2C_PROTOCOL_TIMEOUT:
 		sz = sizeof(struct op_header) + 0;
@@ -91,9 +86,6 @@ int i2c_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 		gbsim_debug("Module %hhu -> AP CPort %hu I2C protocol timeout response\n  ",
 			    module_id, cport_id);
-		if (verbose)
-			gbsim_dump(op_rsp, sz);
-		write(to_ap, op_rsp, sz);
 		break;
 	case OP_I2C_PROTOCOL_RETRIES:
 		sz = sizeof(struct op_header) + 0;
@@ -103,9 +95,6 @@ int i2c_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 		gbsim_debug("Module %hhu -> AP CPort %hu I2C protocol retries response\n  ",
 			    module_id, cport_id);
-		if (verbose)
-			gbsim_dump(op_rsp, sz);
-		write(to_ap, op_rsp, sz);
 		break;
 	case OP_I2C_PROTOCOL_TRANSFER:
 		op_count = le16toh(op_req->i2c_xfer_req.op_count);
@@ -171,15 +160,15 @@ int i2c_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		op_rsp->header.size = htole16((__u16)sz);
 		gbsim_debug("Module %hhu -> AP CPort %hu I2C transfer response\n  ",
 			    module_id, cport_id);
-		if (verbose)
-			gbsim_dump(op_rsp, sz);
-		write(to_ap, op_rsp, sz);
-
 		break;
 	default:
 		gbsim_error("i2c operation type %02x not supported\n", oph->type);
 		return -EINVAL;
 	}
+
+	if (verbose)
+		gbsim_dump(op_rsp, sz);
+	write(to_ap, op_rsp, sz);
 
 	return 0;
 }
