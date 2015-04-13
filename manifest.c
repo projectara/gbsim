@@ -64,9 +64,6 @@ static int identify_descriptor(struct greybus_descriptor *desc, size_t size)
 		cport->protocol = desc->cport.protocol_id;
 		TAILQ_INSERT_TAIL(&info.cports, cport, cnode);
 		break;
-	case GREYBUS_TYPE_CLASS:
-		gbsim_debug("class descriptor found (ignoring)\n");
-		break;
 	case GREYBUS_TYPE_INVALID:
 	default:
 		gbsim_error("invalid descriptor type (%hhu)\n", desc_header->type);
