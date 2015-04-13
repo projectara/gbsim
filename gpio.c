@@ -245,11 +245,12 @@ void gpio_handler(unsigned int cport, __u8 *rbuf, size_t size)
 		op_req->header.pad[0] = cport & 0xff;
 		op_req->header.pad[1] = (cport >> 8) & 0xff;
 
-		op_req->header.size = sizeof(struct op_header) + 1;
-		op_req->header.id = 0x42;
+		op_req->header.size = sizeof(struct op_header) +
+					sizeof(struct gb_gpio_irq_event_request);
+		op_req->header.id = 0x42;		/* XXX HACK */
 		op_req->header.type = GB_GPIO_TYPE_IRQ_EVENT;
 		op_req->header.result = 0;
-		op_req->gpio_irq_event_req.which = 1;
+		op_req->gpio_irq_event_req.which = 1;	/* XXX HACK */
 		gbsim_debug("Module %d -> AP CPort %d GPIO protocol IRQ event request\n  ",
 			    cport_to_module_id(cport), cport);
 		write(cport_in, op_req, op_req->header.size);
