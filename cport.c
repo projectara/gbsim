@@ -57,33 +57,28 @@ static char *get_protocol(unsigned int cport_id)
 	}
 }
 
-static void cport_recv_handler(unsigned int cport_id, void *rbuf, size_t size)
+static void cport_recv_handler(struct gbsim_cport *cport,
+				void *rbuf, size_t size)
 {
-	struct gbsim_cport *cport;
-
-	cport = cport_find(cport_id);
-	if (!cport)
-		return;
-
 	switch (cport->protocol) {
 	case GREYBUS_PROTOCOL_GPIO:
-		gpio_handler(cport_id, rbuf, size);
+		gpio_handler(cport->id, rbuf, size);
 		break;
 	case GREYBUS_PROTOCOL_I2C:
-		i2c_handler(cport_id, rbuf, size);
+		i2c_handler(cport->id, rbuf, size);
 		break;
 	case GREYBUS_PROTOCOL_PWM:
-		pwm_handler(cport_id, rbuf, size);
+		pwm_handler(cport->id, rbuf, size);
 		break;
 	case GREYBUS_PROTOCOL_I2S_MGMT:
-		i2s_mgmt_handler(cport_id, rbuf, size);
+		i2s_mgmt_handler(cport->id, rbuf, size);
 		break;
 	case GREYBUS_PROTOCOL_I2S_RECEIVER:
 	case GREYBUS_PROTOCOL_I2S_TRANSMITTER:
-		i2s_data_handler(cport_id, rbuf, size);
+		i2s_data_handler(cport->id, rbuf, size);
 		break;
 	default:
-		gbsim_error("handler not found for cport %u\n", cport_id);
+		gbsim_error("handler not found for cport %u\n", cport->id);
 	}
 }
 
@@ -91,6 +86,7 @@ static void recv_handler(void *rbuf, size_t size)
 {
 	struct op_header *hdr = rbuf;
 	unsigned int cport_id;
+	struct gbsim_cport *cport;
 
 	if (size < sizeof(*hdr)) {
 		gbsim_error("short message received\n");
@@ -104,6 +100,13 @@ static void recv_handler(void *rbuf, size_t size)
 	hdr->pad[0] = 0;
 	hdr->pad[1] = 0;
 
+	cport = cport_find(cport_id);
+	if (!cport) {
+		gbsim_error("message received for unknown cport id %u\n",
+			cport_id);
+		return;
+	}
+
 	/* FIXME: can identify module from our cport connection */
 	gbsim_debug("AP -> Module %d CPort %d %s request\n  ",
 		    cport_to_module_id(cport_id), cport_id,
@@ -112,7 +115,7 @@ static void recv_handler(void *rbuf, size_t size)
 	if (verbose)
 		gbsim_dump(rbuf, size);
 
-	cport_recv_handler(cport_id, rbuf, size);
+	cport_recv_handler(cport, rbuf, size);
 }
 
 void recv_thread_cleanup(void *arg)
