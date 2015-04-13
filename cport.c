@@ -20,12 +20,12 @@
 /* Receive buffer for all data arriving from the AP */
 static char cport_rbuf[ES1_MSG_SIZE];
 
-static char *get_protocol(unsigned int id)
+static char *get_protocol(unsigned int cport_id)
 {
 	struct gbsim_cport *cport;
 
 	TAILQ_FOREACH(cport, &info.cports, cnode) {
-		if (cport->id == id) {
+		if (cport->id == cport_id) {
 			switch (cport->protocol) {
 			case GREYBUS_PROTOCOL_GPIO:
 				return "GPIO";
@@ -45,32 +45,32 @@ static char *get_protocol(unsigned int id)
 	return "N/A";
 }
 
-static void exec_subdev_handler(unsigned int id, void *rbuf, size_t size)
+static void exec_subdev_handler(unsigned int cport_id, void *rbuf, size_t size)
 {
 	struct gbsim_cport *cport;
 
 	TAILQ_FOREACH(cport, &info.cports, cnode) {
-		if (cport->id == id)
+		if (cport->id == cport_id)
 			switch (cport->protocol) {
 			case GREYBUS_PROTOCOL_GPIO:
-				gpio_handler(id, rbuf, size);
+				gpio_handler(cport_id, rbuf, size);
 				break;
 			case GREYBUS_PROTOCOL_I2C:
-				i2c_handler(id, rbuf, size);
+				i2c_handler(cport_id, rbuf, size);
 				break;
 			case GREYBUS_PROTOCOL_PWM:
-				pwm_handler(id, rbuf, size);
+				pwm_handler(cport_id, rbuf, size);
 				break;
 			case GREYBUS_PROTOCOL_I2S_MGMT:
-				i2s_mgmt_handler(id, rbuf, size);
+				i2s_mgmt_handler(cport_id, rbuf, size);
 				break;
 			case GREYBUS_PROTOCOL_I2S_RECEIVER:
 			case GREYBUS_PROTOCOL_I2S_TRANSMITTER:
-				i2s_data_handler(id, rbuf, size);
+				i2s_data_handler(cport_id, rbuf, size);
 				break;
 			default:
 				gbsim_error("subdev handler not found for cport %d\n",
-					     id);
+					     cport_id);
 			}
 	}
 }
@@ -78,7 +78,7 @@ static void exec_subdev_handler(unsigned int id, void *rbuf, size_t size)
 static void cport_handler(void *rbuf, size_t size)
 {
 	struct op_header *hdr = rbuf;
-	unsigned int id;
+	unsigned int cport_id;
 
 	if (size < sizeof(*hdr)) {
 		gbsim_error("short message received\n");
@@ -88,20 +88,19 @@ static void cport_handler(void *rbuf, size_t size)
 	/*
 	 * Retreive and clear the cport id stored in the header pad bytes.
 	 */
-	id = hdr->pad[1] << 8 | hdr->pad[0];
+	cport_id = hdr->pad[1] << 8 | hdr->pad[0];
 	hdr->pad[0] = 0;
 	hdr->pad[1] = 0;
 
 	/* FIXME: can identify module from our cport connection */
 	gbsim_debug("AP -> Module %d CPort %d %s request\n  ",
-		    cport_to_module_id(id),
-		    id,
-		    get_protocol(id));
+		    cport_to_module_id(cport_id), cport_id,
+		    get_protocol(cport_id));
 
 	if (verbose)
 		gbsim_dump(rbuf, size);
 
-	exec_subdev_handler(id, rbuf, size);
+	exec_subdev_handler(cport_id, rbuf, size);
 }
 
 void cport_thread_cleanup(void *arg)
