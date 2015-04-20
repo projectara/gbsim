@@ -41,6 +41,13 @@ int i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 	oph = (struct op_header *)&op_req->header;
 
 	switch (oph->type) {
+	case GB_I2S_MGMT_TYPE_PROTOCOL_VERSION:
+		payload_size = sizeof(struct protocol_version_rsp);
+		op_rsp->pv_rsp.version_major = GREYBUS_VERSION_MAJOR;
+		op_rsp->pv_rsp.version_minor = GREYBUS_VERSION_MINOR;
+		gbsim_debug("Module %hhu -> AP CPort %hu I2S protocol version response\n  ",
+				module_id, cport_id);
+		break;
 	case GB_I2S_MGMT_TYPE_GET_SUPPORTED_CONFIGURATIONS:
 		payload_size = sizeof(struct gb_i2s_mgmt_get_supported_configurations_response) +
 			sizeof(struct gb_i2s_mgmt_configuration) * CONFIG_COUNT_MAX;
@@ -132,6 +139,13 @@ int i2s_data_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 	oph = (struct op_header *)&op_req->header;
 
 	switch (oph->type) {
+	case GB_I2S_DATA_TYPE_PROTOCOL_VERSION:
+		payload_size = sizeof(struct protocol_version_rsp);
+		op_rsp->pv_rsp.version_major = GREYBUS_VERSION_MAJOR;
+		op_rsp->pv_rsp.version_minor = GREYBUS_VERSION_MINOR;
+		gbsim_debug("Module %hhu -> AP CPort %hu I2S protocol version response\n  ",
+				module_id, cport_id);
+		break;
 	case GB_I2S_DATA_TYPE_SEND_DATA:
 		payload_size = 0;
 		gbsim_debug("Module %hhu -> AP CPort %hu I2S SEND_DATA response\n  ",
