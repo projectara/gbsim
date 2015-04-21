@@ -1,0 +1,2 @@
+autoreconf --install --symlink
+
