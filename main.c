@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 {
 	int ret = -EINVAL;
 	int o;
-	char *hotplug_basedir;
+	char *hotplug_basedir = NULL;
 
 	while ((o = getopt(argc, argv, ":bh:i:v")) != -1) {
 		switch (o) {
@@ -98,6 +98,11 @@ int main(int argc, char *argv[])
 		default:
 			abort();
 		}
+	}
+
+	if (!hotplug_basedir) {
+		gbsim_error("hotplug directory not specified, aborting\n");
+		return 1;
 	}
 
 	signals_init();
