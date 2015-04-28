@@ -104,7 +104,7 @@ from the AP indicating that the handshake process has completed.
 At this point, it's possible to hot plug/unplug modules by simply copying or
 removing a conformant manifest blob file in the /path/to/hotplug-module
 directory. Manifest blob files can be created using the Manifesto tool
-found at https://github.com/ohporter/manifesto. Using the Simple I2C Module as
+found at https://github.com/projectara/manifesto. Using the Simple I2C Module as
 an example, a module can be inserted as follows:
 
 `cp /foo/bar/simple-i2c-module.mnfb /path/to/hotplug-module/MID1-simple-i2c-module.mnfb`
