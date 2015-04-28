@@ -80,7 +80,7 @@ static int get_interface_id(char *fname)
 
 	strcpy(tmp, fname);
 	iid_str = strtok(tmp, "-");
-	if (!strncmp(iid_str, "MID", 3))
+	if (!strncmp(iid_str, "IID", 3))
 		iid = strtol(iid_str+3, NULL, 0);
 
 	return iid;
