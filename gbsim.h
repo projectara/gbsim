@@ -23,6 +23,10 @@
 #define BIT(n)	(1UL << (n))
 #endif
 
+/* Wouldn't support types larger than 4 bytes */
+#define _ALIGNBYTES		(sizeof(uint32_t) - 1)
+#define ALIGN(p)		((typeof(p))(((unsigned)(p) + _ALIGNBYTES) & ~_ALIGNBYTES))
+
 #include "gpbridge.h"
 
 extern int bbb_backend;

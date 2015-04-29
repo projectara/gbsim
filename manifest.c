@@ -50,6 +50,9 @@ static int identify_descriptor(struct greybus_descriptor *desc, size_t size)
 	case GREYBUS_TYPE_STRING:
 		expected_size += sizeof(struct greybus_descriptor_string);
 		expected_size += desc->string.length;
+
+		/* String descriptors are padded to 4 byte boundaries */
+		expected_size = ALIGN(expected_size);
 		break;
 	case GREYBUS_TYPE_INTERFACE:
 		expected_size += sizeof(struct greybus_descriptor_interface);
