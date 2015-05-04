@@ -39,7 +39,7 @@ int i2c_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 	struct op_msg *op_rsp;
 	int i, op_count;
 	__u8 *write_data;
-	bool read_op;
+	bool read_op = false;
 	int read_count = 0;
 	bool write_fail = false;
 	size_t payload_size;
