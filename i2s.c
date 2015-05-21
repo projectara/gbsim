@@ -68,8 +68,8 @@ int i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		conf->ll_wclk_role = GB_I2S_MGMT_ROLE_MASTER;
 		conf->ll_wclk_polarity = GB_I2S_MGMT_POLARITY_NORMAL;
 		conf->ll_wclk_change_edge = GB_I2S_MGMT_EDGE_FALLING;
-		conf->ll_wclk_tx_edge = GB_I2S_MGMT_EDGE_FALLING;
-		conf->ll_wclk_rx_edge = GB_I2S_MGMT_EDGE_RISING;
+		conf->ll_wclk_tx_edge = GB_I2S_MGMT_EDGE_RISING;
+		conf->ll_wclk_rx_edge = GB_I2S_MGMT_EDGE_FALLING;
 		conf->ll_data_offset = 1;
 
 		gbsim_debug("Module %hhu -> AP CPort %hu I2S GET_CONFIGURATION response\n  ",
