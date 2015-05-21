@@ -21,7 +21,7 @@
 
 #include "gbsim.h"
 
-#define CONFIG_COUNT_MAX 32
+#define CONFIG_COUNT_MAX 20
 
 int i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 					void *tbuf, size_t tsize)
