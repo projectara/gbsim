@@ -63,6 +63,7 @@ int i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 						GB_I2S_MGMT_SPATIAL_LOCATION_FL |
 						GB_I2S_MGMT_SPATIAL_LOCATION_FR);
 		conf->ll_protocol = htole32(GB_I2S_MGMT_PROTOCOL_I2S);
+		conf->ll_mclk_role = GB_I2S_MGMT_ROLE_MASTER;
 		conf->ll_bclk_role = GB_I2S_MGMT_ROLE_MASTER;
 		conf->ll_wclk_role = GB_I2S_MGMT_ROLE_MASTER;
 		conf->ll_wclk_polarity = GB_I2S_MGMT_POLARITY_NORMAL;
