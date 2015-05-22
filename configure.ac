@@ -32,6 +32,14 @@ AC_CONFIG_FILES([
 	Makefile
 ])
 
+AC_ARG_ENABLE(legacy-descriptors,
+[AS_HELP_STRING([--enable-legacy-descriptors],
+		[Use the legacy (pre-V2) USB descriptor format])],
+[if test x$enableval = xyes; then
+  AC_DEFINE(GBSIM_LEGACY_DESCRIPTORS, [],
+	  [Use deprecated functionfs descriptors])
+fi])
+
 AC_OUTPUT
 
 AC_MSG_RESULT([

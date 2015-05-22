@@ -25,8 +25,7 @@
 #include <linux/usb/functionfs.h>
 
 #include "gbsim.h"
-
-/* #define USE_DEPRECATED_DESC_HEAD */
+#include "config.h"
 
 #define FFS_PREFIX	"/dev/ffs-gbsim/"
 #define FFS_GBEMU_EP0	FFS_PREFIX"ep0"
@@ -81,7 +80,7 @@ static const struct {
 	struct {
 		__le32 magic;
 		__le32 length;
-#ifndef USE_DEPRECATED_DESC_HEAD
+#ifndef GBSIM_LEGACY_DESCRIPTORS
 		__le32 flags;
 #endif
 		__le32 fs_count;
@@ -95,7 +94,7 @@ static const struct {
 	} __attribute__((packed)) fs_descs, hs_descs;
 } __attribute__((packed)) descriptors = {
 	.header = {
-#ifdef USE_DEPRECATED_DESC_HEAD
+#ifdef GBSIM_LEGACY_DESCRIPTORS
 		.magic = htole32(FUNCTIONFS_DESCRIPTORS_MAGIC),
 #else
 		.magic = htole32(FUNCTIONFS_DESCRIPTORS_MAGIC_V2),

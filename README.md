@@ -66,6 +66,14 @@ For example:
 ./configure --host=arm-linux-gnueabi
 ```
 
+If your build environment only supplies the legacy (pre-V2) USB
+descriptor format, you can indicate that when configuring as well:
+```
+./configure --enable-legacy-descriptors
+```
+(If you get errors about FUNCTIONFS_DESCRIPTORS_MAGIC_V2 not
+being defined, you'll need this.)
+
 ## Run
 
 Load up the greybus framework and ES1 USB driver:
