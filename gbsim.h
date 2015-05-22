@@ -17,6 +17,7 @@
 
 #include <greybus.h>
 #include <greybus_manifest.h>
+#include <greybus_protocols.h>
 #include <svc_msg.h>
 
 #ifndef BIT
@@ -26,8 +27,6 @@
 /* Wouldn't support types larger than 4 bytes */
 #define _ALIGNBYTES		(sizeof(uint32_t) - 1)
 #define ALIGN(p)		((typeof(p))(((unsigned)(p) + _ALIGNBYTES) & ~_ALIGNBYTES))
-
-#include "gpbridge.h"
 
 extern int bbb_backend;
 extern int i2c_adapter;
