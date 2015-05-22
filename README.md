@@ -1,9 +1,25 @@
+<!-- This file uses Github Flavored Markdown (GFM) format. -->
+
 # Greybus Simulator (gbsim)
 
 A tool which simulates an AP Bridge, SVC, and an arbitrary set
 of Ara modules plugged into Greybus.
 
 Provided under BSD license. See *LICENSE* for details.
+
+## Quick Start
+
+This code depends on header files present in the "greybus" source
+directory.  The location of this directory is defined in the *GBDIR*
+environment variable.
+
+To just build gbsim, do this:
+```
+export GBDIR=".../path/to/greybus"
+./autogen.sh
+./configure
+make
+```
 
 ## Install
 
@@ -12,24 +28,19 @@ gbsim on the same machine. This is accomplished using the *dummy_hcd*
 USB host+gadget driver in conjuction with the gadget configfs/functionfs
 features.
 
-Build the kernel greybus subsystem and ES1 USB driver:
-
-```
-cd /path/to/greybus
-make -C /usr/src/linux-headers-foo M=$PWD
-make -C /usr/src/linux-headers-foo M=$PWD modules_install
-```
-
-Modify the gsim Makefile *GBDIR* to point at the kernel greybus
+Set the environment variable *GBDIR* to point at the kernel greybus
 (https://github.com/gregkh/greybus) directory as the simulator shares
 headers with the kernel code.
 
-`GBDIR = /path/to/greybus`
+`export GBDIR=".../path/to/greybus"`
 
-Optionally uncomment *CROSS_COMPILE* and set the variable appropriately
-if you are cross compiling the simulator.
-
-`CROSS_COMPILE = arm-linux-gnueabi-`
+Build the kernel greybus subsystem, including the host driver and
+related protocol drivers.
+```
+cd "${GBDIR}"
+make -C /usr/src/linux-headers-foo M=$PWD
+make -C /usr/src/linux-headers-foo M=$PWD modules_install
+```
 
 Build it:
 
@@ -39,10 +50,20 @@ gbsim has the following dependencies:
 * libconfig (http://hyperrealm.com/libconfig/libconfig.html)
 * libsoc (https://github.com/jackmitch/libsoc)
 
+It also assumes the *GBDIR* environment variable has been set.
 ```
 cd /path/to/gbsim
+./autogen.sh
+./configure
 make
 make install
+```
+
+If you would like to cross-compile the simulator, you can optionally
+specify the prefix used for compilation tools at configure time.
+For example:
+```
+./configure --host=arm-linux-gnueabi
 ```
 
 ## Run
