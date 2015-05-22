@@ -46,6 +46,7 @@ int i2c_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 	uint16_t message_size;
 	uint8_t module_id;
 	uint8_t result = PROTOCOL_STATUS_SUCCESS;
+	ssize_t nbytes;
 
 	module_id = cport_to_module_id(cport_id);
 
@@ -149,7 +150,10 @@ int i2c_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 
 	if (verbose)
 		gbsim_dump(op_rsp, message_size);
-	write(to_ap, op_rsp, message_size);
+
+	nbytes = write(to_ap, op_req, message_size);
+	if (nbytes < 0)
+		return nbytes;
 
 	return 0;
 }
