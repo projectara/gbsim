@@ -119,11 +119,6 @@ int gpio_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 			    cport_id, module_id,
 			    op_req->gpio_irq_type_req.type);
 		break;
-	case GB_GPIO_TYPE_IRQ_ACK:
-		payload_size = 0;
-		gbsim_debug("AP CPort %hu -> Module %hhu GPIO protocol IRQ ack request\n  ",
-			    cport_id, module_id);
-		break;
 	case GB_GPIO_TYPE_IRQ_MASK:
 		payload_size = 0;
 		gbsim_debug("AP CPort %hu -> Module %hhu GPIO protocol IRQ mask request\n  ",

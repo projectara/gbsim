@@ -98,7 +98,6 @@ struct op_msg {
 		struct gb_gpio_irq_type_request		gpio_irq_type_req;
 		struct gb_gpio_irq_mask_request		gpio_irq_mask_req;
 		struct gb_gpio_irq_unmask_request	gpio_irq_unmask_req;
-		struct gb_gpio_irq_ack_request		gpio_irq_ack_req;
 		struct gb_gpio_irq_event_request	gpio_irq_event_req;
 		struct gb_i2c_functionality_response	i2c_fcn_rsp;
 		struct gb_i2c_transfer_request		i2c_xfer_req;
