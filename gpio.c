@@ -129,9 +129,6 @@ int gpio_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		gbsim_debug("AP CPort %hu -> Module %hhu GPIO protocol IRQ unmask request\n  ",
 			    cport_id, module_id);
 		break;
-	case OP_RESPONSE | GB_GPIO_TYPE_IRQ_EVENT:
-		gbsim_debug("gpio irq event response received\n");
-		return 0;
 	default:
 		gbsim_error("gpio operation type %02x not supported\n", oph->type);
 		return -EINVAL;
@@ -167,7 +164,7 @@ int gpio_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 		/* Fill in the request header */
 		message_size = sizeof(struct op_header) + payload_size;
 		op_req->header.size = htole16(message_size);
-		op_req->header.id = 0x42;		/* XXX HACK */
+		op_req->header.id = 0;	/* unidirectional */
 		op_req->header.type = GB_GPIO_TYPE_IRQ_EVENT;
 		op_rsp->header.result = result;
 		/* Store the cport id in the header pad bytes */
