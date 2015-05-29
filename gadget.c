@@ -89,7 +89,7 @@ int gadget_create(usbg_state **s, usbg_gadget **g)
 	return 0;
 
 out2:
-	usbg_cleanup(*s);
+	gadget_cleanup(*s, *g);
 
 out1:
 	return ret;
@@ -104,9 +104,10 @@ int gadget_cleanup(usbg_state *s, usbg_gadget *g)
 {
 	gbsim_debug("gadget_cleanup\n");
 
-	usbg_disable_gadget(g);
-
-	usbg_rm_gadget(g, USBG_RM_RECURSE);
+	if (g) {
+		usbg_disable_gadget(g);
+		usbg_rm_gadget(g, USBG_RM_RECURSE);
+	}
 
 	usbg_cleanup(s);
 
