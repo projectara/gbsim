@@ -15,7 +15,6 @@
 #include <stdio.h>
 #include <usbg/usbg.h>
 
-#include <greybus.h>
 #include <greybus_manifest.h>
 #include <greybus_protocols.h>
 #include <svc_msg.h>
