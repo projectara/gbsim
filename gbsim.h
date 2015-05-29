@@ -8,6 +8,9 @@
  */
 
 /* Required for build, as greybus core uses __packed */
+#ifndef __GBSIM_H
+#define __GBSIM_H
+
 #define __packed  __attribute__((__packed__))
 
 #include <endian.h>
@@ -173,3 +176,5 @@ int i2s_data_handler(uint16_t, void *, size_t, void *, size_t);
 void i2s_init(void);
 
 bool manifest_parse(void *data, size_t size);
+
+#endif /* __GBSIM_H */
