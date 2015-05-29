@@ -45,23 +45,25 @@ static char *get_manifest_blob(char *mnfs)
 
 	if ((mnf_fd = open(mnfs, O_RDONLY)) < 0) {
 		gbsim_error("failed to open manifest blob %s\n", mnfs);
-		return NULL;
+		goto out;
 	}
 
 	if ((n = read(mnf_fd, &size, 2)) != 2) {
 		gbsim_error("failed to read manifest size, read %d\n", n);
-		return NULL;
+		goto out;
 	}
 	lseek(mnf_fd, 0, SEEK_SET);
 
 	mh = (struct greybus_manifest_header *)(hpb + HP_BASE_SIZE);
 	if (read(mnf_fd, mh, size) != size) {
 		gbsim_error("failed to read manifest\n");
-		return NULL;
+		goto out;
 	}
 
-out:
 	return hpb;
+out:
+	free(hpb);
+	return NULL;
 }
 
 static void parse_manifest_blob(char *hpe)
