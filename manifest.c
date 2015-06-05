@@ -16,6 +16,12 @@
 #include "gbsim.h"
 
 /*
+ * Greybus kernel assigns hd-cport-ids to cports in the order they are present
+ * in manifest. To match that here, we can just use a simple counter.
+ */
+static uint16_t hd_cport_id_counter;
+
+/*
  * Validate the given descriptor.  Its reported size must fit within
  * the number of bytes reamining, and it must have a recognized
  * type.  Check that the reported size is at least as big as what
@@ -64,6 +70,7 @@ static int identify_descriptor(struct greybus_descriptor *desc, size_t size)
 		expected_size += sizeof(struct greybus_descriptor_cport);
 		cport = malloc(sizeof(struct gbsim_cport));
 		cport->id = le16toh(desc->cport.id);
+		cport->hd_cport_id = hd_cport_id_counter++;
 		cport->protocol = desc->cport.protocol_id;
 		TAILQ_INSERT_TAIL(&info.cports, cport, cnode);
 		break;

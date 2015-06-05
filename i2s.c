@@ -23,8 +23,8 @@
 
 #define CONFIG_COUNT_MAX 20
 
-int i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
-					void *tbuf, size_t tsize)
+int i2s_mgmt_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
+		     size_t rsize, void *tbuf, size_t tsize)
 {
 	struct op_header *oph;
 	struct op_msg *op_req = rbuf;
@@ -113,8 +113,8 @@ int i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 	op_rsp->header.type = OP_RESPONSE | oph->type;
 	op_rsp->header.result = result;
 	/* Store the cport id in the header pad bytes */
-	op_rsp->header.pad[0] = cport_id & 0xff;
-	op_rsp->header.pad[1] = (cport_id >> 8) & 0xff;
+	op_rsp->header.pad[0] = hd_cport_id & 0xff;
+	op_rsp->header.pad[1] = (hd_cport_id >> 8) & 0xff;
 
 	if (verbose)
 		gbsim_dump(op_rsp, message_size);
@@ -127,8 +127,8 @@ int i2s_mgmt_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 }
 
 
-int i2s_data_handler(uint16_t cport_id, void *rbuf, size_t rsize,
-					void *tbuf, size_t tsize)
+int i2s_data_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
+		     size_t rsize, void *tbuf, size_t tsize)
 {
 	struct op_header *oph;
 	struct op_msg *op_req = rbuf;
@@ -169,8 +169,8 @@ int i2s_data_handler(uint16_t cport_id, void *rbuf, size_t rsize,
 	op_rsp->header.type = OP_RESPONSE | oph->type;
 	op_rsp->header.result = result;
 	/* Store the cport id in the header pad bytes */
-	op_rsp->header.pad[0] = cport_id & 0xff;
-	op_rsp->header.pad[1] = (cport_id >> 8) & 0xff;
+	op_rsp->header.pad[0] = hd_cport_id & 0xff;
+	op_rsp->header.pad[1] = (hd_cport_id >> 8) & 0xff;
 
 	if (verbose)
 		gbsim_dump(op_rsp, message_size);

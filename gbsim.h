@@ -49,6 +49,7 @@ extern int from_ap;
 struct gbsim_cport {
 	TAILQ_ENTRY(gbsim_cport) cnode;
 	uint16_t id;
+	uint16_t hd_cport_id;
 	int protocol;
 };
 
@@ -162,17 +163,17 @@ void send_link_up(int, int);
 void *recv_thread(void *);
 void recv_thread_cleanup(void *);
 
-int gpio_handler(uint16_t, void *, size_t, void *, size_t);
+int gpio_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
 void gpio_init(void);
 
-int i2c_handler(uint16_t, void *, size_t, void *, size_t);
+int i2c_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
 void i2c_init(void);
 
-int pwm_handler(uint16_t, void *, size_t, void *, size_t);
+int pwm_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
 void pwm_init(void);
 
-int i2s_mgmt_handler(uint16_t, void *, size_t, void *, size_t);
-int i2s_data_handler(uint16_t, void *, size_t, void *, size_t);
+int i2s_mgmt_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
+int i2s_data_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
 void i2s_init(void);
 
 bool manifest_parse(void *data, size_t size);

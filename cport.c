@@ -27,7 +27,7 @@ static struct gbsim_cport *cport_find(uint16_t cport_id)
 	struct gbsim_cport *cport;
 
 	TAILQ_FOREACH(cport, &info.cports, cnode)
-		if (cport->id == cport_id)
+		if (cport->hd_cport_id == cport_id)
 			return cport;
 
 	return NULL;
@@ -65,16 +65,16 @@ static int cport_recv_handler(struct gbsim_cport *cport,
 {
 	switch (cport->protocol) {
 	case GREYBUS_PROTOCOL_GPIO:
-		return gpio_handler(cport->id, rbuf, rsize, tbuf, tsize);
+		return gpio_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_I2C:
-		return i2c_handler(cport->id, rbuf, rsize, tbuf, tsize);
+		return i2c_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_PWM:
-		return pwm_handler(cport->id, rbuf, rsize, tbuf, tsize);
+		return pwm_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_I2S_MGMT:
-		return i2s_mgmt_handler(cport->id, rbuf, rsize, tbuf, tsize);
+		return i2s_mgmt_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_I2S_RECEIVER:
 	case GREYBUS_PROTOCOL_I2S_TRANSMITTER:
-		return i2s_data_handler(cport->id, rbuf, rsize, tbuf, tsize);
+		return i2s_data_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
 	default:
 		gbsim_error("handler not found for cport %u\n", cport->id);
 		return -EINVAL;
@@ -84,7 +84,7 @@ static int cport_recv_handler(struct gbsim_cport *cport,
 static void recv_handler(void *rbuf, size_t rsize, void *tbuf, size_t tsize)
 {
 	struct op_header *hdr = rbuf;
-	uint16_t cport_id;
+	uint16_t hd_cport_id;
 	struct gbsim_cport *cport;
 	int ret;
 
@@ -96,21 +96,21 @@ static void recv_handler(void *rbuf, size_t rsize, void *tbuf, size_t tsize)
 	/*
 	 * Retreive and clear the cport id stored in the header pad bytes.
 	 */
-	cport_id = hdr->pad[1] << 8 | hdr->pad[0];
+	hd_cport_id = hdr->pad[1] << 8 | hdr->pad[0];
 	hdr->pad[0] = 0;
 	hdr->pad[1] = 0;
 
-	cport = cport_find(cport_id);
+	cport = cport_find(hd_cport_id);
 	if (!cport) {
 		gbsim_error("message received for unknown cport id %u\n",
-			cport_id);
+			hd_cport_id);
 		return;
 	}
 
 	/* FIXME: can identify module from our cport connection */
 	gbsim_debug("AP -> Module %hhu CPort %hu %s request\n  ",
-		    cport_to_module_id(cport_id), cport_id,
-		    get_protocol(cport_id));
+		    cport_to_module_id(hd_cport_id), cport->id,
+		    get_protocol(hd_cport_id));
 
 	if (verbose)
 		gbsim_dump(rbuf, rsize);
