@@ -32,6 +32,8 @@
 
 extern int bbb_backend;
 extern int i2c_adapter;
+extern int uart_portno;
+extern int uart_count;
 extern int verbose;
 
 /* Matches up with the Greybus Protocol specification document */
@@ -114,6 +116,12 @@ struct op_msg {
 		struct gb_pwm_disable_request		pwm_dis_req;
 		struct gb_i2s_mgmt_get_supported_configurations_response i2s_mgmt_get_sup_conf_rsp;
 		struct gb_i2s_mgmt_get_processing_delay_response i2s_mgmt_get_proc_delay_rsp;
+		struct gb_uart_send_data_request	uart_send_data_req;
+		struct gb_uart_recv_data_request	uart_recv_data_rsp;
+		struct gb_uart_set_break_request	uart_sb_req;
+		struct gb_uart_serial_state_request	uart_ss_resp;
+		struct gb_uart_set_line_coding_request	uart_slc_req;
+		struct gb_uart_set_control_line_state_request uart_sls_req;
 	};
 };
 
@@ -175,6 +183,10 @@ void pwm_init(void);
 int i2s_mgmt_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
 int i2s_data_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
 void i2s_init(void);
+
+int uart_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
+void uart_init(void);
+void uart_cleanup(void);
 
 bool manifest_parse(void *data, size_t size);
 

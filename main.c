@@ -20,6 +20,8 @@
 
 int bbb_backend = 0;
 int i2c_adapter = 0;
+int uart_portno = 0;
+int uart_count = 0;
 int verbose = 0;
 
 static usbg_state *s;
@@ -34,8 +36,8 @@ static void cleanup(void)
 	printf("cleaning up\n");
 	sigemptyset(&sigact.sa_mask);
 
+	uart_cleanup();
 	gadget_cleanup(s, g);
-
 	functionfs_cleanup();
 }
 
@@ -61,7 +63,7 @@ int main(int argc, char *argv[])
 	int o;
 	char *hotplug_basedir = NULL;
 
-	while ((o = getopt(argc, argv, ":bh:i:v")) != -1) {
+	while ((o = getopt(argc, argv, ":bh:i:u:U:v")) != -1) {
 		switch (o) {
 		case 'b':
 			bbb_backend = 1;
@@ -75,6 +77,14 @@ int main(int argc, char *argv[])
 			i2c_adapter = atoi(optarg);
 			printf("i2c_adapter %d\n", i2c_adapter);
 			break;
+		case 'u':
+			uart_portno = atoi(optarg);
+			printf("uart_portno %d\n", uart_portno);
+			break;
+		case 'U':
+			uart_count = atoi(optarg);
+			printf("uart_count %d\n", uart_count);
+			break;
 		case 'v':
 			verbose = 1;
 			printf("verbose %d\n", verbose);
@@ -84,6 +94,10 @@ int main(int argc, char *argv[])
 				gbsim_error("i2c_adapter required\n");
 			else if (optopt == 'h')
 				gbsim_error("hotplug_basedir required\n");
+			else if (optopt == 'u')
+				gbsim_error("uart_portno required\n");
+			else if (optopt == 'U')
+				gbsim_error("uart_count required\n");
 			else
 				gbsim_error("-%c requires an argument\n",
 					optopt);
@@ -129,6 +143,7 @@ int main(int argc, char *argv[])
 	gpio_init();
 	i2c_init();
 	i2s_init();
+	uart_init();
 
 	ret = functionfs_loop();
 

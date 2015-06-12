@@ -20,7 +20,8 @@ gbsim_SOURCES = \
 	inotify.c \
 	main.c \
 	manifest.c \
-	pwm.c
+	pwm.c \
+	uart.c
 
 gbsim_CPPFLAGS = \
 	-Wall \
