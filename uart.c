@@ -128,6 +128,7 @@ static int gb_uart_send(int i, void *tbuf, size_t tsize, __u8 type)
 	uint16_t message_size;
 	struct gb_uart_recv_data_request *rdr =
 		(struct gb_uart_recv_data_request *)(uart_buf + sizeof(struct op_header));
+	int ret;
 
 	switch (type) {
 	case GB_UART_TYPE_RECEIVE_DATA:
@@ -157,10 +158,12 @@ static int gb_uart_send(int i, void *tbuf, size_t tsize, __u8 type)
 	op_req->header.pad[1] = (up[i].cport_id >> 8) & 0xff;
 
 	if (verbose) {
-		gbsim_debug("UART %s -> AP length %hu\n", up[i].name, tsize);
+		gbsim_debug("UART %s -> AP length %zu\n", up[i].name, tsize);
 		gbsim_dump(op_req, message_size);
 	}
-	write(to_ap, op_req, message_size);
+	ret = write(to_ap, op_req, message_size);
+	if (ret < 0)
+		return ret;
 	gb_uart_sync_wait(i, type);
 	return 0;
 }
@@ -221,7 +224,7 @@ static int tty_write(uint8_t module_id, uint16_t cport_id, void *tbuf, size_t ts
 			    up[i].name, errno);
 
 	if (verbose) {
-		gbsim_debug("AP -> UART %s length %hu\n", up[i].name, tsize);
+		gbsim_debug("AP -> UART %s length %zu\n", up[i].name, tsize);
 		gbsim_dump(tbuf, tsize);
 	}
 	return ret;
@@ -495,7 +498,8 @@ int uart_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	struct gb_uart_send_data_request *send_data;
 	struct gb_uart_set_line_coding_request *line_coding;
 	struct gb_uart_set_control_line_state_request *line_state;
-	int i;
+	int i, ret;
+	extern int errno;
 
 	module_id = cport_to_module_id(cport_id);
 
@@ -549,7 +553,9 @@ int uart_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	case (GB_UART_TYPE_RESPONSE | GB_UART_TYPE_SERIAL_STATE):
 		gbsim_debug("AP -> Module %hhu CPort %hu unsol resp %02x index %d\n",
 			    module_id, cport_id, oph->type, i);
-		write(up[i].uart_port_pipe[UART_IDX_TX], &oph->type, 1);
+		ret = write(up[i].uart_port_pipe[UART_IDX_TX], &oph->type, 1);
+		if (ret < 0)
+			gbsim_error("Write to signal pipe fail %d\n", errno);
 		return 0;
 	default:
 		gbsim_error("UART operation type %02x not supported\n", oph->type);
@@ -569,7 +575,9 @@ int uart_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 
 	if (verbose)
 		gbsim_dump(op_rsp, message_size);
-	write(to_ap, op_rsp, message_size);
+	ret = write(to_ap, op_rsp, message_size);
+	if (ret < 0)
+		return ret;
 	return 0;
 
 }
@@ -627,10 +635,12 @@ void uart_cleanup(void)
 {
 	int i;
 	char c;
+	extern int errno;
 
 	if (thread_started) {
 		/* signal termination */
-		write(uart_sig_pipe[UART_IDX_TX], &c, 1);
+		if (write(uart_sig_pipe[UART_IDX_TX], &c, 1) < 0)
+			gbsim_error("Write to signal pipe fail %d\n", errno);
 
 		/* sync */
 		pthread_join(uart_pthread, NULL);
