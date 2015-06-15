@@ -129,12 +129,12 @@ struct op_msg {
 
 /* debug/info/error macros */
 #define gbsim_debug(fmt, ...)						\
-        do { if (verbose) fprintf(stdout, "[D] GBSIM: " fmt,  		\
-				  ##__VA_ARGS__); } while (0)
+        do { if (verbose) { fprintf(stdout, "[D] GBSIM: " fmt,  	\
+				  ##__VA_ARGS__); fflush(stdout); } } while (0)
 #define gbsim_info(fmt, ...)						\
-        do { fprintf(stdout, "[I] GBSIM: " fmt, ##__VA_ARGS__); } while (0)
+        do { fprintf(stdout, "[I] GBSIM: " fmt, ##__VA_ARGS__); fflush(stdout); } while (0)
 #define gbsim_error(fmt, ...)						\
-        do { fprintf(stderr, "[E] GBSIM: " fmt, ##__VA_ARGS__); } while (0)
+        do { fprintf(stderr, "[E] GBSIM: " fmt, ##__VA_ARGS__); fflush(stderr); } while (0)
 
 static inline void gbsim_dump(void *data, size_t size)
 {
@@ -144,6 +144,7 @@ static inline void gbsim_dump(void *data, size_t size)
 	for (i = 0; i < size; i++)
 		fprintf(stdout, "%02x ", buf[i]);
 	fprintf(stdout, "\n");
+	fflush(stdout);
 }
 
 static inline uint8_t cport_to_module_id(uint16_t cport)
