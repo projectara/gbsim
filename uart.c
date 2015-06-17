@@ -69,6 +69,7 @@ struct gb_uart_port {
 	bool		init;
 	char		name[UART_MAXNAME];
 	uint8_t		module_id;
+	int		tiocm_bits;
 	pthread_mutex_t	uart_port;
 	int		uart_port_pipe[UART_IDX_COUNT];
 };
@@ -128,6 +129,8 @@ static int gb_uart_send(int i, void *tbuf, size_t tsize, __u8 type)
 	uint16_t message_size;
 	struct gb_uart_recv_data_request *rdr =
 		(struct gb_uart_recv_data_request *)(uart_buf + sizeof(struct op_header));
+	struct gb_uart_serial_state_request *ssr =
+		(struct gb_uart_serial_state_request *)(uart_buf + sizeof(struct op_header));
 	int ret;
 
 	switch (type) {
@@ -137,6 +140,8 @@ static int gb_uart_send(int i, void *tbuf, size_t tsize, __u8 type)
 		payload_size = sizeof(*rdr) + tsize;
 		break;
 	case GB_UART_TYPE_SERIAL_STATE:
+		memcpy(&ssr->control, tbuf, sizeof(ssr->control));
+		payload_size = sizeof(*ssr) + sizeof(ssr->control);
 		break;
 	default:
 		gbsim_error("UART send operation %02x invalid\n", type);
@@ -178,6 +183,31 @@ static int tty_find_port(uint8_t module_id, uint16_t cport_id)
 		    break;
 	}
 	return i;
+}
+
+/* Only used when bbb_backend is true */
+static void tty_poll_modem_state(int i)
+{
+	int ret;
+	int tiocm_bits;
+	extern int errno;
+
+	pthread_mutex_lock(&up[i].uart_port);
+	ret = ioctl(up[i].fd, TIOCMGET, &tiocm_bits);
+	if (ret == 0 && up[i].tiocm_bits != tiocm_bits) {
+		up[i].tiocm_bits = tiocm_bits;
+		tiocm_bits =  up[i].tiocm_bits & TIOCM_CD  ? GB_UART_CTRL_DCD : 0;
+		tiocm_bits |= up[i].tiocm_bits & TIOCM_DSR ? GB_UART_CTRL_DSR : 0;
+		tiocm_bits |= up[i].tiocm_bits & TIOCM_RI  ? GB_UART_CTRL_RI  : 0;
+		gb_uart_send(i, &tiocm_bits, sizeof(tiocm_bits),
+			     GB_UART_TYPE_SERIAL_STATE);
+		if (verbose)
+			gbsim_debug("UART DCD=%d DSR=%d RI=%d",
+				    tiocm_bits & GB_UART_CTRL_DCD,
+				    tiocm_bits & GB_UART_CTRL_DSR,
+				    tiocm_bits & GB_UART_CTRL_RI);
+	}
+	pthread_mutex_unlock(&up[i].uart_port);
 }
 
 /* Only used when bbb_backend is true */
@@ -588,6 +618,7 @@ static void *uart_thread(void *param)
 	fd_set fdset;
 	int i, ret;
 	int max = uart_sig_pipe[UART_IDX_RX];
+	struct timeval tv;
 	extern int errno;
 
 	pthread_barrier_wait(&uart_barrier);
@@ -595,14 +626,22 @@ static void *uart_thread(void *param)
 	for (i = 0; i < up_count; i++)
 		if (max < up[i].fd)
 			max = up[i].fd;
-
 	while (!terminate_thread) {
+		for (i = 0; i < up_count; i++) {
+			if (up[i].init == true)
+				tty_poll_modem_state(i);
+		}
+
 		FD_ZERO(&fdset);
 		FD_SET(uart_sig_pipe[UART_IDX_RX] , &fdset);
-		for (i = 0; i < up_count; i++)
-			FD_SET(up[i].fd , &fdset);
+		for (i = 0; i < up_count; i++) {
+			if (up[i].init == true)
+				FD_SET(up[i].fd , &fdset);
+		}
 
-		ret = select(1 + max, &fdset, 0, 0, NULL);
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+		ret = select(1 + max, &fdset, 0, 0, &tv);
 		switch (ret) {
 		case -1:
 			gbsim_error("%s : select errno=%d\n", __func__, errno);
