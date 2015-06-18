@@ -435,7 +435,7 @@ static int tty_set_control_line_state(int i,
 		   (sls->control & GB_UART_CTRL_RTS ? TIOCM_RTS : 0));
 
 	pthread_mutex_lock(&up[i].uart_port);
-	ret = ioctl(up[i].fd, TIOCMSET, status);
+	ret = ioctl(up[i].fd, TIOCMSET, &status);
 	pthread_mutex_unlock(&up[i].uart_port);
 err:
 	return ret;
