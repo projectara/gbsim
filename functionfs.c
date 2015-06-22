@@ -37,6 +37,9 @@
 
 #define NEVENT		5
 
+#define HP_PAYLOAD_SIZE		(sizeof(struct svc_function_hotplug))
+#define HP_MSG_SIZE		(sizeof(struct svc_msg_header) +	\
+					HP_PAYLOAD_SIZE)
 #define HS_PAYLOAD_SIZE		(sizeof(struct svc_function_handshake))
 #define HS_MSG_SIZE		(sizeof(struct svc_msg_header) +	\
 					HS_PAYLOAD_SIZE)
@@ -213,38 +216,31 @@ static void send_svc_handshake(void)
 	gbsim_debug("SVC->AP handshake sent\n");
 }
 
-void send_hot_plug(char *hpe, int iid)
+void __send_hot_plug(int iid, int event)
 {
-	struct svc_msg *msg = (struct svc_msg *)hpe;
-	struct greybus_manifest_header *mh =
-		(struct greybus_manifest_header *)(hpe + HP_BASE_SIZE);
-	
-	msg->header.function_id = SVC_FUNCTION_HOTPLUG;
-	msg->header.message_type = SVC_MSG_DATA;
-	msg->header.payload_length = mh->size + 2;
-	msg->hotplug.hotplug_event = SVC_HOTPLUG_EVENT;
-	msg->hotplug.interface_id = iid;
+	struct svc_msg msg;
 
-	/* Write out hotplug message with manifest payload */
-	svc_int_write(hpe, HP_BASE_SIZE + mh->size);
+	msg.header.function_id = SVC_FUNCTION_HOTPLUG;
+	msg.header.message_type = SVC_MSG_DATA;
+	msg.header.payload_length = htole16(HP_PAYLOAD_SIZE);
+	msg.hotplug.hotplug_event = event;
+	msg.hotplug.interface_id = iid;
 
-	gbsim_debug("SVC->AP hotplug event (plug) sent\n");
+	/* Write out hotplug message */
+	svc_int_write(&msg, HP_MSG_SIZE);
+
+	gbsim_debug("SVC->AP hotplug event (%s) sent\n",
+		    event == SVC_HOTPLUG_EVENT ? "plug" : "unplug");
+}
+
+void send_hot_plug(int iid)
+{
+	__send_hot_plug(iid, SVC_HOTPLUG_EVENT);
 }
 
 void send_hot_unplug(int iid)
 {
-	struct svc_msg msg;
-	
-	msg.header.function_id = SVC_FUNCTION_HOTPLUG;
-	msg.header.message_type = SVC_MSG_DATA;
-	msg.header.payload_length = 2;
-	msg.hotplug.hotplug_event = SVC_HOTUNPLUG_EVENT;
-	msg.hotplug.interface_id = iid;
-
-	/* Write out hotplug message */
-	svc_int_write(&msg, HP_BASE_SIZE);
-
-	gbsim_debug("SVC->AP hotplug event (unplug) sent\n");
+	__send_hot_plug(iid, SVC_HOTUNPLUG_EVENT);
 }
 
 void send_link_up(int iid, int did)

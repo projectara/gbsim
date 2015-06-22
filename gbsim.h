@@ -168,7 +168,7 @@ void cleanup_endpoint(int, char *);
 
 int inotify_start(char *);
 
-void send_hot_plug(char *, int);
+void send_hot_plug(int);
 void send_hot_unplug(int);
 
 void send_link_up(int, int);

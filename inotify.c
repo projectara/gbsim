@@ -118,7 +118,7 @@ static void *inotify_thread(void *param)
 						int iid = get_interface_id(event->name);
 						if (iid > 0) {
 							gbsim_info("%s Interface inserted\n", event->name);
-							send_hot_plug(hpe, iid);
+							send_hot_plug(iid);
 							/*
 							 * FIXME: hardcoded
 							 * device ID
