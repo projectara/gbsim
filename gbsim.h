@@ -40,9 +40,6 @@ extern int verbose;
 #define GREYBUS_VERSION_MAJOR	0x00
 #define GREYBUS_VERSION_MINOR	0x01
 
-/* SVC message header + 2 bytes of payload */
-#define HP_BASE_SIZE		sizeof(struct svc_msg_header) + 2
-
 extern int control;
 extern int svc_int;
 extern int to_ap;

@@ -30,17 +30,15 @@ static pthread_t inotify_pthread;
 int notify_fd = -ENXIO;
 static char root[256];
 
-static char *get_manifest_blob(char *mnfs)
+static struct greybus_manifest_header *get_manifest_blob(char *mnfs)
 {
+	struct greybus_manifest_header *mh;
 	int mnf_fd, n;
 	uint16_t size;
-	char *hpb;
-	struct greybus_manifest_header *mh;
 
-
-	if (!(hpb = malloc(HP_BASE_SIZE + 64 * 1024))) {
-		gbsim_error("failed to allocate hotplug buffer\n");
-		goto out;
+	if (!(mh = malloc(64 * 1024))) {
+		gbsim_error("failed to allocate manifest buffer\n");
+		return NULL;
 	}
 
 	if ((mnf_fd = open(mnfs, O_RDONLY)) < 0) {
@@ -54,26 +52,15 @@ static char *get_manifest_blob(char *mnfs)
 	}
 	lseek(mnf_fd, 0, SEEK_SET);
 
-	mh = (struct greybus_manifest_header *)(hpb + HP_BASE_SIZE);
 	if (read(mnf_fd, mh, size) != size) {
 		gbsim_error("failed to read manifest\n");
 		goto out;
 	}
 
-	return hpb;
+	return mh;
 out:
-	free(hpb);
+	free(mh);
 	return NULL;
-}
-
-static void parse_manifest_blob(char *hpe)
-{
-	struct greybus_manifest_header *mh =
-		(struct greybus_manifest_header *)(hpe + HP_BASE_SIZE);
-
-	info.manifest = mh;
-	info.manifest_size = le16toh(mh->size);
-	manifest_parse(mh, le16toh(mh->size));
 }
 
 static int get_interface_id(char *fname)
@@ -108,13 +95,16 @@ static void *inotify_thread(void *param)
 			if (event->len) {
 				if (event->mask & IN_CLOSE_WRITE) {
 					char mnfs[256];
-					char *hpe;
+					struct greybus_manifest_header *mh;
 					strcpy(mnfs, root);
 					strcat(mnfs, "/");
 					strcat(mnfs, event->name);
-					hpe = get_manifest_blob(mnfs);
-					if (hpe) {
-						parse_manifest_blob(hpe);
+					mh = get_manifest_blob(mnfs);
+					if (mh) {
+						info.manifest = mh;
+						info.manifest_size = le16toh(mh->size);
+						manifest_parse(mh, le16toh(mh->size));
+
 						int iid = get_interface_id(event->name);
 						if (iid > 0) {
 							gbsim_info("%s Interface inserted\n", event->name);
