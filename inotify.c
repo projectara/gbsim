@@ -71,6 +71,8 @@ static void parse_manifest_blob(char *hpe)
 	struct greybus_manifest_header *mh =
 		(struct greybus_manifest_header *)(hpe + HP_BASE_SIZE);
 
+	info.manifest = mh;
+	info.manifest_size = le16toh(mh->size);
 	manifest_parse(mh, le16toh(mh->size));
 }
 

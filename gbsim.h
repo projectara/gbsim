@@ -56,6 +56,8 @@ struct gbsim_cport {
 };
 
 struct gbsim_info {
+	void *manifest;
+	size_t manifest_size;
 	TAILQ_HEAD(chead, gbsim_cport) cports;
 };
 
@@ -89,6 +91,8 @@ struct op_msg {
 	struct op_header	header;
 	union {
 		struct protocol_version_rsp		pv_rsp;
+		struct gb_control_get_manifest_size_response control_msize_rsp;
+		struct gb_control_get_manifest_response control_manifest_rsp;
 		struct gb_gpio_line_count_response	gpio_lc_rsp;
 		struct gb_gpio_activate_request		gpio_act_req;
 		struct gb_gpio_deactivate_request	gpio_deact_req;
@@ -171,6 +175,8 @@ void send_link_up(int, int);
 
 void *recv_thread(void *);
 void recv_thread_cleanup(void *);
+
+int control_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
 
 int gpio_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
 void gpio_init(void);

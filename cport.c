@@ -42,6 +42,8 @@ static char *get_protocol(uint16_t cport_id)
 		return "N/A";
 
 	switch (cport->protocol) {
+	case GREYBUS_PROTOCOL_CONTROL:
+		return "CONTROL";
 	case GREYBUS_PROTOCOL_GPIO:
 		return "GPIO";
 	case GREYBUS_PROTOCOL_I2C:
@@ -66,6 +68,8 @@ static int cport_recv_handler(struct gbsim_cport *cport,
 				void *tbuf, size_t tsize)
 {
 	switch (cport->protocol) {
+	case GREYBUS_PROTOCOL_CONTROL:
+		return control_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_GPIO:
 		return gpio_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_I2C:
