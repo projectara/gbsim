@@ -20,6 +20,7 @@
  * in manifest. To match that here, we can just use a simple counter.
  */
 static uint16_t hd_cport_id_counter;
+static int control_done;
 
 /*
  * Validate the given descriptor.  Its reported size must fit within
@@ -36,7 +37,6 @@ static int identify_descriptor(struct greybus_descriptor *desc, size_t size)
 	struct greybus_descriptor_header *desc_header = &desc->header;
 	size_t expected_size;
 	size_t desc_size;
-	struct gbsim_cport *cport;
 
 	if (size < sizeof(*desc_header)) {
 		gbsim_error("manifest too small\n");
@@ -68,11 +68,22 @@ static int identify_descriptor(struct greybus_descriptor *desc, size_t size)
 		break;
 	case GREYBUS_TYPE_CPORT:
 		expected_size += sizeof(struct greybus_descriptor_cport);
-		cport = malloc(sizeof(struct gbsim_cport));
-		cport->id = le16toh(desc->cport.id);
-		cport->hd_cport_id = hd_cport_id_counter++;
-		cport->protocol = desc->cport.protocol_id;
-		TAILQ_INSERT_TAIL(&info.cports, cport, cnode);
+
+		/*
+		 * Module's control protocol's node might not be present in
+		 * manifest, and the first allocated cport should be for control
+		 * protocol.
+		 */
+		if (!control_done &&
+			(le16toh(desc->cport.id) != GB_CONTROL_CPORT_ID)) {
+			allocate_cport(GB_CONTROL_CPORT_ID,
+					hd_cport_id_counter++,
+					GREYBUS_PROTOCOL_CONTROL);
+		}
+
+		control_done = 1;
+		allocate_cport(le16toh(desc->cport.id), hd_cport_id_counter++,
+				desc->cport.protocol_id);
 		break;
 	case GREYBUS_TYPE_INVALID:
 	default:
@@ -152,6 +163,10 @@ bool manifest_parse(void *data, size_t size)
 	/* OK, find all the descriptors */
 	desc = (struct greybus_descriptor *)(header + 1);
 	size -= sizeof(*header);
+
+	/* Reset control protocol's counter */
+	control_done = 0;
+
 	while (size) {
 		int desc_size;
 

@@ -154,6 +154,8 @@ static inline uint8_t cport_to_module_id(uint16_t cport)
 	return 1;
 }
 
+void allocate_cport(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id);
+
 int gadget_create(usbg_state **, usbg_gadget **);
 int gadget_enable(usbg_gadget *);
 int gadget_cleanup(usbg_state *, usbg_gadget *);

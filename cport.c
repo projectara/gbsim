@@ -33,6 +33,18 @@ static struct gbsim_cport *cport_find(uint16_t cport_id)
 	return NULL;
 }
 
+void allocate_cport(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id)
+{
+	struct gbsim_cport *cport;
+
+	cport = malloc(sizeof(*cport));
+	cport->id = cport_id;
+
+	cport->hd_cport_id = hd_cport_id;
+	cport->protocol = protocol_id;
+	TAILQ_INSERT_TAIL(&info.cports, cport, cnode);
+}
+
 static char *get_protocol(uint16_t cport_id)
 {
 	struct gbsim_cport *cport;
