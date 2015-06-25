@@ -35,8 +35,8 @@ int control_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	switch (oph->type) {
 	case GB_CONTROL_TYPE_PROTOCOL_VERSION:
 		payload_size = sizeof(op_rsp->pv_rsp);
-		op_rsp->pv_rsp.version_major = GREYBUS_VERSION_MAJOR;
-		op_rsp->pv_rsp.version_minor = GREYBUS_VERSION_MINOR;
+		op_rsp->pv_rsp.version_major = GB_CONTROL_VERSION_MAJOR;
+		op_rsp->pv_rsp.version_minor = GB_CONTROL_VERSION_MINOR;
 
 		gbsim_debug("Module %hhu -> AP CPort %hu CONTROL protocol version response\n  ",
 			    module_id, cport_id);
