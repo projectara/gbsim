@@ -67,6 +67,7 @@ struct gb_uart_port {
 	int		fd;
 	uint8_t		id;
 	bool		init;
+	bool		esc;
 	char		name[UART_MAXNAME];
 	uint8_t		module_id;
 	int		tiocm_bits;
@@ -121,7 +122,7 @@ static void gb_uart_sync_wait(int i, __u8 rsp_type)
 }
 
 /* Only used when bbb_backend is true */
-static int gb_uart_send(int i, void *tbuf, size_t tsize, __u8 type)
+static int gb_uart_send(int i, void *tbuf, size_t tsize, __u8 type, __u8 flags)
 {
 	char uart_buf[GB_OPERATION_DATA_SIZE_MAX];
 	struct op_msg *op_req = (struct op_msg *)uart_buf;
@@ -136,6 +137,7 @@ static int gb_uart_send(int i, void *tbuf, size_t tsize, __u8 type)
 	switch (type) {
 	case GB_UART_TYPE_RECEIVE_DATA:
 		rdr->size = htole16(tsize);
+		rdr->flags = flags;
 		memcpy(&rdr->data, tbuf, tsize);
 		payload_size = sizeof(*rdr) + tsize;
 		break;
@@ -200,7 +202,7 @@ static void tty_poll_modem_state(int i)
 		tiocm_bits |= up[i].tiocm_bits & TIOCM_DSR ? GB_UART_CTRL_DSR : 0;
 		tiocm_bits |= up[i].tiocm_bits & TIOCM_RI  ? GB_UART_CTRL_RI  : 0;
 		gb_uart_send(i, &tiocm_bits, sizeof(tiocm_bits),
-			     GB_UART_TYPE_SERIAL_STATE);
+			     GB_UART_TYPE_SERIAL_STATE, 0);
 		if (verbose)
 			gbsim_debug("UART DCD=%d DSR=%d RI=%d",
 				    tiocm_bits & GB_UART_CTRL_DCD,
@@ -211,9 +213,66 @@ static void tty_poll_modem_state(int i)
 }
 
 /* Only used when bbb_backend is true */
+static char *gb_uart_send_escape_sequences(int i, char *data, int size)
+{
+	char *begin = data;
+	char *end = data + size;
+	char *send_data = data;
+	__u8 flags = 0;
+
+	while (data < end && flags == 0) {
+		/* With PARMRK set 0xff indicates an escape sequence */
+		if (*data == '\xff') {
+			data += 1;
+			if (data == end)
+				goto err;
+			switch (*data) {
+			case 0xff:
+				/* 0xff received : 0xff, 0xff */
+				*send_data = *data;
+				break;
+			case 0x00:
+				data += 1;
+				if (data == end)
+					goto err;
+				if (*data == '\x00') {
+					/* Break condition : 0xff, 0x00, 0x00 */
+					flags = GB_UART_RECV_FLAG_BREAK;
+				} else {
+					/* Pairty/framing error for byte 'n' : 0xff, 0x00, n */
+					*send_data = *data;
+					flags = GB_UART_RECV_FLAG_PARITY | GB_UART_RECV_FLAG_FRAMING;
+				}
+				break;
+			default:
+				gbsim_error("Unexpected byte in escape 0x%02x\n",
+					*data);
+			}
+		} else {
+			*send_data = *data;
+		}
+		data += 1;
+		send_data += 1;
+	}
+
+	/* Send the parsed message */
+	size = send_data - begin;
+	gb_uart_send(i, begin, size, GB_UART_TYPE_RECEIVE_DATA, flags);
+
+	/* Return offset */
+	return data;
+err:
+	gbsim_error("UART: parsing esc sequence");
+	return end;
+
+}
+
+/* Only used when bbb_backend is true */
 static int tty_read(int i)
 {
 	char data[GB_UART_DATA_SIZE_MAX];
+	char *next_frame;
+	char *end;
 	int ret;
 	extern int errno;
 
@@ -224,7 +283,16 @@ static int tty_read(int i)
 		if ((errno != EAGAIN) && (errno != EWOULDBLOCK))
 			return ret;
 	} else {
-		gb_uart_send(i, data, ret, GB_UART_TYPE_RECEIVE_DATA);
+		if (up[i].esc) {
+			next_frame = data;
+			end = &data[ret];
+			while (next_frame < end) {
+				next_frame = gb_uart_send_escape_sequences(i, next_frame, ret);
+				ret = end-next_frame;
+			}
+		} else {
+			gb_uart_send(i, data, ret, GB_UART_TYPE_RECEIVE_DATA, 0);
+		}
 	}
 	return 0;
 }
@@ -259,6 +327,7 @@ static int tty_write(uint8_t module_id, uint16_t cport_id, void *tbuf, size_t ts
 	}
 	return ret;
 }
+
 static int tty_set_line_coding(int i,
 			       struct gb_uart_set_line_coding_request *slc)
 {
@@ -424,7 +493,7 @@ static int tty_set_line_coding(int i,
 		}
 
 		/* Enable input parity checking with parity bit strip */
-		newtios.c_iflag |= IGNPAR | INPCK | ISTRIP;
+		newtios.c_iflag = PARMRK | INPCK;
 	}
 
 	/* set input mode (non-canonical, no echo,...) */
@@ -437,6 +506,7 @@ static int tty_set_line_coding(int i,
 	if (bbb_backend) {
 		pthread_mutex_lock(&up[i].uart_port);
 		tcsetattr(up[i].fd, TCSAFLUSH, &newtios);
+		up[i].esc = newtios.c_cflag & PARENB ? true : false;
 		pthread_mutex_unlock(&up[i].uart_port);
 	}
 
