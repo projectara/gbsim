@@ -113,6 +113,9 @@ static void recv_handler(void *rbuf, size_t rsize, void *tbuf, size_t tsize)
 		return;
 	}
 
+	if (verbose)
+		gbsim_dump(rbuf, rsize);
+
 	/*
 	 * Retreive and clear the cport id stored in the header pad bytes.
 	 */
@@ -131,9 +134,6 @@ static void recv_handler(void *rbuf, size_t rsize, void *tbuf, size_t tsize)
 	gbsim_debug("AP -> Module %hhu CPort %hu %s request\n  ",
 		    cport_to_module_id(hd_cport_id), cport->id,
 		    get_protocol(hd_cport_id));
-
-	if (verbose)
-		gbsim_dump(rbuf, rsize);
 
 	ret = cport_recv_handler(cport, rbuf, rsize, tbuf, tsize);
 	if (ret)
