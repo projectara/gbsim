@@ -64,6 +64,7 @@
  */
 struct gb_uart_port {
 	uint16_t	cport_id;
+	uint16_t	hd_cport_id;
 	int		fd;
 	uint8_t		id;
 	bool		init;
@@ -161,8 +162,8 @@ static int gb_uart_send(int i, void *tbuf, size_t tsize, __u8 type, __u8 flags)
 	op_req->header.type = type;
 
 	/* Store the cport id in the header pad bytes */
-	op_req->header.pad[0] = up[i].cport_id & 0xff;
-	op_req->header.pad[1] = (up[i].cport_id >> 8) & 0xff;
+	op_req->header.pad[0] = up[i].hd_cport_id & 0xff;
+	op_req->header.pad[1] = (up[i].hd_cport_id >> 8) & 0xff;
 
 	if (verbose) {
 		gbsim_debug("UART %s -> AP length %zu\n", up[i].name, tsize);
@@ -560,7 +561,8 @@ err:
 	return ret;
 }
 
-static int uart_init_port(uint8_t module_id, uint16_t cport_id, uint8_t id)
+static int uart_init_port(uint8_t module_id, uint16_t cport_id,
+			  uint16_t hd_cport_id, uint8_t id)
 {
 	int i;
 
@@ -575,10 +577,11 @@ static int uart_init_port(uint8_t module_id, uint16_t cport_id, uint8_t id)
 	}
 	up[port_count].module_id = module_id;
 	up[port_count].cport_id = cport_id;
+	up[port_count].hd_cport_id = hd_cport_id;
 	up[port_count].id = id;
 	up[port_count].init = true;
-	gbsim_info("UART Module %hu Cport %hhu port-index %d\n",
-		   module_id, cport_id, port_count);
+	gbsim_info("UART Module %hu Cport %hhu HDCport %hhu port-index %d\n",
+		   module_id, cport_id, hd_cport_id, port_count);
 	i = port_count;
 	port_count++;
 	return i;
@@ -607,7 +610,7 @@ int uart_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	oph = (struct op_header *)&op_req->header;
 
 	/* Associate the module_id and cport_id with the device fd */
-	i = uart_init_port(module_id, cport_id, oph->id);
+	i = uart_init_port(module_id, cport_id, hd_cport_id, oph->id);
 	if (i < 0)
 		return i;
 
