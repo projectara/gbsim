@@ -214,16 +214,17 @@ static void tty_poll_modem_state(int i)
 }
 
 /* Only used when bbb_backend is true */
-static char *gb_uart_send_escape_sequences(int i, char *data, int size)
+static unsigned char *gb_uart_send_escape_sequences(int i, unsigned char *data,
+						    int size)
 {
-	char *begin = data;
-	char *end = data + size;
-	char *send_data = data;
+	unsigned char *begin = data;
+	unsigned char *end = data + size;
+	unsigned char *send_data = data;
 	__u8 flags = 0;
 
 	while (data < end && flags == 0) {
 		/* With PARMRK set 0xff indicates an escape sequence */
-		if (*data == '\xff') {
+		if (*data == 0xff) {
 			data += 1;
 			if (data == end)
 				goto err;
@@ -236,7 +237,7 @@ static char *gb_uart_send_escape_sequences(int i, char *data, int size)
 				data += 1;
 				if (data == end)
 					goto err;
-				if (*data == '\x00') {
+				if (*data == 0x00) {
 					/* Break condition : 0xff, 0x00, 0x00 */
 					flags = GB_UART_RECV_FLAG_BREAK;
 				} else {
@@ -271,9 +272,9 @@ err:
 /* Only used when bbb_backend is true */
 static int tty_read(int i)
 {
-	char data[GB_UART_DATA_SIZE_MAX];
-	char *next_frame;
-	char *end;
+	unsigned char data[GB_UART_DATA_SIZE_MAX];
+	unsigned char *next_frame;
+	unsigned char *end;
 	int ret;
 	extern int errno;
 
