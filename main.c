@@ -144,6 +144,7 @@ int main(int argc, char *argv[])
 	i2c_init();
 	i2s_init();
 	uart_init();
+	sdio_init();
 
 	ret = functionfs_loop();
 

@@ -123,6 +123,12 @@ struct op_msg {
 		struct gb_uart_serial_state_request	uart_ss_resp;
 		struct gb_uart_set_line_coding_request	uart_slc_req;
 		struct gb_uart_set_control_line_state_request uart_sls_req;
+		struct gb_sdio_get_caps_response	sdio_caps_rsp;
+		struct gb_sdio_event_request		sdio_event_req;
+		struct gb_sdio_command_request		sdio_cmd_req;
+		struct gb_sdio_command_response		sdio_cmd_rsp;
+		struct gb_sdio_transfer_request		sdio_xfer_req;
+		struct gb_sdio_transfer_response	sdio_xfer_rsp;
 	};
 };
 
@@ -186,6 +192,9 @@ void i2c_init(void);
 
 int pwm_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
 void pwm_init(void);
+
+int sdio_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
+void sdio_init(void);
 
 int i2s_mgmt_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
 int i2s_data_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);

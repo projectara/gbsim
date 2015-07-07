@@ -22,6 +22,7 @@ gbsim_SOURCES = \
 	main.c \
 	manifest.c \
 	pwm.c \
+	sdio.c \
 	uart.c
 
 gbsim_CPPFLAGS = \

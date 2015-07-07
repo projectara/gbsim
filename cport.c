@@ -64,6 +64,8 @@ static char *get_protocol(uint16_t cport_id)
 		return "UART";
 	case GREYBUS_PROTOCOL_PWM:
 		return "PWM";
+	case GREYBUS_PROTOCOL_SDIO:
+		return "SDIO";
 	case GREYBUS_PROTOCOL_I2S_MGMT:
 		return "I2S_MGMT";
 	case GREYBUS_PROTOCOL_I2S_RECEIVER:
@@ -90,6 +92,8 @@ static int cport_recv_handler(struct gbsim_cport *cport,
 		return uart_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_PWM:
 		return pwm_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
+	case GREYBUS_PROTOCOL_SDIO:
+		return sdio_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_I2S_MGMT:
 		return i2s_mgmt_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_I2S_RECEIVER:
