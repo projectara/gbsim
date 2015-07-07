@@ -73,7 +73,6 @@ struct gb_uart_port {
 	uint8_t		module_id;
 	int		tiocm_bits;
 	pthread_mutex_t	uart_port;
-	int		uart_port_pipe[UART_IDX_COUNT];
 };
 
 static struct gb_uart_port up[GB_UART_MAX];
@@ -84,43 +83,6 @@ static int port_count;
 static int up_count;
 static pthread_t uart_pthread;
 static pthread_barrier_t uart_barrier;
-
-/* Only used when bbb_backend is true */
-static void gb_uart_sync_wait(int i, __u8 rsp_type)
-{
-	fd_set fdset;
-	int ret;
-	int max = up[i].uart_port_pipe[UART_IDX_RX];
-	__u8 gb_rsp_type;
-	struct timeval tv;
-	extern int errno;
-
-	rsp_type = rsp_type | GB_UART_TYPE_RESPONSE;
-	FD_ZERO(&fdset);
-	FD_SET(up[i].uart_port_pipe[UART_IDX_RX], &fdset);
-	tv.tv_sec = 2;
-	tv.tv_usec = 0;
-
-	ret = select(1 + max, &fdset, 0, 0, &tv);
-	switch (ret) {
-	case -1:
-		/* TODO: BOD add signal handling */
-		gbsim_error("%s : select errno=%d\n", __func__, errno);
-		break;
-	case 0:
-		gbsim_error("UART AP response timeout msg %02x\n", rsp_type);
-		break;
-	default:
-		while (read(up[i].uart_port_pipe[UART_IDX_RX], &gb_rsp_type, 1) > 0);
-		if (gb_rsp_type != rsp_type) {
-			gbsim_error("UART AP response %02x wanted %02x\n",
-				gb_rsp_type, rsp_type);
-		} else {
-			if (verbose)
-				gbsim_info("UART AP response ACK\n");
-		}
-	}
-}
 
 /* Only used when bbb_backend is true */
 static int gb_uart_send(int i, void *tbuf, size_t tsize, __u8 type, __u8 flags)
@@ -158,7 +120,7 @@ static int gb_uart_send(int i, void *tbuf, size_t tsize, __u8 type, __u8 flags)
 	/* Fill in the request header */
 	message_size = sizeof(struct op_header) + payload_size;
 	op_req->header.size = htole16(message_size);
-	op_req->header.id = ++up[i].id;
+	op_req->header.id = 0;				/* Unidirectional */
 	op_req->header.type = type;
 
 	/* Store the cport id in the header pad bytes */
@@ -172,7 +134,6 @@ static int gb_uart_send(int i, void *tbuf, size_t tsize, __u8 type, __u8 flags)
 	ret = write(to_ap, op_req, message_size);
 	if (ret < 0)
 		return ret;
-	gb_uart_sync_wait(i, type);
 	return 0;
 }
 
@@ -655,11 +616,8 @@ int uart_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		break;
 	case (GB_UART_TYPE_RESPONSE | GB_UART_TYPE_RECEIVE_DATA):
 	case (GB_UART_TYPE_RESPONSE | GB_UART_TYPE_SERIAL_STATE):
-		gbsim_debug("AP -> Module %hhu CPort %hu unsol resp %02x index %d\n",
-			    module_id, cport_id, oph->type, i);
-		ret = write(up[i].uart_port_pipe[UART_IDX_TX], &oph->type, 1);
-		if (ret < 0)
-			gbsim_error("Write to signal pipe fail %d\n", errno);
+		gbsim_error("AP -> Module %hhu CPort %hu unsol resp %02x\n",
+			    module_id, cport_id, oph->type);
 		return 0;
 	default:
 		gbsim_error("UART operation type %02x not supported\n", oph->type);
@@ -770,31 +728,17 @@ void uart_cleanup(void)
 	for (i = 0; i < GB_UART_MAX; i++) {
 		if (up[i].fd != -1)
 			close(up[i].fd);
-		if (up[i].uart_port_pipe[UART_IDX_TX] != -1)
-			close(up[i].uart_port_pipe[UART_IDX_TX]);
-		if (up[i].uart_port_pipe[UART_IDX_RX] != -1)
-			close(up[i].uart_port_pipe[UART_IDX_RX]);
 	}
 }
 
 /* Only used when bbb_backend is true */
 static int uart_open(int idx)
 {
-	int ret;
-
 	/* Open fd to serial port */
 	snprintf(up[up_count].name, sizeof(up[up_count].name), "/dev/ttyO%d", idx);
 	up[up_count].fd = open(up[up_count].name, O_RDWR);
 	if (up->fd < 0) {
 		fprintf(stderr, "cannot open %s errno=%d\n", up[up_count].name, errno);
-		uart_cleanup();
-		return EXIT_FAILURE;
-	}
-
-	/* Pipe for signalling */
-	ret = pipe2(up[up_count].uart_port_pipe, O_NONBLOCK);
-	if (ret < 0) {
-		fprintf(stderr, "error making pipe - port %d\n", idx);
 		uart_cleanup();
 		return EXIT_FAILURE;
 	}
