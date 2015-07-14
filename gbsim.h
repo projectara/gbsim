@@ -129,6 +129,8 @@ struct op_msg {
 		struct gb_sdio_command_response		sdio_cmd_rsp;
 		struct gb_sdio_transfer_request		sdio_xfer_req;
 		struct gb_sdio_transfer_response	sdio_xfer_rsp;
+		struct gb_loopback_transfer_request	loopback_xfer_req;
+		struct gb_loopback_transfer_response	loopback_xfer_resp;
 	};
 };
 
@@ -203,6 +205,10 @@ void i2s_init(void);
 int uart_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
 void uart_init(void);
 void uart_cleanup(void);
+
+int loopback_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
+void loopback_init(void);
+void loopback_cleanup(void);
 
 bool manifest_parse(void *data, size_t size);
 

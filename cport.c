@@ -62,6 +62,8 @@ static char *get_protocol(uint16_t cport_id)
 		return "I2C";
 	case GREYBUS_PROTOCOL_UART:
 		return "UART";
+	case GREYBUS_PROTOCOL_LOOPBACK:
+		return "LOOPBACK";
 	case GREYBUS_PROTOCOL_PWM:
 		return "PWM";
 	case GREYBUS_PROTOCOL_SDIO:
@@ -99,6 +101,8 @@ static int cport_recv_handler(struct gbsim_cport *cport,
 	case GREYBUS_PROTOCOL_I2S_RECEIVER:
 	case GREYBUS_PROTOCOL_I2S_TRANSMITTER:
 		return i2s_data_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
+	case GREYBUS_PROTOCOL_LOOPBACK:
+		return loopback_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
 	default:
 		gbsim_error("handler not found for cport %u\n", cport->id);
 		return -EINVAL;

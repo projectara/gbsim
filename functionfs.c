@@ -70,6 +70,7 @@ int from_ap = -ENXIO;
 static pthread_t recv_pthread;
 
 static int state = GBEMU_IDLE;
+#define GBSIM_LEGACY_DESCRIPTORS
 
 /* 
  * Descriptors:
