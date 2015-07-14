@@ -22,12 +22,6 @@
 
 #include "gbsim.h"
 
-#define OP_I2C_PROTOCOL_VERSION		0x01
-#define OP_I2C_PROTOCOL_FUNCTIONALITY	0x02
-#define OP_I2C_PROTOCOL_TIMEOUT		0x03
-#define OP_I2C_PROTOCOL_RETRIES		0x04
-#define OP_I2C_PROTOCOL_TRANSFER	0x05
-
 static __u8 data_byte;
 static int ifd;
 
@@ -54,30 +48,30 @@ int i2c_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	oph = (struct op_header *)&op_req->header;
 
 	switch (oph->type) {
-	case OP_I2C_PROTOCOL_VERSION:
+	case GB_I2C_TYPE_PROTOCOL_VERSION:
 		payload_size = sizeof(struct protocol_version_rsp);
 		op_rsp->pv_rsp.version_major = GREYBUS_VERSION_MAJOR;
 		op_rsp->pv_rsp.version_minor = GREYBUS_VERSION_MINOR;
 		gbsim_debug("Module %hhu -> AP CPort %hu I2C protocol version response\n  ",
 			    module_id, cport_id);
 		break;
-	case OP_I2C_PROTOCOL_FUNCTIONALITY:
+	case GB_I2C_TYPE_FUNCTIONALITY:
 		payload_size = sizeof(struct gb_i2c_functionality_response);
 		op_rsp->i2c_fcn_rsp.functionality = htole32(I2C_FUNC_I2C);
 		gbsim_debug("Module %hhu -> AP CPort %hu I2C protocol functionality response\n  ",
 			    module_id, cport_id);
 		break;
-	case OP_I2C_PROTOCOL_TIMEOUT:
+	case GB_I2C_TYPE_TIMEOUT:
 		payload_size = 0;
 		gbsim_debug("Module %hhu -> AP CPort %hu I2C protocol timeout response\n  ",
 			    module_id, cport_id);
 		break;
-	case OP_I2C_PROTOCOL_RETRIES:
+	case GB_I2C_TYPE_RETRIES:
 		payload_size = 0;
 		gbsim_debug("Module %hhu -> AP CPort %hu I2C protocol retries response\n  ",
 			    module_id, cport_id);
 		break;
-	case OP_I2C_PROTOCOL_TRANSFER:
+	case GB_I2C_TYPE_TRANSFER:
 		op_count = le16toh(op_req->i2c_xfer_req.op_count);
 		write_data = (__u8 *)&op_req->i2c_xfer_req.ops[op_count];
 		gbsim_debug("Number of transfer ops %d\n", op_count);
