@@ -31,14 +31,6 @@
 #define BREAK_DURATION_MS 300			/* break duration tcsendbreak() */
 
 /* greybus-spec/build/html/bridged_phy.html#uart-protocol */
-#define GB_UART_TYPE_INVALID			0x00
-#define GB_UART_TYPE_PROTOCOL_VERSION		0x01
-#define GB_UART_TYPE_SEND_DATA			0x02
-#define GB_UART_TYPE_RECIEVE_DATA		0x03
-#define GB_UART_TYPE_SET_LINE_CODING		0x04
-#define GB_UART_TYPE_SET_CONTROL_LINE_STATE	0x05
-#define GB_UART_TYPE_SEND_BREAK			0x06
-#define GB_UART_TYPE_SERIAL_STATE		0x07
 #define GB_UART_TYPE_RESPONSE			0x80
 #define GB_UART_MAX				255
 #define GB_OPERATION_DATA_SIZE_MAX		0x400	/* TODO: BOD */
