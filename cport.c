@@ -16,7 +16,7 @@
 
 #include "gbsim.h"
 
-#define ES1_MSG_SIZE	(4 * 1024)
+#define ES1_MSG_SIZE	(2 * 1024)
 
 /* Receive buffer for all data arriving from the AP */
 static char cport_rbuf[ES1_MSG_SIZE];
