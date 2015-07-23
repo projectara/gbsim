@@ -145,7 +145,7 @@ int i2c_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	if (verbose)
 		gbsim_dump(op_rsp, message_size);
 
-	nbytes = write(to_ap, op_req, message_size);
+	nbytes = write(to_ap, op_rsp, message_size);
 	if (nbytes < 0)
 		return nbytes;
 
