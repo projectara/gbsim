@@ -75,7 +75,7 @@ static char *get_protocol(uint16_t cport_id)
 	case GREYBUS_PROTOCOL_I2S_TRANSMITTER:
 		return "I2S_TRANSMITTER";
 	default:
-		return "(Unknown protocol>";
+		return "(Unknown protocol)";
 	}
 }
 
