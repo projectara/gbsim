@@ -22,6 +22,18 @@
 static uint16_t hd_cport_id_counter;
 static int control_done;
 
+uint16_t allocate_hd_cport_id(void)
+{
+	/*
+	 * AP's hd_cport_id GB_SVC_CPORT_ID is reserved and must not be used for
+	 * other protocols.
+	 */
+	if (hd_cport_id_counter == GB_SVC_CPORT_ID)
+		++hd_cport_id_counter;
+
+	return hd_cport_id_counter++;
+}
+
 /*
  * Validate the given descriptor.  Its reported size must fit within
  * the number of bytes reamining, and it must have a recognized
@@ -77,12 +89,12 @@ static int identify_descriptor(struct greybus_descriptor *desc, size_t size)
 		if (!control_done &&
 			(le16toh(desc->cport.id) != GB_CONTROL_CPORT_ID)) {
 			allocate_cport(GB_CONTROL_CPORT_ID,
-					hd_cport_id_counter++,
+					allocate_hd_cport_id(),
 					GREYBUS_PROTOCOL_CONTROL);
 		}
 
 		control_done = 1;
-		allocate_cport(le16toh(desc->cport.id), hd_cport_id_counter++,
+		allocate_cport(le16toh(desc->cport.id), allocate_hd_cport_id(),
 				desc->cport.protocol_id);
 		break;
 	case GREYBUS_TYPE_INVALID:
