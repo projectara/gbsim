@@ -149,9 +149,9 @@ int loopback_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 
 	switch (oph->type) {
 	case GB_LOOPBACK_TYPE_PROTOCOL_VERSION:
-		payload_size = sizeof(struct protocol_version_rsp);
-		op_rsp->pv_rsp.version_major = GB_LOOPBACK_VERSION_MAJOR;
-		op_rsp->pv_rsp.version_minor = GB_LOOPBACK_VERSION_MINOR;
+		payload_size = sizeof(struct gb_protocol_version_response);
+		op_rsp->pv_rsp.major = GB_LOOPBACK_VERSION_MAJOR;
+		op_rsp->pv_rsp.minor = GB_LOOPBACK_VERSION_MINOR;
 		gbsim_debug("Module %hhu -> AP CPort %hu LOOPBACK version\n",
 			    module_id, cport_id);
 		break;

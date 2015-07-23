@@ -570,9 +570,9 @@ int uart_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 
 	switch (oph->type) {
 	case GB_UART_TYPE_PROTOCOL_VERSION:
-		payload_size = sizeof(struct protocol_version_rsp);
-		op_rsp->pv_rsp.version_major = GREYBUS_VERSION_MAJOR;
-		op_rsp->pv_rsp.version_minor = GREYBUS_VERSION_MINOR;
+		payload_size = sizeof(struct gb_protocol_version_response);
+		op_rsp->pv_rsp.major = GREYBUS_VERSION_MAJOR;
+		op_rsp->pv_rsp.minor = GREYBUS_VERSION_MINOR;
 		gbsim_debug("Module %hhu -> AP CPort %hu UART version\n",
 			    module_id, cport_id);
 		break;

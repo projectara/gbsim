@@ -77,17 +77,11 @@ struct op_header {
 	__u8	pad[2];
 };
 
-/* common ops */
-struct protocol_version_rsp {
-	__u8	version_major;
-	__u8	version_minor;
-};
-
 /* Ops */
 struct op_msg {
 	struct op_header	header;
 	union {
-		struct protocol_version_rsp		pv_rsp;
+		struct gb_protocol_version_response	pv_rsp;
 		struct gb_control_get_manifest_size_response control_msize_rsp;
 		struct gb_control_get_manifest_response control_manifest_rsp;
 		struct gb_gpio_line_count_response	gpio_lc_rsp;
