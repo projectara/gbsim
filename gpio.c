@@ -180,6 +180,44 @@ int gpio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	return 0;
 }
 
+char *gpio_get_operation(uint8_t type)
+{
+	switch (type) {
+	case GB_GPIO_TYPE_INVALID:
+		return "GB_GPIO_TYPE_INVALID";
+	case GB_GPIO_TYPE_PROTOCOL_VERSION:
+		return "GB_GPIO_TYPE_PROTOCOL_VERSION";
+	case GB_GPIO_TYPE_LINE_COUNT:
+		return "GB_GPIO_TYPE_LINE_COUNT";
+	case GB_GPIO_TYPE_ACTIVATE:
+		return "GB_GPIO_TYPE_ACTIVATE";
+	case GB_GPIO_TYPE_DEACTIVATE:
+		return "GB_GPIO_TYPE_DEACTIVATE";
+	case GB_GPIO_TYPE_GET_DIRECTION:
+		return "GB_GPIO_TYPE_GET_DIRECTION";
+	case GB_GPIO_TYPE_DIRECTION_IN:
+		return "GB_GPIO_TYPE_DIRECTION_IN";
+	case GB_GPIO_TYPE_DIRECTION_OUT:
+		return "GB_GPIO_TYPE_DIRECTION_OUT";
+	case GB_GPIO_TYPE_GET_VALUE:
+		return "GB_GPIO_TYPE_GET_VALUE";
+	case GB_GPIO_TYPE_SET_VALUE:
+		return "GB_GPIO_TYPE_SET_VALUE";
+	case GB_GPIO_TYPE_SET_DEBOUNCE:
+		return "GB_GPIO_TYPE_SET_DEBOUNCE";
+	case GB_GPIO_TYPE_IRQ_TYPE:
+		return "GB_GPIO_TYPE_IRQ_TYPE";
+	case GB_GPIO_TYPE_IRQ_MASK:
+		return "GB_GPIO_TYPE_IRQ_MASK";
+	case GB_GPIO_TYPE_IRQ_UNMASK:
+		return "GB_GPIO_TYPE_IRQ_UNMASK";
+	case GB_GPIO_TYPE_IRQ_EVENT:
+		return "GB_GPIO_TYPE_IRQ_EVENT";
+	default:
+		return "(Unknown operation)";
+	}
+}
+
 void gpio_init(void)
 {
 	int i;

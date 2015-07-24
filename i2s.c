@@ -182,6 +182,44 @@ int i2s_data_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	return 0;
 }
 
+char *i2s_mgmt_get_operation(uint8_t type)
+{
+	switch (type) {
+	case GB_I2S_MGMT_TYPE_PROTOCOL_VERSION:
+		return "GB_I2S_MGMT_TYPE_PROTOCOL_VERSION";
+	case GB_I2S_MGMT_TYPE_GET_SUPPORTED_CONFIGURATIONS:
+		return "GB_I2S_MGMT_TYPE_GET_SUPPORTED_CONFIGURATIONS";
+	case GB_I2S_MGMT_TYPE_SET_CONFIGURATION:
+		return "GB_I2S_MGMT_TYPE_SET_CONFIGURATION";
+	case GB_I2S_MGMT_TYPE_SET_SAMPLES_PER_MESSAGE:
+		return "GB_I2S_MGMT_TYPE_SET_SAMPLES_PER_MESSAGE";
+	case GB_I2S_MGMT_TYPE_GET_PROCESSING_DELAY:
+		return "GB_I2S_MGMT_TYPE_GET_PROCESSING_DELAY";
+	case GB_I2S_MGMT_TYPE_SET_START_DELAY:
+		return "GB_I2S_MGMT_TYPE_SET_START_DELAY";
+	case GB_I2S_MGMT_TYPE_ACTIVATE_CPORT:
+		return "GB_I2S_MGMT_TYPE_ACTIVATE_CPORT";
+	case GB_I2S_MGMT_TYPE_DEACTIVATE_CPORT:
+		return "GB_I2S_MGMT_TYPE_DEACTIVATE_CPORT";
+	case GB_I2S_MGMT_TYPE_REPORT_EVENT:
+		return "GB_I2S_MGMT_TYPE_REPORT_EVENT";
+	default:
+		return "(Unknown operation)";
+	}
+}
+
+char *i2s_data_get_operation(uint8_t type)
+{
+	switch (type) {
+	case GB_I2S_DATA_TYPE_PROTOCOL_VERSION:
+		return "GB_I2S_DATA_TYPE_PROTOCOL_VERSION";
+	case GB_I2S_DATA_TYPE_SEND_DATA:
+		return "GB_I2S_DATA_TYPE_SEND_DATA";
+	default:
+		return "(Unknown operation)";
+	}
+}
+
 void i2s_init(void)
 {
 

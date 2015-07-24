@@ -45,37 +45,63 @@ void allocate_cport(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id)
 	TAILQ_INSERT_TAIL(&info.cports, cport, cnode);
 }
 
-static char *get_protocol(uint16_t cport_id)
+static void get_protocol_operation(uint16_t cport_id, char **protocol,
+				   char **operation, uint8_t type)
 {
 	struct gbsim_cport *cport;
 
 	cport = cport_find(cport_id);
-	if (!cport)
-		return "N/A";
+	if (!cport) {
+		*protocol = "N/A";
+		*operation = "N/A";
+		return;
+	}
 
 	switch (cport->protocol) {
 	case GREYBUS_PROTOCOL_CONTROL:
-		return "CONTROL";
+		*protocol = "CONTROL";
+		*operation = control_get_operation(type);
+		break;
 	case GREYBUS_PROTOCOL_GPIO:
-		return "GPIO";
+		*protocol = "GPIO";
+		*operation = gpio_get_operation(type);
+		break;
 	case GREYBUS_PROTOCOL_I2C:
-		return "I2C";
+		*protocol = "I2C";
+		*operation = i2c_get_operation(type);
+		break;
 	case GREYBUS_PROTOCOL_UART:
-		return "UART";
+		*protocol = "UART";
+		*operation = uart_get_operation(type);
+		break;
 	case GREYBUS_PROTOCOL_LOOPBACK:
-		return "LOOPBACK";
+		*protocol = "LOOPBACK";
+		*operation = loopback_get_operation(type);
+		break;
 	case GREYBUS_PROTOCOL_PWM:
-		return "PWM";
+		*protocol = "PWM";
+		*operation = pwm_get_operation(type);
+		break;
 	case GREYBUS_PROTOCOL_SDIO:
-		return "SDIO";
+		*protocol = "SDIO";
+		*operation = sdio_get_operation(type);
+		break;
 	case GREYBUS_PROTOCOL_I2S_MGMT:
-		return "I2S_MGMT";
+		*protocol = "I2S_MGMT";
+		*operation = i2s_mgmt_get_operation(type);
+		break;
 	case GREYBUS_PROTOCOL_I2S_RECEIVER:
-		return "I2S_RECEIVER";
+		*protocol = "I2S_RECEIVER";
+		*operation = i2s_data_get_operation(type);
+		break;
 	case GREYBUS_PROTOCOL_I2S_TRANSMITTER:
-		return "I2S_TRANSMITTER";
+		*protocol = "I2S_TRANSMITTER";
+		*operation = i2s_data_get_operation(type);
+		break;
 	default:
-		return "(Unknown protocol)";
+		*protocol = "(Unknown protocol)";
+		*operation = "(Unknown operation)";
+		break;
 	}
 }
 
@@ -114,6 +140,7 @@ static void recv_handler(void *rbuf, size_t rsize, void *tbuf, size_t tsize)
 	struct op_header *hdr = rbuf;
 	uint16_t hd_cport_id;
 	struct gbsim_cport *cport;
+	char *protocol, *operation;
 	int ret;
 
 	if (rsize < sizeof(*hdr)) {
@@ -131,10 +158,12 @@ static void recv_handler(void *rbuf, size_t rsize, void *tbuf, size_t tsize)
 		return;
 	}
 
+	get_protocol_operation(hd_cport_id, &protocol, &operation, hdr->type);
+
 	/* FIXME: can identify module from our cport connection */
-	gbsim_debug("AP -> Module %hhu CPort %hu %s request\n  ",
+	gbsim_debug("AP -> Module %hhu CPort %hu %s %s request\n",
 		    cport_to_module_id(hd_cport_id), cport->id,
-		    get_protocol(hd_cport_id));
+		    protocol, operation);
 
 	if (verbose)
 		gbsim_dump(rbuf, rsize);

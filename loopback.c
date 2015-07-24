@@ -201,6 +201,24 @@ int loopback_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 
 }
 
+char *loopback_get_operation(uint8_t type)
+{
+	switch (type) {
+	case GB_LOOPBACK_TYPE_INVALID:
+		return "GB_LOOPBACK_TYPE_INVALID";
+	case GB_LOOPBACK_TYPE_PROTOCOL_VERSION:
+		return "GB_LOOPBACK_TYPE_PROTOCOL_VERSION";
+	case GB_LOOPBACK_TYPE_PING:
+		return "GB_LOOPBACK_TYPE_PING";
+	case GB_LOOPBACK_TYPE_TRANSFER:
+		return "GB_LOOPBACK_TYPE_TRANSFER";
+	case GB_LOOPBACK_TYPE_SINK:
+		return "GB_LOOPBACK_TYPE_SINK";
+	default:
+		return "(Unknown operation)";
+	}
+}
+
 void loopback_cleanup(void)
 {
 	if (thread_started) {

@@ -739,6 +739,30 @@ static int uart_open(int idx)
 	return 0;
 }
 
+char *uart_get_operation(uint8_t type)
+{
+	switch (type) {
+	case GB_UART_TYPE_INVALID:
+		return "GB_UART_TYPE_INVALID";
+	case GB_UART_TYPE_PROTOCOL_VERSION:
+		return "GB_UART_TYPE_PROTOCOL_VERSION";
+	case GB_UART_TYPE_SEND_DATA:
+		return "GB_UART_TYPE_SEND_DATA";
+	case GB_UART_TYPE_RECEIVE_DATA:
+		return "GB_UART_TYPE_RECEIVE_DATA";
+	case GB_UART_TYPE_SET_LINE_CODING:
+		return "GB_UART_TYPE_SET_LINE_CODING";
+	case GB_UART_TYPE_SET_CONTROL_LINE_STATE:
+		return "GB_UART_TYPE_SET_CONTROL_LINE_STATE";
+	case GB_UART_TYPE_SEND_BREAK:
+		return "GB_UART_TYPE_SEND_BREAK";
+	case GB_UART_TYPE_SERIAL_STATE:
+		return "GB_UART_TYPE_SERIAL_STATE";
+	default:
+		return "(Unknown operation)";
+	}
+}
+
 void uart_init(void)
 {
 	extern int errno;

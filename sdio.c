@@ -756,6 +756,28 @@ int sdio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	return 0;
 }
 
+char *sdio_get_operation(uint8_t type)
+{
+	switch (type) {
+	case GB_SDIO_TYPE_INVALID:
+		return "GB_SDIO_TYPE_INVALID";
+	case GB_SDIO_TYPE_PROTOCOL_VERSION:
+		return "GB_SDIO_TYPE_PROTOCOL_VERSION";
+	case GB_SDIO_TYPE_GET_CAPABILITIES:
+		return "GB_SDIO_TYPE_GET_CAPABILITIES";
+	case GB_SDIO_TYPE_SET_IOS:
+		return "GB_SDIO_TYPE_SET_IOS";
+	case GB_SDIO_TYPE_COMMAND:
+		return "GB_SDIO_TYPE_COMMAND";
+	case GB_SDIO_TYPE_TRANSFER:
+		return "GB_SDIO_TYPE_TRANSFER";
+	case GB_SDIO_TYPE_EVENT:
+		return "GB_SDIO_TYPE_EVENT";
+	default:
+		return "(Unknown operation)";
+	}
+}
+
 void sdio_init(void)
 {
 	sd_init();

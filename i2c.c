@@ -152,6 +152,26 @@ int i2c_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	return 0;
 }
 
+char *i2c_get_operation(uint8_t type)
+{
+	switch (type) {
+	case GB_I2C_TYPE_INVALID:
+		return "GB_I2C_TYPE_INVALID";
+	case GB_I2C_TYPE_PROTOCOL_VERSION:
+		return "GB_I2C_TYPE_PROTOCOL_VERSION";
+	case GB_I2C_TYPE_FUNCTIONALITY:
+		return "GB_I2C_TYPE_FUNCTIONALITY";
+	case GB_I2C_TYPE_TIMEOUT:
+		return "GB_I2C_TYPE_TIMEOUT";
+	case GB_I2C_TYPE_RETRIES:
+		return "GB_I2C_TYPE_RETRIES";
+	case GB_I2C_TYPE_TRANSFER:
+		return "GB_I2C_TYPE_TRANSFER";
+	default:
+		return "(Unknown operation)";
+	}
+}
+
 void i2c_init(void)
 {
 	char filename[20];

@@ -179,28 +179,37 @@ void *recv_thread(void *);
 void recv_thread_cleanup(void *);
 
 int control_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
+char *control_get_operation(uint8_t type);
 
 int gpio_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
+char *gpio_get_operation(uint8_t type);
 void gpio_init(void);
 
 int i2c_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
+char *i2c_get_operation(uint8_t type);
 void i2c_init(void);
 
 int pwm_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
+char *pwm_get_operation(uint8_t type);
 void pwm_init(void);
 
 int sdio_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
+char *sdio_get_operation(uint8_t type);
 void sdio_init(void);
 
 int i2s_mgmt_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
 int i2s_data_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
+char *i2s_mgmt_get_operation(uint8_t type);
+char *i2s_data_get_operation(uint8_t type);
 void i2s_init(void);
 
 int uart_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
+char *uart_get_operation(uint8_t type);
 void uart_init(void);
 void uart_cleanup(void);
 
 int loopback_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
+char *loopback_get_operation(uint8_t type);
 void loopback_init(void);
 void loopback_cleanup(void);
 

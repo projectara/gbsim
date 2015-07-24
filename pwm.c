@@ -130,6 +130,32 @@ int pwm_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	return 0;
 }
 
+char *pwm_get_operation(uint8_t type)
+{
+	switch (type) {
+	case GB_PWM_TYPE_INVALID:
+		return "GB_PWM_TYPE_INVALID";
+	case GB_PWM_TYPE_PROTOCOL_VERSION:
+		return "GB_PWM_TYPE_PROTOCOL_VERSION";
+	case GB_PWM_TYPE_PWM_COUNT:
+		return "GB_PWM_TYPE_PWM_COUNT";
+	case GB_PWM_TYPE_ACTIVATE:
+		return "GB_PWM_TYPE_ACTIVATE";
+	case GB_PWM_TYPE_DEACTIVATE:
+		return "GB_PWM_TYPE_DEACTIVATE";
+	case GB_PWM_TYPE_CONFIG:
+		return "GB_PWM_TYPE_CONFIG";
+	case GB_PWM_TYPE_POLARITY:
+		return "GB_PWM_TYPE_POLARITY";
+	case GB_PWM_TYPE_ENABLE:
+		return "GB_PWM_TYPE_ENABLE";
+	case GB_PWM_TYPE_DISABLE:
+		return "GB_PWM_TYPE_DISABLE";
+	default:
+		return "(Unknown operation)";
+	}
+}
+
 void pwm_init(void)
 {
 	if (bbb_backend) {

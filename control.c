@@ -93,3 +93,25 @@ int control_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 
 	return 0;
 }
+
+char *control_get_operation(uint8_t type)
+{
+	switch (type) {
+	case GB_CONTROL_TYPE_INVALID:
+		return "GB_CONTROL_TYPE_INVALID";
+	case GB_CONTROL_TYPE_PROTOCOL_VERSION:
+		return "GB_CONTROL_TYPE_PROTOCOL_VERSION";
+	case GB_CONTROL_TYPE_PROBE_AP:
+		return "GB_CONTROL_TYPE_PROBE_AP";
+	case GB_CONTROL_TYPE_GET_MANIFEST_SIZE:
+		return "GB_CONTROL_TYPE_GET_MANIFEST_SIZE";
+	case GB_CONTROL_TYPE_GET_MANIFEST:
+		return "GB_CONTROL_TYPE_GET_MANIFEST";
+	case GB_CONTROL_TYPE_CONNECTED:
+		return "GB_CONTROL_TYPE_CONNECTED";
+	case GB_CONTROL_TYPE_DISCONNECTED:
+		return "GB_CONTROL_TYPE_DISCONNECTED";
+	default:
+		return "(Unknown operation)";
+	}
+}
