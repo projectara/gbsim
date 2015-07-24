@@ -570,40 +570,20 @@ static void sd_init(void)
 }
 
 /* Greybus Specific Code */
-static ssize_t sdio_send_message(struct op_msg *msg, uint16_t message_size)
-{
-	ssize_t nbytes;
-
-	if (verbose)
-		gbsim_dump(msg, message_size);
-	nbytes = write(to_ap, msg, message_size);
-
-	return nbytes;
-}
-
 static ssize_t sdio_send_card_event(struct op_msg *op_req, uint16_t hd_cport_id,
 				    uint8_t event)
 {
-	size_t payload_size = sizeof(struct gb_sdio_event_request);
-	uint16_t message_size;
+	uint16_t message_size = sizeof(struct op_header) +
+				sizeof(struct gb_sdio_event_request);
 
 	op_req->sdio_event_req.event = event;
 
-	/* Fill in the request header */
-	message_size = sizeof(struct op_header) + payload_size;
-	op_req->header.size = htole16(message_size);
-	op_req->header.id = 0;	/* unidirectional */
-	op_req->header.type = GB_SDIO_TYPE_EVENT;
-	op_req->header.result = PROTOCOL_STATUS_SUCCESS;
-	/* Store the cport id in the header pad bytes */
-	op_req->header.pad[0] = hd_cport_id & 0xff;
-	op_req->header.pad[1] = (hd_cport_id >> 8) & 0xff;
-
-	return sdio_send_message(op_req, message_size);
+	return send_request(op_req, hd_cport_id, message_size, 0,
+			GB_SDIO_TYPE_EVENT);
 }
 
 static ssize_t sdio_transfer_rsp(struct op_msg *op_rsp, uint16_t hd_cport_id,
-				 uint16_t id, uint16_t data_blocks,
+				 struct op_header *oph, uint16_t data_blocks,
 				 uint16_t data_blksz, uint8_t *data)
 {
 	size_t payload_size;
@@ -635,39 +615,22 @@ static ssize_t sdio_transfer_rsp(struct op_msg *op_rsp, uint16_t hd_cport_id,
 
 send:
 	message_size = sizeof(struct op_header) + payload_size;
-
-	op_rsp->header.size = htole16(message_size);
-	op_rsp->header.id = id;
-	op_rsp->header.type = OP_RESPONSE | GB_SDIO_TYPE_TRANSFER;
-	op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
-	/* Store the cport id in the header pad bytes */
-	op_rsp->header.pad[0] = hd_cport_id & 0xff;
-	op_rsp->header.pad[1] = (hd_cport_id >> 8) & 0xff;
-
-	return sdio_send_message(op_rsp, message_size);
+	return send_response(op_rsp, hd_cport_id, message_size, oph,
+			     PROTOCOL_STATUS_SUCCESS);
 }
 
 static ssize_t sdio_command_rsp(struct op_msg *op_rsp, uint16_t hd_cport_id,
-				uint16_t id)
+				struct op_header *oph)
 {
-	size_t payload_size = sizeof(struct gb_sdio_command_response);
-	uint16_t message_size;
+	uint16_t message_size = sizeof(struct gb_sdio_command_response) +
+				sizeof(struct op_header);
 	int i;
-
-	message_size = sizeof(struct op_header) + payload_size;
 
 	for (i = 0; i < 4; i++)
 		op_rsp->sdio_cmd_rsp.resp[i] = htole32(sd->rsp[i]);
 
-	op_rsp->header.size = htole16(message_size);
-	op_rsp->header.id = id;
-	op_rsp->header.type = OP_RESPONSE | GB_SDIO_TYPE_COMMAND;
-	op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
-	/* Store the cport id in the header pad bytes */
-	op_rsp->header.pad[0] = hd_cport_id & 0xff;
-	op_rsp->header.pad[1] = (hd_cport_id >> 8) & 0xff;
-
-	return sdio_send_message(op_rsp, message_size);
+	return send_response(op_rsp, hd_cport_id, message_size, oph,
+			     PROTOCOL_STATUS_SUCCESS);
 }
 
 int sdio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
@@ -717,7 +680,7 @@ int sdio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 			       op_req->sdio_cmd_req.cmd_type,
 			       le32toh(op_req->sdio_cmd_req.cmd_arg));
 
-		sdio_command_rsp(op_rsp, hd_cport_id, oph->id);
+		sdio_command_rsp(op_rsp, hd_cport_id, oph);
 		return 0;
 	case GB_SDIO_TYPE_TRANSFER:
 		data_blocks = le16toh(op_req->sdio_xfer_req.data_blocks);
@@ -728,7 +691,7 @@ int sdio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		else
 			sd_transfer_write(data_blocks, data_blksz);
 
-		sdio_transfer_rsp(op_rsp, hd_cport_id, oph->id, data_blocks,
+		sdio_transfer_rsp(op_rsp, hd_cport_id, oph, data_blocks,
 				  data_blksz, data);
 		return 0;
 	default:
@@ -737,17 +700,8 @@ int sdio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		return -EINVAL;
 	}
 
-	/* Fill in the response header */
 	message_size = sizeof(struct op_header) + payload_size;
-	op_rsp->header.size = htole16(message_size);
-	op_rsp->header.id = oph->id;
-	op_rsp->header.type = OP_RESPONSE | oph->type;
-	op_rsp->header.result = result;
-	/* Store the cport id in the header pad bytes */
-	op_rsp->header.pad[0] = hd_cport_id & 0xff;
-	op_rsp->header.pad[1] = (hd_cport_id >> 8) & 0xff;
-
-	sdio_send_message(op_rsp, message_size);
+	send_response(op_rsp, hd_cport_id, message_size, oph, result);
 
 	/* Simulate a card insert after sending capabilities */
 	if (oph->type == GB_SDIO_TYPE_GET_CAPABILITIES)
