@@ -33,7 +33,6 @@ int gpio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	size_t payload_size;
 	uint16_t message_size;
 	uint8_t module_id;
-	uint8_t result = PROTOCOL_STATUS_SUCCESS;
 	ssize_t nbytes;
 
 	module_id = cport_to_module_id(cport_id);
@@ -139,7 +138,7 @@ int gpio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	op_rsp->header.size = htole16(message_size);
 	op_rsp->header.id = oph->id;
 	op_rsp->header.type = OP_RESPONSE | oph->type;
-	op_rsp->header.result = result;
+	op_rsp->header.result = PROTOCOL_STATUS_SUCCESS;
 	/* Store the cport id in the header pad bytes */
 	op_rsp->header.pad[0] = hd_cport_id & 0xff;
 	op_rsp->header.pad[1] = (hd_cport_id >> 8) & 0xff;
@@ -156,7 +155,6 @@ int gpio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	/* Test GPIO interrupts by sending one when they become unmasked */
 	if (oph->type == GB_GPIO_TYPE_IRQ_UNMASK) {
 		payload_size = sizeof(struct gb_gpio_irq_event_request);
-		result = PROTOCOL_STATUS_SUCCESS;
 		op_req->gpio_irq_event_req.which = 1;	/* XXX HACK */
 		gbsim_debug("Module %hhu -> AP CPort %hu GPIO protocol IRQ event request\n  ",
 			    module_id, cport_id);
@@ -166,7 +164,7 @@ int gpio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		op_req->header.size = htole16(message_size);
 		op_req->header.id = 0;	/* unidirectional */
 		op_req->header.type = GB_GPIO_TYPE_IRQ_EVENT;
-		op_rsp->header.result = result;
+		op_rsp->header.result = 0;
 		/* Store the cport id in the header pad bytes */
 		op_req->header.pad[0] = hd_cport_id & 0xff;
 		op_req->header.pad[1] = (hd_cport_id >> 8) & 0xff;
