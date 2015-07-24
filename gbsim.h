@@ -214,5 +214,10 @@ void loopback_init(void);
 void loopback_cleanup(void);
 
 bool manifest_parse(void *data, size_t size);
+int send_response(struct op_msg *op, uint16_t hd_cport_id,
+		   uint16_t message_size, struct op_header *oph,
+		   uint8_t result);
+int send_request(struct op_msg *op, uint16_t hd_cport_id,
+		 uint16_t message_size, uint16_t id, uint8_t type);
 
 #endif /* __GBSIM_H */

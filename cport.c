@@ -105,6 +105,56 @@ static void get_protocol_operation(uint16_t cport_id, char **protocol,
 	}
 }
 
+static int send_msg_to_ap(struct op_msg *op, uint16_t hd_cport_id,
+			  uint16_t message_size, uint16_t id, uint8_t type,
+			  uint8_t result)
+{
+	char *protocol, *operation;
+	ssize_t nbytes;
+
+	op->header.size = htole16(message_size);
+	op->header.id = id;
+	op->header.type = type;
+	op->header.result = result;
+
+	/* Store the cport id in the header pad bytes */
+	op->header.pad[0] = hd_cport_id & 0xff;
+	op->header.pad[1] = (hd_cport_id >> 8) & 0xff;
+
+	get_protocol_operation(hd_cport_id, &protocol, &operation,
+			       type & ~OP_RESPONSE);
+	if (type & OP_RESPONSE)
+		gbsim_debug("Module -> AP CPort %hu %s %s response\n",
+			    hd_cport_id, protocol, operation);
+	else
+		gbsim_debug("AP -> Module CPort %hu %s %s request\n",
+			    hd_cport_id, protocol, operation);
+
+	/* Send the response to the AP */
+	if (verbose)
+		gbsim_dump(op, message_size);
+
+	nbytes = write(to_ap, op, message_size);
+	if (nbytes < 0)
+		return nbytes;
+
+	return 0;
+}
+
+int send_response(struct op_msg *op, uint16_t hd_cport_id,
+		   uint16_t message_size, struct op_header *oph,
+		   uint8_t result)
+{
+	return send_msg_to_ap(op, hd_cport_id, message_size, oph->id,
+			oph->type | OP_RESPONSE, result);
+}
+
+int send_request(struct op_msg *op, uint16_t hd_cport_id,
+		 uint16_t message_size, uint16_t id, uint8_t type)
+{
+	return send_msg_to_ap(op, hd_cport_id, message_size, id, type, 0);
+}
+
 static int cport_recv_handler(struct gbsim_cport *cport,
 				void *rbuf, size_t rsize,
 				void *tbuf, size_t tsize)
