@@ -1,0 +1,247 @@
+/*
+ * Greybus Simulator: SVC CPort protocol
+ *
+ * Copyright 2015 Google Inc.
+ * Copyright 2015 Linaro Ltd.
+ *
+ * Provided under the three clause BSD license found in the LICENSE file.
+ */
+
+#include <fcntl.h>
+#include <pthread.h>
+#include <linux/fs.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <errno.h>
+
+#include "gbsim.h"
+
+static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
+			       void *rbuf, size_t rsize, void *tbuf,
+			       size_t tsize)
+{
+	struct op_msg *op_req = rbuf;
+	struct op_msg *op_rsp = tbuf;
+	struct op_header *oph = &op_req->header;
+	struct gb_svc_intf_device_id_request *svc_dev_id;
+	struct gb_svc_conn_create_request *svc_conn_create;
+	struct gb_svc_conn_destroy_request *svc_conn_destroy;
+	uint16_t message_size = sizeof(*oph);
+	size_t payload_size = 0;
+
+	switch (oph->type) {
+	case GB_SVC_TYPE_PROTOCOL_VERSION:
+		gbsim_error("%s: Protocol Version request not supported\n",
+			    __func__);
+		break;
+	case GB_SVC_TYPE_INTF_DEVICE_ID:
+		svc_dev_id = &op_req->svc_intf_device_id_request;
+
+		gbsim_debug("SVC assign device id (%hhu %hhu) response\n",
+			    svc_dev_id->intf_id, svc_dev_id->device_id);
+		break;
+	case GB_SVC_TYPE_CONN_CREATE:
+		svc_conn_create = &op_req->svc_conn_create_request;
+
+		gbsim_debug("SVC connection create request (%hhu %hu):(%hhu %hu) response\n",
+			    svc_conn_create->intf1_id, svc_conn_create->cport1_id,
+			    svc_conn_create->intf2_id, svc_conn_create->cport2_id);
+		break;
+	case GB_SVC_TYPE_CONN_DESTROY:
+		svc_conn_destroy = &op_req->svc_conn_destroy_request;
+
+		gbsim_debug("SVC connection destroy request (%hhu %hu):(%hhu %hu) response\n",
+			    svc_conn_destroy->intf1_id, svc_conn_destroy->cport1_id,
+			    svc_conn_destroy->intf2_id, svc_conn_destroy->cport2_id);
+		break;
+	case GB_SVC_TYPE_INTF_HOTPLUG:
+	case GB_SVC_TYPE_INTF_HOT_UNPLUG:
+	case GB_SVC_TYPE_INTF_RESET:
+	default:
+		gbsim_error("%s: Request not supported (%d)\n", __func__,
+			    oph->type);
+		return -EINVAL;
+	}
+
+	message_size += payload_size;
+	return send_response(op_rsp, hd_cport_id, message_size, oph,
+			     PROTOCOL_STATUS_SUCCESS);
+}
+
+static int svc_handler_response(uint16_t cport_id, uint16_t hd_cport_id,
+				void *rbuf, size_t rsize)
+{
+	struct op_msg *op_rsp = rbuf;
+	struct op_header *oph = &op_rsp->header;
+	int ret;
+
+	/* Must be AP's svc protocol's cport */
+	if (cport_id != GB_SVC_CPORT_ID || cport_id != hd_cport_id) {
+		gbsim_error("%s: Error: cport-id-mismatch (%d %d %d)", __func__,
+			    cport_id, hd_cport_id, GB_SVC_CPORT_ID);
+		return -EINVAL;
+	}
+
+	switch (oph->type & ~OP_RESPONSE) {
+	case GB_SVC_TYPE_PROTOCOL_VERSION:
+		gbsim_debug("%s: Version major-%d minor-%d\n", __func__,
+			    op_rsp->pv_rsp.major, op_rsp->pv_rsp.minor);
+
+		/* Version request successful, send hello msg */
+		ret = svc_request_send(GB_SVC_TYPE_SVC_HELLO, AP_INTF_ID);
+		if (ret) {
+			gbsim_error("%s: Failed to send svc hello request (%d)\n",
+				    __func__, ret);
+			return ret;
+		}
+		break;
+	case GB_SVC_TYPE_SVC_HELLO:
+		/*
+		 * AP's SVC cport is ready now, start scanning for module
+		 * hotplug.
+		 */
+		ret = inotify_start(hotplug_basedir);
+		if (ret < 0)
+			gbsim_error("Failed to start inotify thread\n");
+		break;
+	case GB_SVC_TYPE_INTF_HOTPLUG:
+	case GB_SVC_TYPE_INTF_HOT_UNPLUG:
+	case GB_SVC_TYPE_INTF_RESET:
+		break;
+	default:
+		gbsim_error("%s: Response not supported (%d)\n", __func__,
+			    oph->type & ~OP_RESPONSE);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+int svc_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
+		    size_t rsize, void *tbuf, size_t tsize)
+{
+	struct op_msg *op = rbuf;
+	struct op_header *oph = &op->header;
+
+	if (oph->type & OP_RESPONSE)
+		return svc_handler_response(cport_id, hd_cport_id, rbuf, rsize);
+	else
+		return svc_handler_request(cport_id, hd_cport_id, rbuf, rsize,
+					   tbuf, tsize);
+}
+
+char *svc_get_operation(uint8_t type)
+{
+	switch (type) {
+	case GB_SVC_TYPE_INVALID:
+		return "GB_SVC_TYPE_INVALID";
+	case GB_SVC_TYPE_PROTOCOL_VERSION:
+		return "GB_SVC_TYPE_PROTOCOL_VERSION";
+	case GB_SVC_TYPE_SVC_HELLO:
+		return "GB_SVC_TYPE_SVC_HELLO";
+	case GB_SVC_TYPE_INTF_DEVICE_ID:
+		return "GB_SVC_TYPE_INTF_DEVICE_ID";
+	case GB_SVC_TYPE_INTF_HOTPLUG:
+		return "GB_SVC_TYPE_INTF_HOTPLUG";
+	case GB_SVC_TYPE_INTF_HOT_UNPLUG:
+		return "GB_SVC_TYPE_INTF_HOT_UNPLUG";
+	case GB_SVC_TYPE_INTF_RESET:
+		return "GB_SVC_TYPE_INTF_RESET";
+	case GB_SVC_TYPE_CONN_CREATE:
+		return "GB_SVC_TYPE_CONN_CREATE";
+	case GB_SVC_TYPE_CONN_DESTROY:
+		return "GB_SVC_TYPE_CONN_DESTROY";
+	default:
+		return "(Unknown operation)";
+	}
+}
+
+int svc_request_send(uint8_t type, uint8_t intf_id)
+{
+	struct op_msg msg;
+	struct op_header *oph = &msg.header;
+	struct gb_protocol_version_response *version_request;
+	struct gb_svc_hello_request *hello_request;
+	struct gb_svc_intf_hotplug_request *hotplug;
+	struct gb_svc_intf_hot_unplug_request *hotunplug;
+	struct gb_svc_intf_reset_request *reset;
+	uint16_t message_size = sizeof(*oph);
+	size_t payload_size;
+	ssize_t nbytes;
+
+	switch (type) {
+	case GB_SVC_TYPE_PROTOCOL_VERSION:
+		payload_size = sizeof(*version_request);
+		version_request = &msg.svc_version_request;
+		version_request->major = GB_SVC_VERSION_MAJOR;
+		version_request->minor = GB_SVC_VERSION_MINOR;
+		break;
+	case GB_SVC_TYPE_SVC_HELLO:
+		payload_size = sizeof(*hello_request);
+		hello_request = &msg.hello_request;
+
+		hello_request->endo_id = htole16(ENDO_ID);
+		hello_request->interface_id = AP_INTF_ID;
+		break;
+	case GB_SVC_TYPE_INTF_HOTPLUG:
+		payload_size = sizeof(*hotplug);
+		hotplug = &msg.svc_intf_hotplug_request;
+
+		hotplug->intf_id = intf_id;
+
+		//FIXME: Use some real version numbers here ?
+		hotplug->data.unipro_mfg_id = htole32(1);
+		hotplug->data.unipro_prod_id = htole32(1);
+		hotplug->data.ara_vend_id = htole32(1);
+		hotplug->data.ara_prod_id = htole32(1);
+		break;
+	case GB_SVC_TYPE_INTF_HOT_UNPLUG:
+		payload_size = sizeof(*hotunplug);
+		hotunplug = &msg.svc_intf_hot_unplug_request;
+		hotunplug->intf_id = intf_id;
+		break;
+	case GB_SVC_TYPE_INTF_RESET:
+		payload_size = sizeof(*reset);
+		reset = &msg.svc_intf_reset_request;
+		reset->intf_id = intf_id;
+
+		break;
+	default:
+		gbsim_error("svc operation type %02x not supported\n", type);
+		return -EINVAL;
+	}
+
+	gbsim_debug("Module's Interface %hhu -> AP CPort %hu %s request\n",
+		    intf_id, GB_SVC_CPORT_ID, svc_get_operation(type));
+
+	/* Fill in the response header */
+	message_size += payload_size;
+	oph->size = htole16(message_size);
+	oph->id = 1; //FIXME Do we need a better id allocation here ?
+	oph->type = type;
+	oph->result = 0;
+
+	/* Store the cport id in the header pad bytes */
+	oph->pad[0] = GB_SVC_CPORT_ID & 0xff;
+	oph->pad[1] = (GB_SVC_CPORT_ID >> 8) & 0xff;
+
+	/* Send the response to the AP */
+	if (verbose)
+		gbsim_dump(&msg, message_size);
+
+	nbytes = write(to_ap, &msg, message_size);
+	if (nbytes < 0)
+		return nbytes;
+
+	return 0;
+}
+
+void svc_init(void)
+{
+	/* Allocate cport for svc protocol between AP and SVC */
+	allocate_cport(GB_SVC_CPORT_ID, GB_SVC_CPORT_ID, GREYBUS_PROTOCOL_SVC);
+}

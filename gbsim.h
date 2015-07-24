@@ -35,10 +35,15 @@ extern int i2c_adapter;
 extern int uart_portno;
 extern int uart_count;
 extern int verbose;
+extern char *hotplug_basedir;
 
 /* Matches up with the Greybus Protocol specification document */
 #define GREYBUS_VERSION_MAJOR	0x00
 #define GREYBUS_VERSION_MINOR	0x01
+
+/* Fixed values of AP's interface id and endo id */
+#define ENDO_ID 0x4755
+#define AP_INTF_ID 0x5
 
 extern int control;
 extern int svc_int;
@@ -84,6 +89,14 @@ struct op_msg {
 		struct gb_protocol_version_response	pv_rsp;
 		struct gb_control_get_manifest_size_response control_msize_rsp;
 		struct gb_control_get_manifest_response control_manifest_rsp;
+		struct gb_protocol_version_response	svc_version_request;
+		struct gb_svc_hello_request		hello_request;
+		struct gb_svc_intf_device_id_request	svc_intf_device_id_request;
+		struct gb_svc_conn_create_request	svc_conn_create_request;
+		struct gb_svc_conn_destroy_request	svc_conn_destroy_request;
+		struct gb_svc_intf_hotplug_request	svc_intf_hotplug_request;
+		struct gb_svc_intf_hot_unplug_request	svc_intf_hot_unplug_request;
+		struct gb_svc_intf_reset_request	svc_intf_reset_request;
 		struct gb_gpio_line_count_response	gpio_lc_rsp;
 		struct gb_gpio_activate_request		gpio_act_req;
 		struct gb_gpio_deactivate_request	gpio_deact_req;
@@ -180,6 +193,11 @@ void recv_thread_cleanup(void *);
 
 int control_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
 char *control_get_operation(uint8_t type);
+
+int svc_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
+int svc_request_send(uint8_t, uint8_t);
+char *svc_get_operation(uint8_t type);
+void svc_init(void);
 
 int gpio_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
 char *gpio_get_operation(uint8_t type);

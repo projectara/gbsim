@@ -16,6 +16,7 @@ gbsim_SOURCES = \
 	gbsim.h \
 	gpio.c \
 	control.c \
+	svc.c \
 	i2c.c \
 	i2s.c \
 	inotify.c \

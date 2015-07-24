@@ -22,6 +22,7 @@ int bbb_backend = 0;
 int i2c_adapter = 0;
 int uart_portno = 0;
 int uart_count = 0;
+char *hotplug_basedir;
 int verbose = 0;
 
 static usbg_state *s;
@@ -61,7 +62,6 @@ int main(int argc, char *argv[])
 {
 	int ret = -EINVAL;
 	int o;
-	char *hotplug_basedir = NULL;
 
 	while ((o = getopt(argc, argv, ":bh:i:u:U:v")) != -1) {
 		switch (o) {
@@ -140,6 +140,7 @@ int main(int argc, char *argv[])
 		goto out;
 
 	/* Protocol handlers */
+	svc_init();
 	gpio_init();
 	i2c_init();
 	i2s_init();

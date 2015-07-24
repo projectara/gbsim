@@ -62,6 +62,10 @@ static void get_protocol_operation(uint16_t cport_id, char **protocol,
 		*protocol = "CONTROL";
 		*operation = control_get_operation(type);
 		break;
+	case GREYBUS_PROTOCOL_SVC:
+		*protocol = "SVC";
+		*operation = svc_get_operation(type);
+		break;
 	case GREYBUS_PROTOCOL_GPIO:
 		*protocol = "GPIO";
 		*operation = gpio_get_operation(type);
@@ -162,6 +166,8 @@ static int cport_recv_handler(struct gbsim_cport *cport,
 	switch (cport->protocol) {
 	case GREYBUS_PROTOCOL_CONTROL:
 		return control_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
+	case GREYBUS_PROTOCOL_SVC:
+		return svc_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_GPIO:
 		return gpio_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_I2C:
