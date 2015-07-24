@@ -119,8 +119,8 @@ static void loopback_init_port(uint8_t module_id, uint16_t cport_id,
 	gblb.hd_cport_id = hd_cport_id;
 	gblb.id = id;
 	gblb.init = true;
-	gbsim_info("Loopback Module %hu Cport %hhu HDCport %hhu port-index %d\n",
-		   module_id, cport_id, hd_cport_id, port_count);
+	gbsim_debug("Loopback Module %hu Cport %hhu HDCport %hhu index %d\n",
+		    module_id, cport_id, hd_cport_id, port_count);
 }
 
 
