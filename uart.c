@@ -554,7 +554,7 @@ int uart_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	struct gb_uart_send_data_request *send_data;
 	struct gb_uart_set_line_coding_request *line_coding;
 	struct gb_uart_set_control_line_state_request *line_state;
-	int i, ret;
+	int i;
 	extern int errno;
 
 	module_id = cport_to_module_id(cport_id);
@@ -572,29 +572,23 @@ int uart_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		payload_size = sizeof(struct gb_protocol_version_response);
 		op_rsp->pv_rsp.major = GREYBUS_VERSION_MAJOR;
 		op_rsp->pv_rsp.minor = GREYBUS_VERSION_MINOR;
-		gbsim_debug("Module %hhu -> AP CPort %hu UART version\n",
-			    module_id, cport_id);
 		break;
 	case GB_UART_TYPE_SEND_DATA:
 		send_data = &op_req->uart_send_data_req;
 		if (tty_write(module_id, cport_id, send_data->data, send_data->size) < send_data->size)
 			result = PROTOCOL_STATUS_INVALID;
-		gbsim_debug("Module %hhu -> AP CPort %hu UART send len %hu\n",
-			    module_id, cport_id, send_data->size);
+		gbsim_debug("UART send len %hu\n", send_data->size);
 		break;
 	case GB_UART_TYPE_SET_LINE_CODING:
 		line_coding = &op_req->uart_slc_req;
 		if (tty_set_line_coding(i, line_coding))
 			result = PROTOCOL_STATUS_INVALID;
-		gbsim_debug("Module %hhu -> AP CPort %hu UART set-line-coding\n",
-			    module_id, cport_id);
 		break;
 	case GB_UART_TYPE_SET_CONTROL_LINE_STATE:
 		line_state = &op_req->uart_sls_req;
 		if (tty_set_control_line_state(i, line_state))
 			result = PROTOCOL_STATUS_INVALID;
-		gbsim_debug("Module %hhu -> AP CPort %hu UART dtr=%d rts=%d\n",
-			module_id, cport_id,
+		gbsim_debug("UART dtr=%d rts=%d\n",
 			line_state->control&GB_UART_CTRL_DTR,
 			line_state->control & GB_UART_CTRL_RTS);
 		break;
@@ -602,8 +596,6 @@ int uart_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		set_break = &op_req->uart_sb_req;
 		if (tty_send_break(i, set_break))
 			result = PROTOCOL_STATUS_INVALID;
-		gbsim_debug("Module %hhu -> AP CPort %hu UART send-break\n",
-			    module_id, cport_id);
 		break;
 	case (OP_RESPONSE | GB_UART_TYPE_RECEIVE_DATA):
 	case (OP_RESPONSE | GB_UART_TYPE_SERIAL_STATE):
@@ -611,28 +603,11 @@ int uart_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 			    module_id, cport_id, oph->type);
 		return 0;
 	default:
-		gbsim_error("UART operation type %02x not supported\n", oph->type);
 		return -EINVAL;
 	}
 
-	/* Fill in the response header */
 	message_size = sizeof(struct op_header) + payload_size;
-	op_rsp->header.size = htole16(message_size);
-	op_rsp->header.id = oph->id;
-	op_rsp->header.type = OP_RESPONSE | oph->type;
-	op_rsp->header.result = result;
-
-	/* Store the cport id in the header pad bytes */
-	op_rsp->header.pad[0] = hd_cport_id & 0xff;
-	op_rsp->header.pad[1] = (hd_cport_id >> 8) & 0xff;
-
-	if (verbose)
-		gbsim_dump(op_rsp, message_size);
-	ret = write(to_ap, op_rsp, message_size);
-	if (ret < 0)
-		return ret;
-	return 0;
-
+	return send_response(op_rsp, hd_cport_id, message_size, oph, result);
 }
 
 /* Only used when bbb_backend is true */
