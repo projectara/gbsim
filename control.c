@@ -1,4 +1,3 @@
-
 /*
  * Greybus Simulator: Control CPort protocol
  *
