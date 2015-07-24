@@ -32,11 +32,7 @@ int i2s_mgmt_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	struct gb_i2s_mgmt_configuration *conf;
 	size_t payload_size;
 	uint16_t message_size;
-	uint8_t module_id;
 	uint8_t result = PROTOCOL_STATUS_SUCCESS;
-	ssize_t nbytes;
-
-	module_id = cport_to_module_id(cport_id);
 
 	op_rsp = (struct op_msg *)tbuf;
 	oph = (struct op_header *)&op_req->header;
@@ -46,8 +42,6 @@ int i2s_mgmt_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		payload_size = sizeof(struct gb_protocol_version_response);
 		op_rsp->pv_rsp.major = GREYBUS_VERSION_MAJOR;
 		op_rsp->pv_rsp.minor = GREYBUS_VERSION_MINOR;
-		gbsim_debug("Module %hhu -> AP CPort %hu I2S protocol version response\n  ",
-				module_id, cport_id);
 		break;
 	case GB_I2S_MGMT_TYPE_GET_SUPPORTED_CONFIGURATIONS:
 		payload_size = sizeof(struct gb_i2s_mgmt_get_supported_configurations_response) +
@@ -72,58 +66,29 @@ int i2s_mgmt_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		conf->ll_wclk_tx_edge = GB_I2S_MGMT_EDGE_RISING;
 		conf->ll_wclk_rx_edge = GB_I2S_MGMT_EDGE_FALLING;
 		conf->ll_data_offset = 1;
-
-		gbsim_debug("Module %hhu -> AP CPort %hu I2S GET_CONFIGURATION response\n  ",
-			    module_id, cport_id);
 		break;
 	case GB_I2S_MGMT_TYPE_SET_CONFIGURATION:
 		payload_size = 0;
-		gbsim_debug("Module %hhu -> AP CPort %hu I2S SET_CONFIGURATION response\n  ",
-			    module_id, cport_id);
 		break;
 	case GB_I2S_MGMT_TYPE_SET_SAMPLES_PER_MESSAGE:
 		payload_size = 0;
-		gbsim_debug("Module %hhu -> AP CPort %hu I2S SET_SAMPLES_PER_MESSAGE response\n  ",
-			    module_id, cport_id);
 		break;
 	case GB_I2S_MGMT_TYPE_SET_START_DELAY:
 		payload_size = 0;
-		gbsim_debug("Module %hhu -> AP CPort %hu I2S SET_START_DELAY response\n  ",
-			    module_id, cport_id);
 		break;
 	case GB_I2S_MGMT_TYPE_ACTIVATE_CPORT:
 		payload_size = 0;
-		gbsim_debug("Module %hhu -> AP CPort %hu I2S ACTIVATE_CPORT response\n  ",
-			    module_id, cport_id);
 		break;
 	case GB_I2S_MGMT_TYPE_DEACTIVATE_CPORT:
 		payload_size = 0;
-		gbsim_debug("Module %hhu -> AP CPort %hu I2S DEACTIVATE_CPORT response\n  ",
-			    module_id, cport_id);
 		break;
 	default:
 		gbsim_error("i2s mgmt operation type %02x not supported\n", oph->type);
 		return -EINVAL;
 	}
 
-	/* Fill in the response header */
 	message_size = sizeof(struct op_header) + payload_size;
-	op_rsp->header.size = htole16(message_size);
-	op_rsp->header.id = oph->id;
-	op_rsp->header.type = OP_RESPONSE | oph->type;
-	op_rsp->header.result = result;
-	/* Store the cport id in the header pad bytes */
-	op_rsp->header.pad[0] = hd_cport_id & 0xff;
-	op_rsp->header.pad[1] = (hd_cport_id >> 8) & 0xff;
-
-	if (verbose)
-		gbsim_dump(op_rsp, message_size);
-
-	nbytes = write(to_ap, op_rsp, message_size);
-	if (nbytes < 0)
-		return nbytes;
-
-	return 0;
+	return send_response(op_rsp, hd_cport_id, message_size, oph, result);
 }
 
 
@@ -135,11 +100,7 @@ int i2s_data_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	struct op_msg *op_rsp;
 	size_t payload_size;
 	uint16_t message_size;
-	uint8_t module_id;
 	uint8_t result = PROTOCOL_STATUS_SUCCESS;
-	ssize_t nbytes;
-
-	module_id = cport_to_module_id(cport_id);
 
 	op_rsp = (struct op_msg *)tbuf;
 	oph = (struct op_header *)&op_req->header;
@@ -149,37 +110,17 @@ int i2s_data_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		payload_size = sizeof(struct gb_protocol_version_response);
 		op_rsp->pv_rsp.major = GREYBUS_VERSION_MAJOR;
 		op_rsp->pv_rsp.minor = GREYBUS_VERSION_MINOR;
-		gbsim_debug("Module %hhu -> AP CPort %hu I2S protocol version response\n  ",
-				module_id, cport_id);
 		break;
 	case GB_I2S_DATA_TYPE_SEND_DATA:
 		payload_size = 0;
-		gbsim_debug("Module %hhu -> AP CPort %hu I2S SEND_DATA response\n  ",
-			    module_id, cport_id);
 		break;
 	default:
 		gbsim_error("i2s data operation type %02x not supported\n", oph->type);
 		return -EINVAL;
 	}
 
-	/* Fill in the response header */
 	message_size = sizeof(struct op_header) + payload_size;
-	op_rsp->header.size = htole16(message_size);
-	op_rsp->header.id = oph->id;
-	op_rsp->header.type = OP_RESPONSE | oph->type;
-	op_rsp->header.result = result;
-	/* Store the cport id in the header pad bytes */
-	op_rsp->header.pad[0] = hd_cport_id & 0xff;
-	op_rsp->header.pad[1] = (hd_cport_id >> 8) & 0xff;
-
-	if (verbose)
-		gbsim_dump(op_rsp, message_size);
-
-	nbytes = write(to_ap, op_rsp, message_size);
-	if (nbytes < 0)
-		return nbytes;
-
-	return 0;
+	return send_response(op_rsp, hd_cport_id, message_size, oph, result);
 }
 
 char *i2s_mgmt_get_operation(uint8_t type)
