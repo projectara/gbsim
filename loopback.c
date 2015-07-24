@@ -29,9 +29,6 @@
 #define GB_OPERATION_DATA_SIZE_MAX		\
 	(0x800 - sizeof(struct gb_loopback_transfer_request))
 
-/* Comands and response types/flags */
-#define GB_LOOPBACK_TYPE_RESPONSE		0x80
-
 enum {
 	LOOPBACK_FSM_IDLE = 0,
 	LOOPBACK_FSM_PING_HOST,
@@ -188,7 +185,7 @@ int loopback_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	message_size = sizeof(struct op_header) + payload_size;
 	op_rsp->header.size = htole16(message_size);
 	op_rsp->header.id = oph->id;
-	op_rsp->header.type = GB_LOOPBACK_TYPE_RESPONSE | oph->type;
+	op_rsp->header.type = OP_RESPONSE | oph->type;
 	op_rsp->header.result = result;
 
 	/* Store the cport id in the header pad bytes */
