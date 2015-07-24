@@ -140,7 +140,7 @@ static void recv_handler(void *rbuf, size_t rsize, void *tbuf, size_t tsize)
 	struct op_header *hdr = rbuf;
 	uint16_t hd_cport_id;
 	struct gbsim_cport *cport;
-	char *protocol, *operation;
+	char *protocol, *operation, *type;
 	int ret;
 
 	if (rsize < sizeof(*hdr)) {
@@ -158,12 +158,14 @@ static void recv_handler(void *rbuf, size_t rsize, void *tbuf, size_t tsize)
 		return;
 	}
 
-	get_protocol_operation(hd_cport_id, &protocol, &operation, hdr->type);
+	type = hdr->type & OP_RESPONSE ? "response" : "request";
+	get_protocol_operation(hd_cport_id, &protocol, &operation,
+			       hdr->type & ~OP_RESPONSE);
 
 	/* FIXME: can identify module from our cport connection */
-	gbsim_debug("AP -> Module %hhu CPort %hu %s %s request\n",
+	gbsim_debug("AP -> Module %hhu CPort %hu %s %s %s\n",
 		    cport_to_module_id(hd_cport_id), cport->id,
-		    protocol, operation);
+		    protocol, operation, type);
 
 	if (verbose)
 		gbsim_dump(rbuf, rsize);
