@@ -31,7 +31,6 @@
 #define BREAK_DURATION_MS 300			/* break duration tcsendbreak() */
 
 /* greybus-spec/build/html/bridged_phy.html#uart-protocol */
-#define GB_UART_TYPE_RESPONSE			0x80
 #define GB_UART_MAX				255
 #define GB_OPERATION_DATA_SIZE_MAX		0x400	/* TODO: BOD */
 
@@ -606,8 +605,8 @@ int uart_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		gbsim_debug("Module %hhu -> AP CPort %hu UART send-break\n",
 			    module_id, cport_id);
 		break;
-	case (GB_UART_TYPE_RESPONSE | GB_UART_TYPE_RECEIVE_DATA):
-	case (GB_UART_TYPE_RESPONSE | GB_UART_TYPE_SERIAL_STATE):
+	case (OP_RESPONSE | GB_UART_TYPE_RECEIVE_DATA):
+	case (OP_RESPONSE | GB_UART_TYPE_SERIAL_STATE):
 		gbsim_error("AP -> Module %hhu CPort %hu unsol resp %02x\n",
 			    module_id, cport_id, oph->type);
 		return 0;
@@ -620,7 +619,7 @@ int uart_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	message_size = sizeof(struct op_header) + payload_size;
 	op_rsp->header.size = htole16(message_size);
 	op_rsp->header.id = oph->id;
-	op_rsp->header.type = GB_UART_TYPE_RESPONSE | oph->type;
+	op_rsp->header.type = OP_RESPONSE | oph->type;
 	op_rsp->header.result = result;
 
 	/* Store the cport id in the header pad bytes */
