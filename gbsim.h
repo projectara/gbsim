@@ -97,6 +97,7 @@ struct op_msg {
 		struct gb_svc_intf_hotplug_request	svc_intf_hotplug_request;
 		struct gb_svc_intf_hot_unplug_request	svc_intf_hot_unplug_request;
 		struct gb_svc_intf_reset_request	svc_intf_reset_request;
+		struct gb_svc_route_create_request	svc_route_create_request;
 		struct gb_gpio_line_count_response	gpio_lc_rsp;
 		struct gb_gpio_activate_request		gpio_act_req;
 		struct gb_gpio_deactivate_request	gpio_deact_req;

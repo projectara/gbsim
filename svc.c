@@ -30,6 +30,7 @@ static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 	struct gb_svc_intf_device_id_request *svc_dev_id;
 	struct gb_svc_conn_create_request *svc_conn_create;
 	struct gb_svc_conn_destroy_request *svc_conn_destroy;
+	struct gb_svc_route_create_request *svc_route_create;
 	uint16_t message_size = sizeof(*oph);
 	size_t payload_size = 0;
 
@@ -57,6 +58,13 @@ static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 		gbsim_debug("SVC connection destroy request (%hhu %hu):(%hhu %hu) response\n",
 			    svc_conn_destroy->intf1_id, svc_conn_destroy->cport1_id,
 			    svc_conn_destroy->intf2_id, svc_conn_destroy->cport2_id);
+		break;
+	case GB_SVC_TYPE_ROUTE_CREATE:
+		svc_route_create = &op_req->svc_route_create_request;
+
+		gbsim_debug("SVC route create request (%hhu %hu):(%hhu %hu) response\n",
+			    svc_route_create->intf1_id, svc_route_create->dev1_id,
+			    svc_route_create->intf2_id, svc_route_create->dev2_id);
 		break;
 	case GB_SVC_TYPE_INTF_HOTPLUG:
 	case GB_SVC_TYPE_INTF_HOT_UNPLUG:
@@ -155,6 +163,8 @@ char *svc_get_operation(uint8_t type)
 		return "GB_SVC_TYPE_CONN_CREATE";
 	case GB_SVC_TYPE_CONN_DESTROY:
 		return "GB_SVC_TYPE_CONN_DESTROY";
+	case GB_SVC_TYPE_ROUTE_CREATE:
+		return "GB_SVC_TYPE_ROUTE_CREATE";
 	default:
 		return "(Unknown operation)";
 	}
