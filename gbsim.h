@@ -169,6 +169,7 @@ static inline uint8_t cport_to_module_id(uint16_t cport)
 	return 1;
 }
 
+struct gbsim_cport *cport_find(uint16_t cport_id);
 void allocate_cport(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id);
 void free_cport(struct gbsim_cport *cport);
 void free_cports(void);
@@ -194,6 +195,7 @@ int svc_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
 int svc_request_send(uint8_t, uint8_t);
 char *svc_get_operation(uint8_t type);
 void svc_init(void);
+void svc_exit(void);
 
 int gpio_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
 char *gpio_get_operation(uint8_t type);

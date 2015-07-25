@@ -40,6 +40,7 @@ static void cleanup(void)
 	uart_cleanup();
 	gadget_cleanup(s, g);
 	functionfs_cleanup();
+	svc_exit();
 }
 
 static void signal_handler(int sig)

@@ -22,7 +22,7 @@
 static char cport_rbuf[ES1_MSG_SIZE];
 static char cport_tbuf[ES1_MSG_SIZE];
 
-static struct gbsim_cport *cport_find(uint16_t cport_id)
+struct gbsim_cport *cport_find(uint16_t cport_id)
 {
 	struct gbsim_cport *cport;
 

@@ -257,3 +257,8 @@ void svc_init(void)
 	/* Allocate cport for svc protocol between AP and SVC */
 	allocate_cport(GB_SVC_CPORT_ID, GB_SVC_CPORT_ID, GREYBUS_PROTOCOL_SVC);
 }
+
+void svc_exit(void)
+{
+	free_cport(cport_find(GB_SVC_CPORT_ID));
+}
