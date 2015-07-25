@@ -116,8 +116,10 @@ static int svc_handler_response(uint16_t cport_id, uint16_t hd_cport_id,
 		if (ret < 0)
 			gbsim_error("Failed to start inotify thread\n");
 		break;
-	case GB_SVC_TYPE_INTF_HOTPLUG:
 	case GB_SVC_TYPE_INTF_HOT_UNPLUG:
+		free_cports();
+		break;
+	case GB_SVC_TYPE_INTF_HOTPLUG:
 	case GB_SVC_TYPE_INTF_RESET:
 		break;
 	default:

@@ -34,6 +34,11 @@ static uint16_t allocate_hd_cport_id(void)
 	return hd_cport_id_counter++;
 }
 
+void reset_hd_cport_id(void)
+{
+	hd_cport_id_counter = 0;
+}
+
 /*
  * Validate the given descriptor.  Its reported size must fit within
  * the number of bytes reamining, and it must have a recognized

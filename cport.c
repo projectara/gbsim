@@ -45,6 +45,31 @@ void allocate_cport(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id)
 	TAILQ_INSERT_TAIL(&info.cports, cport, cnode);
 }
 
+void free_cport(struct gbsim_cport *cport)
+{
+	TAILQ_REMOVE(&info.cports, cport, cnode);
+	free(cport);
+}
+
+void free_cports(void)
+{
+	struct gbsim_cport *cport;
+
+	/*
+	 * Linux doesn't have a foreach_safe version of tailq and so the dirty
+	 * trick of 'goto again'.
+	 */
+again:
+	TAILQ_FOREACH(cport, &info.cports, cnode) {
+		if (cport->hd_cport_id == GB_SVC_CPORT_ID)
+			continue;
+
+		free_cport(cport);
+		goto again;
+	}
+	reset_hd_cport_id();
+}
+
 static void get_protocol_operation(uint16_t cport_id, char **protocol,
 				   char **operation, uint8_t type)
 {

@@ -170,6 +170,8 @@ static inline uint8_t cport_to_module_id(uint16_t cport)
 }
 
 void allocate_cport(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id);
+void free_cport(struct gbsim_cport *cport);
+void free_cports(void);
 
 int gadget_create(usbg_state **, usbg_gadget **);
 int gadget_enable(usbg_gadget *);
@@ -226,6 +228,7 @@ void loopback_init(void);
 void loopback_cleanup(void);
 
 bool manifest_parse(void *data, size_t size);
+void reset_hd_cport_id(void);
 int send_response(struct op_msg *op, uint16_t hd_cport_id,
 		   uint16_t message_size, struct op_header *oph,
 		   uint8_t result);
