@@ -135,10 +135,6 @@ int main(int argc, char *argv[])
 	if (ret < 0)
 		goto out;
 
-	ret = inotify_start(hotplug_basedir);
-	if (ret < 0)
-		goto out;
-
 	/* Protocol handlers */
 	svc_init();
 	gpio_init();

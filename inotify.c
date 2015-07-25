@@ -108,12 +108,7 @@ static void *inotify_thread(void *param)
 						int iid = get_interface_id(event->name);
 						if (iid > 0) {
 							gbsim_info("%s Interface inserted\n", event->name);
-							send_hot_plug(iid);
-							/*
-							 * FIXME: hardcoded
-							 * device ID
-							 */
-							send_link_up(iid, 2);
+							svc_request_send(GB_SVC_TYPE_INTF_HOTPLUG, iid);
 						} else
 							gbsim_error("invalid interface ID, no hotplug plug event sent\n");
 					} else
@@ -122,7 +117,7 @@ static void *inotify_thread(void *param)
 				else if (event->mask & IN_DELETE) {
 					int iid = get_interface_id(event->name);
 					if (iid > 0) {
-						send_hot_unplug(get_interface_id(event->name));
+						svc_request_send(GB_SVC_TYPE_INTF_HOT_UNPLUG, iid);
 						gbsim_info("%s interface removed\n", event->name);
 					} else
 						gbsim_error("invalid interface ID, no hotplug unplug event sent\n");

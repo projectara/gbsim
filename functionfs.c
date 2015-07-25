@@ -327,7 +327,16 @@ static int enable_endpoints(void)
 		return ret;
 	}
 
-	send_svc_handshake();
+	/*
+	 * Start communication with the AP in following sequence:
+	 * - Send a svc protocol version request
+	 * - For a valid response, send the 'hello' message.
+	 */
+	ret = svc_request_send(GB_SVC_TYPE_PROTOCOL_VERSION, AP_INTF_ID);
+	if (ret) {
+		gbsim_error("Failed to send svc version request (%d)\n", ret);
+		return ret;
+	}
 
 	return 0;
 }
@@ -451,7 +460,6 @@ static int read_control(void)
 			disable_endpoints();
 			break;
 		case FUNCTIONFS_SETUP:
-			handle_setup(&event[i].u.setup);
 			break;
 		case FUNCTIONFS_SUSPEND:
 			break;
