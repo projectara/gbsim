@@ -37,39 +37,12 @@
 
 #define NEVENT		5
 
-#define HP_PAYLOAD_SIZE		(sizeof(struct svc_function_hotplug))
-#define HP_MSG_SIZE		(sizeof(struct svc_msg_header) +	\
-					HP_PAYLOAD_SIZE)
-#define HS_PAYLOAD_SIZE		(sizeof(struct svc_function_handshake))
-#define HS_MSG_SIZE		(sizeof(struct svc_msg_header) +	\
-					HS_PAYLOAD_SIZE)
-#define APID_PAYLOAD_SIZE	(sizeof(struct svc_function_unipro_management))
-#define APID_MSG_SIZE		(sizeof(struct svc_msg_header) +	\
-					APID_PAYLOAD_SIZE)
-#define LU_PAYLOAD_SIZE		(sizeof(struct svc_function_unipro_management))
-#define LU_MSG_SIZE		(sizeof(struct svc_msg_header) +	\
-					LU_PAYLOAD_SIZE)
-
-#define HS_VALID(m)							\
-	((m->handshake.version_major == GREYBUS_VERSION_MAJOR) &&	\
-	(m->handshake.version_minor == GREYBUS_VERSION_MINOR) &&	\
-	(m->handshake.handshake_type == SVC_HANDSHAKE_AP_HELLO))
-
-#define CPORT_BUF_SIZE		(sizeof(struct svc_msg) + 64 * 1024)
-
-enum gbsim_state {
-	GBEMU_IDLE		= 0,
-	GBEMU_HS_COMPLETE	= 1,
-};
-
 int control = -ENXIO;
-int svc_int = -ENXIO;
 int to_ap = -ENXIO;
 int from_ap = -ENXIO;
 
 static pthread_t recv_pthread;
 
-static int state = GBEMU_IDLE;
 #define GBSIM_LEGACY_DESCRIPTORS
 
 /* 
@@ -196,90 +169,6 @@ static const struct {
  * Endpoint handling
  */
 
-static int svc_int_write(void *buf, size_t length)
-{
-	return write(svc_int, buf, length);
-};
-
-static void send_svc_handshake(void)
-{
-	uint8_t buf[256];
-	struct svc_msg *m = (struct svc_msg *)buf;
-
-	m->header.function_id = SVC_FUNCTION_HANDSHAKE;
-	m->header.message_type = SVC_MSG_DATA;
-	m->header.payload_length = htole16(HS_PAYLOAD_SIZE);
-	m->handshake.version_major = GREYBUS_VERSION_MAJOR;
-	m->handshake.version_minor = GREYBUS_VERSION_MINOR;
-	m->handshake.handshake_type = SVC_HANDSHAKE_SVC_HELLO;
-
-	svc_int_write(m, HS_MSG_SIZE);
-	gbsim_debug("SVC->AP handshake sent\n");
-}
-
-void __send_hot_plug(int iid, int event)
-{
-	struct svc_msg msg;
-
-	msg.header.function_id = SVC_FUNCTION_HOTPLUG;
-	msg.header.message_type = SVC_MSG_DATA;
-	msg.header.payload_length = htole16(HP_PAYLOAD_SIZE);
-	msg.hotplug.hotplug_event = event;
-	msg.hotplug.interface_id = iid;
-
-	/* Write out hotplug message */
-	svc_int_write(&msg, HP_MSG_SIZE);
-
-	gbsim_debug("SVC->AP hotplug event (%s) sent\n",
-		    event == SVC_HOTPLUG_EVENT ? "plug" : "unplug");
-}
-
-void send_hot_plug(int iid)
-{
-	__send_hot_plug(iid, SVC_HOTPLUG_EVENT);
-}
-
-void send_hot_unplug(int iid)
-{
-	__send_hot_plug(iid, SVC_HOTUNPLUG_EVENT);
-}
-
-void send_link_up(int iid, int did)
-{
-	struct svc_msg msg;
-
-	msg.header.function_id = SVC_FUNCTION_UNIPRO_NETWORK_MANAGEMENT;
-	msg.header.message_type = SVC_MSG_DATA;
-	msg.header.payload_length = htole16(LU_PAYLOAD_SIZE);
-	msg.management.management_packet_type = SVC_MANAGEMENT_LINK_UP;
-	msg.management.link_up.interface_id = iid;
-	msg.management.link_up.device_id = did;
-
-	/* Write out hotplug message */
-	svc_int_write(&msg, LU_MSG_SIZE);
-
-	gbsim_debug("SVC -> AP Link Up (%d:%d) message sent\n",
-		    iid, did);
-}
-
-void send_ap_id(int iid)
-{
-	struct svc_msg msg;
-	
-	msg.header.function_id = SVC_FUNCTION_UNIPRO_NETWORK_MANAGEMENT;
-	msg.header.message_type = SVC_MSG_DATA;
-	msg.header.payload_length = htole16(APID_PAYLOAD_SIZE);
-	msg.management.management_packet_type = SVC_MANAGEMENT_AP_ID;
-	msg.management.ap_id.interface_id = iid;
-	msg.management.ap_id.device_id = 1;
-
-	/* Write out hotplug message */
-	svc_int_write(&msg, APID_MSG_SIZE);
-
-	gbsim_debug("SVC -> AP ID (IID:%d DID:1) message sent\n", iid);
-}
-
-
 void cleanup_endpoint(int ep_fd, char *ep_name)
 {
 	int ret;
@@ -308,10 +197,6 @@ static int enable_endpoints(void)
 
 	/* Start SVC/CPort endpoints here */
 	gbsim_debug("Start SVC/CPort endpoints\n");
-
-	svc_int = open(FFS_GBEMU_SVC, O_RDWR);
-	if (svc_int < 0)
-		return svc_int;
 
 	to_ap = open(FFS_GBEMU_IN, O_RDWR);
 	if (to_ap < 0)
@@ -351,72 +236,10 @@ static void disable_endpoints(void)
 	pthread_cancel(recv_pthread);
 	pthread_join(recv_pthread, NULL);
 
-	state = GBEMU_IDLE;
-
 	close(from_ap);
 	from_ap = -EINVAL;
 	close(to_ap);
 	to_ap = -EINVAL;
-
-	close(svc_int);
-	svc_int = -EINVAL;
-}
-
-static void handle_setup(const struct usb_ctrlrequest *setup)
-{
-	uint8_t buf[256];
-	struct svc_msg *m = (struct svc_msg *)buf;
-	int count;
-
-	if (verbose) {
-		gbsim_debug("AP->AP Bridge setup message:\n");
-		gbsim_debug("  bRequestType = %02x\n", setup->bRequestType);
-		gbsim_debug("  bRequest     = %02x\n", setup->bRequest);
-		gbsim_debug("  wValue       = %04x\n", le16toh(setup->wValue));
-		gbsim_debug("  wIndex       = %04x\n", le16toh(setup->wIndex));
-		gbsim_debug("  wLength      = %04x\n", le16toh(setup->wLength));
-	}
-
-	if ((setup->bRequest == 0x01) &&
-	    (setup->bRequestType & USB_TYPE_VENDOR)) {
-
-		if ((count = read(control, buf, setup->wLength)) < 0) {
-			perror("SVC message data not present");
-			return;
-		}
-
-		if (verbose) {
-			int i;
-			gbsim_debug("AP->SVC message:\n  ");
-			for (i = 0; i < count; i++)
-				fprintf(stdout, "%02x ", buf[i]);
-			fprintf(stdout, "\n");
-		}
-
-		if (m->header.message_type == SVC_MSG_ERROR) {
-			perror("SVC message session error");
-			return;
-		}
-
-		switch (m->header.function_id) {
-		case SVC_FUNCTION_HANDSHAKE:
-			if (HS_VALID(m)) {
-				gbsim_info("AP handshake complete\n");
-				state = GBEMU_HS_COMPLETE;
-				send_ap_id(0);
-			} else
-				perror("AP handshake invalid");
-			break;
-		case SVC_FUNCTION_UNIPRO_NETWORK_MANAGEMENT:
-			gbsim_debug("AP -> SVC set route to Device ID %d\n",
-				    m->management.set_route.device_id);
-			break;
-		default:
-			perror("SVC message ID invalid");
-			return;
-		}
-		
-	}
 }
 
 static int read_control(void)

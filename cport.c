@@ -237,7 +237,6 @@ static void recv_handler(void *rbuf, size_t rsize, void *tbuf, size_t tsize)
 
 void recv_thread_cleanup(void *arg)
 {
-	cleanup_endpoint(svc_int, "svc_int");
 	cleanup_endpoint(to_ap, "to_ap");
 	cleanup_endpoint(from_ap, "from_ap");
 }

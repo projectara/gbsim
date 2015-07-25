@@ -20,7 +20,6 @@
 
 #include <greybus_manifest.h>
 #include <greybus_protocols.h>
-#include <svc_msg.h>
 
 #ifndef BIT
 #define BIT(n)	(1UL << (n))
@@ -46,7 +45,6 @@ extern char *hotplug_basedir;
 #define AP_INTF_ID 0x5
 
 extern int control;
-extern int svc_int;
 extern int to_ap;
 extern int from_ap;
 
@@ -183,11 +181,6 @@ int functionfs_cleanup(void);
 void cleanup_endpoint(int, char *);
 
 int inotify_start(char *);
-
-void send_hot_plug(int);
-void send_hot_unplug(int);
-
-void send_link_up(int, int);
 
 void *recv_thread(void *);
 void recv_thread_cleanup(void *);
