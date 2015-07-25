@@ -22,7 +22,7 @@
 static uint16_t hd_cport_id_counter;
 static int control_done;
 
-uint16_t allocate_hd_cport_id(void)
+static uint16_t allocate_hd_cport_id(void)
 {
 	/*
 	 * AP's hd_cport_id GB_SVC_CPORT_ID is reserved and must not be used for
