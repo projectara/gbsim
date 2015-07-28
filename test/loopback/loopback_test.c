@@ -50,10 +50,12 @@ void usage(void)
 	"             without logging any metrics data\n"
 	"  PATH indicates the sysfs path for the loopback greybus entries e.g.\n"
 	"       /sys/bus/greybus/devices/endo0:1:1:1:1/\n"
+	"  DEV specifies the loopback device to read raw latcency timings from e.g.\n"
+	"       /dev/gb/loopback0\n"
 	"Examples:\n"
-	"  looptest transfer 128 10000\n"
-	"  looptest ping 0 128\n"
-	"  looptest sink 2030 32768\n");
+	"  looptest transfer 128 10000 /sys/bus/greybus/devices/endo0:1:1:1:1/ /dev/gb/loopback0\n"
+	"  looptest ping 0 128 /sys/bus/greybus/devices/endo0:1:1:1:1/ /dev/gb/loopback0\n"
+	"  looptest sink 2030 32768 /sys/bus/greybus/devices/endo0:1:1:1:1/ /dev/gb/loopback0\n");
 	abort();
 }
 
@@ -113,18 +115,33 @@ void write_sysfs_val(const char *sys_pfx, const char *node, int val)
 	close(fd);
 }
 
-void log_csv(const char *test_name, int size, int iteration_max,
-	     const char *sys_pfx)
+void log_csv_error(int len, int err)
 {
+	fprintf(stderr, "unable to write %d bytes to csv %s\n", len,
+		strerror(err));
+}
 
+void log_csv(const char *test_name, int size, int iteration_max,
+	     const char *sys_pfx, const char *gb_loopback_dev)
+{
+	extern int errno;
 	char buf[CSV_MAX_LINE];
 	char *date;
-	int error, fd, len;
+	int error, fd, fd_dev, len;
 	int request_min, request_max, request_avg, request_jitter;
 	int latency_min, latency_max, latency_avg, latency_jitter;
 	int throughput_min, throughput_max, throughput_avg, throughput_jitter;
+	unsigned int i;
+	uint32_t val;
 	struct tm tm;
 	time_t t;
+
+	fd_dev = open(gb_loopback_dev, O_RDONLY);
+	if (fd_dev < 0) {
+		fprintf(stderr, "unable to open specified device %s\n",
+			gb_loopback_dev);
+		return;
+	}
 
 	/*
 	 * file name will test_name_size_iteration_max.csv
@@ -160,28 +177,47 @@ void log_csv(const char *test_name, int size, int iteration_max,
 		abort();
 	}
 
-	/* append data set to file */
+	/* append calculated metrics to file */
 	memset(buf, 0x00, sizeof(buf));
 	len = snprintf(buf, sizeof(buf), "%d-%d-%d %d:%d:%d,",
 		       tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
 		       tm.tm_hour, tm.tm_min, tm.tm_sec);
 	len += snprintf(&buf[len], sizeof(buf) - len,
-			"%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
+			"%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
 			test_name, size, iteration_max, error,
 			request_min, request_max, request_avg, request_jitter,
 			latency_min, latency_max, latency_avg, latency_jitter,
 			throughput_min, throughput_max, throughput_avg,
 			throughput_jitter);
 	write(fd, buf, len);
-	close(fd);
 
-	/* print metrics to stdout - requested feature add */
-	printf("\n");
-	printf("%s", buf);
+	/* print basic metrics to stdout - requested feature add */
+	printf("\n%s\n", buf);
+
+	/* Write raw latency times to CSV  */
+	for (i = 0; i < iteration_max; i++) {
+		len = read(fd_dev, &val, sizeof(val));
+		if (len < 0) {
+			fprintf(stderr, "error reading %s %s\n",
+				gb_loopback_dev, strerror(errno));
+			break;
+		}
+		len = snprintf(buf, sizeof(buf), ",%d", val);
+		if (write(fd, buf, len) != len) {
+			log_csv_error(0, errno);
+			break;
+		}
+	}
+	if (write(fd, "\n", 1) < 1)
+		log_csv_error(1, errno);
+
+	/* skip printing large set to stdout just close open handles */
+	close(fd_dev);
+	close(fd);
 }
 
 void loopback_run(const char *test_name, int size, int iteration_max,
-		  const char *sys_pfx)
+		  const char *sys_pfx, const char *gb_loopback_dev)
 {
 	char buf[MAX_SYSFS_PATH];
 	char inotify_buf[0x800];
@@ -286,13 +322,14 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 	if (err)
 		printf("\nError executing test\n");
 	else
-		log_csv(test_name, size, iteration_max, sys_pfx);
+		log_csv(test_name, size, iteration_max, sys_pfx,
+			gb_loopback_dev);
 }
 
 int main(int argc, char *argv[])
 {
-	if (argc != 5)
+	if (argc != 6)
 		usage();
-	loopback_run(argv[1], atoi(argv[2]), atoi(argv[3]), argv[4]);
+	loopback_run(argv[1], atoi(argv[2]), atoi(argv[3]), argv[4], argv[5]);
 	return 0;
 }
