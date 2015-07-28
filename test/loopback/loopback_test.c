@@ -179,11 +179,11 @@ void log_csv(const char *test_name, int size, int iteration_max,
 
 	/* append calculated metrics to file */
 	memset(buf, 0x00, sizeof(buf));
-	len = snprintf(buf, sizeof(buf), "%d-%d-%d %d:%d:%d,",
+	len = snprintf(buf, sizeof(buf), "%u-%u-%u %u:%u:%u,",
 		       tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
 		       tm.tm_hour, tm.tm_min, tm.tm_sec);
 	len += snprintf(&buf[len], sizeof(buf) - len,
-			"%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
+			"%s,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u",
 			test_name, size, iteration_max, error,
 			request_min, request_max, request_avg, request_jitter,
 			latency_min, latency_max, latency_avg, latency_jitter,
@@ -202,7 +202,7 @@ void log_csv(const char *test_name, int size, int iteration_max,
 				gb_loopback_dev, strerror(errno));
 			break;
 		}
-		len = snprintf(buf, sizeof(buf), ",%d", val);
+		len = snprintf(buf, sizeof(buf), ",%u", val);
 		if (write(fd, buf, len) != len) {
 			log_csv_error(0, errno);
 			break;
