@@ -279,25 +279,21 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 	err = 0;
 	while (1) {
 		/* Wait for change */
-		tv.tv_sec = 10;
+		tv.tv_sec = 1;
 		tv.tv_usec = 0;
 		FD_ZERO(&fds);
 		FD_SET(fd, &fds);
 		ret = select(fd + 1, &fds, NULL, NULL, &tv);
 
-		/* Bail out if no change */
-		if (ret <= 0) {
-			fprintf(stderr, "error/timeout polling for change\n");
-			close(fd);
-			abort();
+		if (ret > 0) {
+			if (!FD_ISSET(fd, &fds)) {
+				fprintf(stderr, "error - FD_ISSET fd=%d flase!\n",
+					fd);
+				break;
+			}
+			/* Read to clear the event */
+			ret = read(fd, inotify_buf, sizeof(inotify_buf));
 		}
-		if (!FD_ISSET(fd, &fds)) {
-			fprintf(stderr, "error - FD_ISSET fd=%d flase!\n",
-				fd);
-			break;
-		}
-		/* Read to clear the event */
-		ret = read(fd, inotify_buf, sizeof(inotify_buf));
 
 		/* Grab the data */
 		iteration_count = read_sysfs_int(sys_pfx, "iteration_count");
