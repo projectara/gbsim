@@ -26,7 +26,7 @@ static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 {
 	struct op_msg *op_req = rbuf;
 	struct op_msg *op_rsp = tbuf;
-	struct op_header *oph = &op_req->header;
+	struct gb_operation_msg_hdr *oph = &op_req->header;
 	struct gb_svc_intf_device_id_request *svc_dev_id;
 	struct gb_svc_conn_create_request *svc_conn_create;
 	struct gb_svc_conn_destroy_request *svc_conn_destroy;
@@ -84,7 +84,7 @@ static int svc_handler_response(uint16_t cport_id, uint16_t hd_cport_id,
 				void *rbuf, size_t rsize)
 {
 	struct op_msg *op_rsp = rbuf;
-	struct op_header *oph = &op_rsp->header;
+	struct gb_operation_msg_hdr *oph = &op_rsp->header;
 	int ret;
 
 	/* Must be AP's svc protocol's cport */
@@ -135,7 +135,7 @@ int svc_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		    size_t rsize, void *tbuf, size_t tsize)
 {
 	struct op_msg *op = rbuf;
-	struct op_header *oph = &op->header;
+	struct gb_operation_msg_hdr *oph = &op->header;
 
 	if (oph->type & OP_RESPONSE)
 		return svc_handler_response(cport_id, hd_cport_id, rbuf, rsize);
@@ -175,7 +175,7 @@ char *svc_get_operation(uint8_t type)
 int svc_request_send(uint8_t type, uint8_t intf_id)
 {
 	struct op_msg msg;
-	struct op_header *oph = &msg.header;
+	struct gb_operation_msg_hdr *oph = &msg.header;
 	struct gb_protocol_version_response *version_request;
 	struct gb_svc_hello_request *hello_request;
 	struct gb_svc_intf_hotplug_request *hotplug;
@@ -233,7 +233,7 @@ int svc_request_send(uint8_t type, uint8_t intf_id)
 	/* Fill in the response header */
 	message_size += payload_size;
 	oph->size = htole16(message_size);
-	oph->id = 1; //FIXME Do we need a better id allocation here ?
+	oph->operation_id = 1; //FIXME Do we need a better id allocation here ?
 	oph->type = type;
 	oph->result = 0;
 

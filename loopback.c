@@ -125,7 +125,7 @@ int loopback_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		 size_t rsize, void *tbuf, size_t tsize)
 {
 	char data[GB_OPERATION_DATA_SIZE_MAX];
-	struct op_header *oph;
+	struct gb_operation_msg_hdr *oph;
 	struct op_msg *op_req = rbuf;
 	struct op_msg *op_rsp;
 	size_t payload_size = 0;
@@ -138,10 +138,10 @@ int loopback_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	module_id = cport_to_module_id(cport_id);
 
 	op_rsp = (struct op_msg *)tbuf;
-	oph = (struct op_header *)&op_req->header;
+	oph = (struct gb_operation_msg_hdr *)&op_req->header;
 
 	/* Associate the module_id and cport_id with the device fd */
-	loopback_init_port(module_id, cport_id, hd_cport_id, oph->id);
+	loopback_init_port(module_id, cport_id, hd_cport_id, oph->operation_id);
 
 	switch (oph->type) {
 	case GB_LOOPBACK_TYPE_PROTOCOL_VERSION:
@@ -174,7 +174,7 @@ int loopback_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		return -EINVAL;
 	}
 
-	message_size = sizeof(struct op_header) + payload_size;
+	message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;
 	return send_response(op_rsp, hd_cport_id, message_size, oph, result);
 }
 

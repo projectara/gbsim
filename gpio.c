@@ -27,7 +27,7 @@ static gpio *gpios[6];
 int gpio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		 size_t rsize, void *tbuf, size_t tsize)
 {
-	struct op_header *oph;
+	struct gb_operation_msg_hdr *oph;
 	struct op_msg *op_req = rbuf;
 	struct op_msg *op_rsp;
 	size_t payload_size;
@@ -35,7 +35,7 @@ int gpio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	ssize_t nbytes;
 
 	op_rsp = (struct op_msg *)tbuf;
-	oph = (struct op_header *)&op_req->header;
+	oph = (struct gb_operation_msg_hdr *)&op_req->header;
 
 	switch (oph->type) {
 	case GB_GPIO_TYPE_PROTOCOL_VERSION:
@@ -120,7 +120,7 @@ int gpio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		return -EINVAL;
 	}
 
-	message_size = sizeof(struct op_header) + payload_size;
+	message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;
 	nbytes = send_response(op_rsp, hd_cport_id, message_size, oph,
 			       PROTOCOL_STATUS_SUCCESS);
 	if (nbytes)
@@ -133,7 +133,7 @@ int gpio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		payload_size = sizeof(struct gb_gpio_irq_event_request);
 		op_req->gpio_irq_event_req.which = 1;	/* XXX HACK */
 
-		message_size = sizeof(struct op_header) + payload_size;
+		message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;
 		return send_request(op_req, hd_cport_id, message_size, 0,
 				    GB_GPIO_TYPE_IRQ_EVENT);
 	}

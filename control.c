@@ -25,7 +25,7 @@ int control_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 {
 	struct op_msg *op_req = rbuf;
 	struct op_msg *op_rsp = tbuf;
-	struct op_header *oph = &op_req->header;
+	struct gb_operation_msg_hdr *oph = &op_req->header;
 	uint16_t message_size = sizeof(*oph);
 	size_t payload_size;
 

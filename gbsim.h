@@ -72,17 +72,9 @@ extern struct gbsim_info info;
 #define PROTOCOL_STATUS_RETRY	0x04
 #define PROTOCOL_STATUS_BAD	0xff
 
-struct op_header {
-	__le16	size;
-	__le16	id;
-	__u8	type;
-	__u8	result;
-	__u8	pad[2];
-};
-
 /* Ops */
 struct op_msg {
-	struct op_header	header;
+	struct gb_operation_msg_hdr			header;
 	union {
 		struct gb_protocol_version_response	pv_rsp;
 		struct gb_control_get_manifest_size_response control_msize_rsp;
@@ -232,7 +224,7 @@ void loopback_cleanup(void);
 bool manifest_parse(void *data, size_t size);
 void reset_hd_cport_id(void);
 int send_response(struct op_msg *op, uint16_t hd_cport_id,
-		   uint16_t message_size, struct op_header *oph,
+		   uint16_t message_size, struct gb_operation_msg_hdr *oph,
 		   uint8_t result);
 int send_request(struct op_msg *op, uint16_t hd_cport_id,
 		 uint16_t message_size, uint16_t id, uint8_t type);

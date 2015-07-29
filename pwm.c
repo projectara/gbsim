@@ -26,7 +26,7 @@ static pwm *pwms[2];
 int pwm_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		size_t rsize, void *tbuf, size_t tsize)
 {
-	struct op_header *oph;
+	struct gb_operation_msg_hdr *oph;
 	struct op_msg *op_req = rbuf;
 	struct op_msg *op_rsp;
 	__u32 duty;
@@ -36,7 +36,7 @@ int pwm_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	uint8_t result = PROTOCOL_STATUS_SUCCESS;
 
 	op_rsp = (struct op_msg *)tbuf;
-	oph = (struct op_header *)&op_req->header;
+	oph = (struct gb_operation_msg_hdr *)&op_req->header;
 
 	switch (oph->type) {
 	case GB_PWM_TYPE_PROTOCOL_VERSION:
@@ -102,7 +102,7 @@ int pwm_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		return -EINVAL;
 	}
 
-	message_size = sizeof(struct op_header) + payload_size;
+	message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;
 	return send_response(op_rsp, hd_cport_id, message_size, oph, result);
 }
 

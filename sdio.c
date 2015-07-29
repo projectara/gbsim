@@ -573,7 +573,7 @@ static void sd_init(void)
 static ssize_t sdio_send_card_event(struct op_msg *op_req, uint16_t hd_cport_id,
 				    uint8_t event)
 {
-	uint16_t message_size = sizeof(struct op_header) +
+	uint16_t message_size = sizeof(struct gb_operation_msg_hdr) +
 				sizeof(struct gb_sdio_event_request);
 
 	op_req->sdio_event_req.event = event;
@@ -583,7 +583,7 @@ static ssize_t sdio_send_card_event(struct op_msg *op_req, uint16_t hd_cport_id,
 }
 
 static ssize_t sdio_transfer_rsp(struct op_msg *op_rsp, uint16_t hd_cport_id,
-				 struct op_header *oph, uint16_t data_blocks,
+				 struct gb_operation_msg_hdr *oph, uint16_t data_blocks,
 				 uint16_t data_blksz, uint8_t *data)
 {
 	size_t payload_size;
@@ -614,16 +614,16 @@ static ssize_t sdio_transfer_rsp(struct op_msg *op_rsp, uint16_t hd_cport_id,
 		memcpy(&op_rsp->sdio_xfer_rsp.data[0], sd->xfer, len);
 
 send:
-	message_size = sizeof(struct op_header) + payload_size;
+	message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;
 	return send_response(op_rsp, hd_cport_id, message_size, oph,
 			     PROTOCOL_STATUS_SUCCESS);
 }
 
 static ssize_t sdio_command_rsp(struct op_msg *op_rsp, uint16_t hd_cport_id,
-				struct op_header *oph)
+				struct gb_operation_msg_hdr *oph)
 {
 	uint16_t message_size = sizeof(struct gb_sdio_command_response) +
-				sizeof(struct op_header);
+				sizeof(struct gb_operation_msg_hdr);
 	int i;
 
 	for (i = 0; i < 4; i++)
@@ -636,7 +636,7 @@ static ssize_t sdio_command_rsp(struct op_msg *op_rsp, uint16_t hd_cport_id,
 int sdio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		 size_t rsize, void *tbuf, size_t tsize)
 {
-	struct op_header *oph;
+	struct gb_operation_msg_hdr *oph;
 	struct op_msg *op_req = rbuf;
 	struct op_msg *op_rsp;
 	size_t payload_size = 0;
@@ -651,7 +651,7 @@ int sdio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	module_id = cport_to_module_id(cport_id);
 
 	op_rsp = (struct op_msg *)tbuf;
-	oph = (struct op_header *)&op_req->header;
+	oph = (struct gb_operation_msg_hdr *)&op_req->header;
 
 	switch (oph->type) {
 	case GB_SDIO_TYPE_PROTOCOL_VERSION:
@@ -700,7 +700,7 @@ int sdio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		return -EINVAL;
 	}
 
-	message_size = sizeof(struct op_header) + payload_size;
+	message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;
 	send_response(op_rsp, hd_cport_id, message_size, oph, result);
 
 	/* Simulate a card insert after sending capabilities */

@@ -83,9 +83,9 @@ static int gb_uart_send(int i, void *tbuf, size_t tsize, __u8 type, __u8 flags)
 	size_t payload_size = 0;
 	uint16_t message_size;
 	struct gb_uart_recv_data_request *rdr =
-		(struct gb_uart_recv_data_request *)(uart_buf + sizeof(struct op_header));
+		(struct gb_uart_recv_data_request *)(uart_buf + sizeof(struct gb_operation_msg_hdr));
 	struct gb_uart_serial_state_request *ssr =
-		(struct gb_uart_serial_state_request *)(uart_buf + sizeof(struct op_header));
+		(struct gb_uart_serial_state_request *)(uart_buf + sizeof(struct gb_operation_msg_hdr));
 	int ret;
 
 	switch (type) {
@@ -109,9 +109,9 @@ static int gb_uart_send(int i, void *tbuf, size_t tsize, __u8 type, __u8 flags)
 		    up[i].module_id, up[i].cport_id);
 
 	/* Fill in the request header */
-	message_size = sizeof(struct op_header) + payload_size;
+	message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;
 	op_req->header.size = htole16(message_size);
-	op_req->header.id = 0;				/* Unidirectional */
+	op_req->header.operation_id = 0;				/* Unidirectional */
 	op_req->header.type = type;
 
 	/* Store the cport id in the header pad bytes */
@@ -543,7 +543,7 @@ static int uart_init_port(uint8_t module_id, uint16_t cport_id,
 int uart_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		 size_t rsize, void *tbuf, size_t tsize)
 {
-	struct op_header *oph;
+	struct gb_operation_msg_hdr *oph;
 	struct op_msg *op_req = rbuf;
 	struct op_msg *op_rsp;
 	size_t payload_size = 0;
@@ -560,10 +560,10 @@ int uart_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	module_id = cport_to_module_id(cport_id);
 
 	op_rsp = (struct op_msg *)tbuf;
-	oph = (struct op_header *)&op_req->header;
+	oph = (struct gb_operation_msg_hdr *)&op_req->header;
 
 	/* Associate the module_id and cport_id with the device fd */
-	i = uart_init_port(module_id, cport_id, hd_cport_id, oph->id);
+	i = uart_init_port(module_id, cport_id, hd_cport_id, oph->operation_id);
 	if (i < 0)
 		return i;
 
@@ -606,7 +606,7 @@ int uart_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		return -EINVAL;
 	}
 
-	message_size = sizeof(struct op_header) + payload_size;
+	message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;
 	return send_response(op_rsp, hd_cport_id, message_size, oph, result);
 }
 

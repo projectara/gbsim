@@ -142,7 +142,7 @@ static int send_msg_to_ap(struct op_msg *op, uint16_t hd_cport_id,
 	ssize_t nbytes;
 
 	op->header.size = htole16(message_size);
-	op->header.id = id;
+	op->header.operation_id = id;
 	op->header.type = type;
 	op->header.result = result;
 
@@ -171,10 +171,10 @@ static int send_msg_to_ap(struct op_msg *op, uint16_t hd_cport_id,
 }
 
 int send_response(struct op_msg *op, uint16_t hd_cport_id,
-		   uint16_t message_size, struct op_header *oph,
+		   uint16_t message_size, struct gb_operation_msg_hdr *oph,
 		   uint8_t result)
 {
-	return send_msg_to_ap(op, hd_cport_id, message_size, oph->id,
+	return send_msg_to_ap(op, hd_cport_id, message_size, oph->operation_id,
 			oph->type | OP_RESPONSE, result);
 }
 
@@ -218,7 +218,7 @@ static int cport_recv_handler(struct gbsim_cport *cport,
 
 static void recv_handler(void *rbuf, size_t rsize, void *tbuf, size_t tsize)
 {
-	struct op_header *hdr = rbuf;
+	struct gb_operation_msg_hdr *hdr = rbuf;
 	uint16_t hd_cport_id;
 	struct gbsim_cport *cport;
 	char *protocol, *operation, *type;
