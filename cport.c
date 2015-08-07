@@ -156,7 +156,7 @@ static int send_msg_to_ap(struct op_msg *op, uint16_t hd_cport_id,
 		gbsim_debug("Module -> AP CPort %hu %s %s response\n",
 			    hd_cport_id, protocol, operation);
 	else
-		gbsim_debug("AP -> Module CPort %hu %s %s request\n",
+		gbsim_debug("Module -> AP CPort %hu %s %s request\n",
 			    hd_cport_id, protocol, operation);
 
 	/* Send the response to the AP */
