@@ -183,7 +183,6 @@ int svc_request_send(uint8_t type, uint8_t intf_id)
 	struct gb_svc_intf_reset_request *reset;
 	uint16_t message_size = sizeof(*oph);
 	size_t payload_size;
-	ssize_t nbytes;
 
 	switch (type) {
 	case GB_SVC_TYPE_PROTOCOL_VERSION:
@@ -227,29 +226,8 @@ int svc_request_send(uint8_t type, uint8_t intf_id)
 		return -EINVAL;
 	}
 
-	gbsim_debug("Module's Interface %hhu -> AP CPort %hu %s request\n",
-		    intf_id, GB_SVC_CPORT_ID, svc_get_operation(type));
-
-	/* Fill in the response header */
 	message_size += payload_size;
-	oph->size = htole16(message_size);
-	oph->operation_id = 1; //FIXME Do we need a better id allocation here ?
-	oph->type = type;
-	oph->result = 0;
-
-	/* Store the cport id in the header pad bytes */
-	oph->pad[0] = GB_SVC_CPORT_ID & 0xff;
-	oph->pad[1] = (GB_SVC_CPORT_ID >> 8) & 0xff;
-
-	/* Send the response to the AP */
-	if (verbose)
-		gbsim_dump(&msg, message_size);
-
-	nbytes = write(to_ap, &msg, message_size);
-	if (nbytes < 0)
-		return nbytes;
-
-	return 0;
+	return send_request(&msg, GB_SVC_CPORT_ID, message_size, 1, type);
 }
 
 void svc_init(void)
