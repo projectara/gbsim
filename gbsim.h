@@ -129,6 +129,12 @@ struct op_msg {
 		struct gb_sdio_transfer_response	sdio_xfer_rsp;
 		struct gb_loopback_transfer_request	loopback_xfer_req;
 		struct gb_loopback_transfer_response	loopback_xfer_resp;
+		struct gb_protocol_version_response	fw_version_request;
+		struct gb_firmware_size_request		fw_size_req;
+		struct gb_firmware_size_response	fw_size_resp;
+		struct gb_firmware_get_firmware_request	fw_get_firmware_req;
+		struct gb_firmware_get_firmware_response fw_get_firmware_resp;
+		struct gb_firmware_ready_to_boot_request fw_rbt_req;
 	};
 };
 
@@ -220,6 +226,9 @@ int loopback_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
 char *loopback_get_operation(uint8_t type);
 void loopback_init(void);
 void loopback_cleanup(void);
+
+int firmware_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
+char *firmware_get_operation(uint8_t type);
 
 bool manifest_parse(void *data, size_t size);
 void reset_hd_cport_id(void);

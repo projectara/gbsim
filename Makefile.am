@@ -11,6 +11,7 @@ bin_PROGRAMS = \
 gbsim_SOURCES = \
 	config.h \
 	cport.c \
+	firmware.c \
 	functionfs.c \
 	gadget.c \
 	gbsim.h \

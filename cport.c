@@ -127,6 +127,10 @@ static void get_protocol_operation(uint16_t cport_id, char **protocol,
 		*protocol = "I2S_TRANSMITTER";
 		*operation = i2s_data_get_operation(type);
 		break;
+	case GREYBUS_PROTOCOL_FIRMWARE:
+		*protocol = "FIRMWARE";
+		*operation = firmware_get_operation(type);
+		break;
 	default:
 		*protocol = "(Unknown protocol)";
 		*operation = "(Unknown operation)";
@@ -210,6 +214,8 @@ static int cport_recv_handler(struct gbsim_cport *cport,
 		return i2s_data_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_LOOPBACK:
 		return loopback_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
+	case GREYBUS_PROTOCOL_FIRMWARE:
+		return firmware_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
 	default:
 		gbsim_error("handler not found for cport %u\n", cport->id);
 		return -EINVAL;
