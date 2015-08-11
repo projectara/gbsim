@@ -15,6 +15,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <dirent.h>
 
 #define MAX_SYSFS_PATH	0x200
 #define CSV_MAX_LINE	0x1000
@@ -31,10 +32,20 @@ static struct dict dict[] = {
 	{"sink", 4}
 };
 
+struct loopback_names {
+	char sysfs_entry[MAX_SYSFS_PATH];
+	char dbgfs_entry[MAX_SYSFS_PATH];
+	char *csv_pfx;
+};
+static struct loopback_names *lb_name = NULL;
+static unsigned int lb_entries = 0;
+
 static int verbose = 1;
 
 void abort()
 {
+	if (lb_name)
+		free(lb_name);
 	_exit(1);
 }
 
@@ -48,14 +59,14 @@ void usage(void)
 	"             Note if ITERATIONS is set to zero then this utility will\n"
 	"             initiate an infinite (non terminating) test and exit\n"
 	"             without logging any metrics data\n"
-	"  PATH indicates the sysfs path for the loopback greybus entries e.g.\n"
-	"       /sys/bus/greybus/devices/endo0:1:1:1:1/\n"
-	"  DEV specifies the loopback device to read raw latcency timings from e.g.\n"
-	"       /dev/gb/loopback0\n"
+	"  SYSPATH indicates the sysfs path for the loopback greybus entries e.g.\n"
+	"          /sys/bus/greybus/devices\n"
+	"  DBGPATH indicates the debugfs path for the loopback greybus entries e.g.\n"
+	"          /sys/kernel/debug/gb_loopback/\n"
 	"Examples:\n"
-	"  looptest transfer 128 10000 /sys/bus/greybus/devices/endo0:1:1:1:1/ /dev/gb/loopback0\n"
-	"  looptest ping 0 128 /sys/bus/greybus/devices/endo0:1:1:1:1/ /dev/gb/loopback0\n"
-	"  looptest sink 2030 32768 /sys/bus/greybus/devices/endo0:1:1:1:1/ /dev/gb/loopback0\n");
+	"  looptest transfer 128 10000 /sys/bus/greybus/devices/ /sys/kernel/debug/gb_loopback/\n"
+	"  looptest ping 0 128 /sys/bus/greybus/devices/ /sys/kernel/debug/gb_loopback/\n"
+	"  looptest sink 2030 32768 /sys/bus/greybus/devices/ /sys/kernel/debug/gb_loopback/\n");
 	abort();
 }
 
@@ -146,13 +157,14 @@ void log_csv_error(int len, int err)
 		strerror(err));
 }
 
-void log_csv(const char *test_name, int size, int iteration_max,
-	     const char *sys_pfx, const char *gb_loopback_dev)
+void __log_csv(const char *test_name, int size, int iteration_max,
+	       int fd, struct tm *tm, char *dbgfs_entry, const char *sys_pfx,
+	       const char *csv_pfx)
 {
-	extern int errno;
 	char buf[CSV_MAX_LINE];
+	extern int errno;
 	char *date;
-	int error, fd, fd_dev, len;
+	int error, fd_dev, len;
 	float request_avg, latency_avg, latency_gb_avg, throughput_avg;
 	int request_min, request_max, request_jitter;
 	int latency_min, latency_max, latency_jitter;
@@ -160,28 +172,15 @@ void log_csv(const char *test_name, int size, int iteration_max,
 	int throughput_min, throughput_max, throughput_jitter;
 	unsigned int i;
 	uint32_t val;
-	struct tm tm;
-	time_t t;
 
-	fd_dev = open(gb_loopback_dev, O_RDONLY);
+	fd_dev = open(dbgfs_entry, O_RDONLY);
 	if (fd_dev < 0) {
 		fprintf(stderr, "unable to open specified device %s\n",
-			gb_loopback_dev);
+			dbgfs_entry);
 		return;
 	}
 
-	/*
-	 * file name will test_name_size_iteration_max.csv
-	 * every time the same test with the same parameters is run we will then
-	 * append to the same CSV with datestamp - representing each test
-	 * dataset.
-	 */
-	snprintf(buf, sizeof(buf), "%s_%d_%d.csv", test_name, size,
-		 iteration_max);
-
 	/* gather data set */
-	t = time(NULL);
-	tm = *localtime(&t);
 	error = read_sysfs_int(sys_pfx, "error");
 	request_min = read_sysfs_int(sys_pfx, "requests_per_second_min");
 	request_max = read_sysfs_int(sys_pfx, "requests_per_second_max");
@@ -202,20 +201,14 @@ void log_csv(const char *test_name, int size, int iteration_max,
 	latency_gb_jitter = latency_gb_max - latency_gb_min;
 	throughput_jitter = throughput_max - throughput_min;
 
-	fd = open(buf, O_WRONLY|O_CREAT|O_APPEND);
-	if (fd < 0) {
-		fprintf(stderr, "unable to open %s for appendation\n", buf);
-		abort();
-	}
-
 	/* append calculated metrics to file */
 	memset(buf, 0x00, sizeof(buf));
 	len = snprintf(buf, sizeof(buf), "%u-%u-%u %u:%u:%u,",
-		       tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-		       tm.tm_hour, tm.tm_min, tm.tm_sec);
+		       tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+		       tm->tm_hour, tm->tm_min, tm->tm_sec);
 	len += snprintf(&buf[len], sizeof(buf) - len,
-			"%s,%u,%u,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u",
-			test_name, size, iteration_max, error,
+			"%s,%s,%u,%u,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u",
+			test_name, csv_pfx, size, iteration_max, error,
 			request_min, request_max, request_avg, request_jitter,
 			latency_min, latency_max, latency_avg, latency_jitter,
 			latency_gb_min, latency_gb_max, latency_gb_avg, latency_gb_jitter,
@@ -231,7 +224,7 @@ void log_csv(const char *test_name, int size, int iteration_max,
 		len = read(fd_dev, &val, sizeof(val));
 		if (len < 0) {
 			fprintf(stderr, "error reading %s %s\n",
-				gb_loopback_dev, strerror(errno));
+				dbgfs_entry, strerror(errno));
 			break;
 		}
 		len = snprintf(buf, sizeof(buf), ",%u", val);
@@ -245,14 +238,114 @@ void log_csv(const char *test_name, int size, int iteration_max,
 
 	/* skip printing large set to stdout just close open handles */
 	close(fd_dev);
+
+}
+
+void log_csv(const char *test_name, int size, int iteration_max,
+	     const char *sys_pfx)
+{
+	int fd, j;
+	struct tm tm;
+	time_t t;
+	char buf[MAX_SYSFS_PATH];
+
+	t = time(NULL);
+	tm = *localtime(&t);
+
+	/*
+	 * file name will test_name_size_iteration_max.csv
+	 * every time the same test with the same parameters is run we will then
+	 * append to the same CSV with datestamp - representing each test
+	 * dataset.
+	 */
+	snprintf(buf, sizeof(buf), "%s_%d_%d.csv", test_name, size,
+		 iteration_max);
+
+	fd = open(buf, O_WRONLY|O_CREAT|O_APPEND);
+	if (fd < 0) {
+		fprintf(stderr, "unable to open %s for appendation\n", buf);
+		abort();
+	}
+	for (j = 0; j < lb_entries; j++) {
+		__log_csv(test_name, size, iteration_max, fd, &tm,
+			  lb_name[j].dbgfs_entry, lb_name[j].sysfs_entry,
+			  lb_name[j].csv_pfx);
+	}
 	close(fd);
 }
 
+int construct_paths(const char *sys_pfx, const char *dbgfs_pfx)
+{
+	struct dirent **namelist;
+	int i, n, ret, j;
+	unsigned int module_id, interface_id, bundle_id, cport_id;
+
+	i = n = scandir(dbgfs_pfx, &namelist, NULL, alphasort);
+	if (n < 0) {
+		perror("scandir");
+		ret = -ENODEV;
+		goto baddir;
+	} else {
+		/* Don't include '.' and '..' */
+		lb_entries = n - 2;
+		if (!lb_entries) {
+			ret = -ENOMEM;
+			goto done;
+		}
+		lb_name = malloc(lb_entries * sizeof(*lb_name));
+		if (lb_name == NULL) {
+			ret = -ENOMEM;
+			goto done;
+		}
+
+		j = 0;
+		while (n--) {
+			if (strstr(namelist[n]->d_name, "raw_latency_")) {
+				ret = sscanf(namelist[n]->d_name,
+					     "raw_latency_%u:%u:%u:%u",
+					     &module_id, &interface_id,
+					     &bundle_id, &cport_id);
+				if (ret != 4) {
+					fprintf(stderr,
+						"failed to scan from %s\n",
+						namelist[n]->d_name);
+					ret = -ENODEV;
+					goto done;
+				}
+				snprintf(lb_name[j].sysfs_entry, MAX_SYSFS_PATH,
+					"%sendo0:%u:%u:%u:%u/", sys_pfx,
+					module_id, interface_id,
+					bundle_id, cport_id);
+				lb_name[j].csv_pfx = lb_name[j].sysfs_entry;
+			} else if (strstr(namelist[n]->d_name, "aggregate_latency")) {
+				/*
+				 * for the special combined node there's no endo entry
+				 * so just fake one :)
+				 */
+				memcpy(&lb_name[j].sysfs_entry, &lb_name[0].sysfs_entry,
+				       MAX_SYSFS_PATH);
+				lb_name[j].csv_pfx = lb_name[j].dbgfs_entry;
+			}
+			snprintf(lb_name[j].dbgfs_entry, MAX_SYSFS_PATH,
+				"%s%s", dbgfs_pfx, namelist[n]->d_name);
+			j++;
+		}
+	}
+	ret = 0;
+done:
+	for (n = 0; n < i; n++)
+		free(namelist[n]);
+	free(namelist);
+baddir:
+	return ret;
+}
+
 void loopback_run(const char *test_name, int size, int iteration_max,
-		  const char *sys_pfx, const char *gb_loopback_dev)
+		  const char *sys_prefix, const char *dbgfs_prefix)
 {
 	char buf[MAX_SYSFS_PATH];
 	char inotify_buf[0x800];
+	char *sys_pfx = (char*)sys_prefix;
 	extern int errno;
 	fd_set fds;
 	int test_id = 0;
@@ -260,6 +353,13 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 	int previous, err, iteration_count;
 	int fd, wd, ret;
 	struct timeval tv;
+
+	if (construct_paths(sys_prefix, dbgfs_prefix)) {
+		fprintf(stderr, "unable to construct sysfs/dbgfs path names\n");
+		usage();
+		return;
+	}
+	sys_pfx = lb_name[0].sysfs_entry;
 
 	for (i = 0; i < sizeof(dict) / sizeof(struct dict); i++) {
 		if (!strstr(dict[i].name, test_name))
@@ -350,8 +450,7 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 	if (err)
 		printf("\nError executing test\n");
 	else
-		log_csv(test_name, size, iteration_max, sys_pfx,
-			gb_loopback_dev);
+		log_csv(test_name, size, iteration_max, sys_pfx);
 }
 
 int main(int argc, char *argv[])
@@ -359,5 +458,7 @@ int main(int argc, char *argv[])
 	if (argc != 6)
 		usage();
 	loopback_run(argv[1], atoi(argv[2]), atoi(argv[3]), argv[4], argv[5]);
+	if (lb_name)
+		free(lb_name);
 	return 0;
 }
