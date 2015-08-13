@@ -30,7 +30,7 @@ int control_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	size_t payload_size;
 
 	switch (oph->type) {
-	case GB_CONTROL_TYPE_PROTOCOL_VERSION:
+	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
 		payload_size = sizeof(op_rsp->pv_rsp);
 		op_rsp->pv_rsp.major = GB_CONTROL_VERSION_MAJOR;
 		op_rsp->pv_rsp.minor = GB_CONTROL_VERSION_MINOR;
@@ -63,9 +63,9 @@ int control_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 char *control_get_operation(uint8_t type)
 {
 	switch (type) {
-	case GB_CONTROL_TYPE_INVALID:
+	case GB_REQUEST_TYPE_INVALID:
 		return "GB_CONTROL_TYPE_INVALID";
-	case GB_CONTROL_TYPE_PROTOCOL_VERSION:
+	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
 		return "GB_CONTROL_TYPE_PROTOCOL_VERSION";
 	case GB_CONTROL_TYPE_PROBE_AP:
 		return "GB_CONTROL_TYPE_PROBE_AP";

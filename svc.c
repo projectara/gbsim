@@ -35,7 +35,7 @@ static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 	size_t payload_size = 0;
 
 	switch (oph->type) {
-	case GB_SVC_TYPE_PROTOCOL_VERSION:
+	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
 		gbsim_error("%s: Protocol Version request not supported\n",
 			    __func__);
 		break;
@@ -95,7 +95,7 @@ static int svc_handler_response(uint16_t cport_id, uint16_t hd_cport_id,
 	}
 
 	switch (oph->type & ~OP_RESPONSE) {
-	case GB_SVC_TYPE_PROTOCOL_VERSION:
+	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
 		gbsim_debug("%s: Version major-%d minor-%d\n", __func__,
 			    op_rsp->pv_rsp.major, op_rsp->pv_rsp.minor);
 
@@ -147,9 +147,9 @@ int svc_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 char *svc_get_operation(uint8_t type)
 {
 	switch (type) {
-	case GB_SVC_TYPE_INVALID:
+	case GB_REQUEST_TYPE_INVALID:
 		return "GB_SVC_TYPE_INVALID";
-	case GB_SVC_TYPE_PROTOCOL_VERSION:
+	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
 		return "GB_SVC_TYPE_PROTOCOL_VERSION";
 	case GB_SVC_TYPE_SVC_HELLO:
 		return "GB_SVC_TYPE_SVC_HELLO";
@@ -185,7 +185,7 @@ int svc_request_send(uint8_t type, uint8_t intf_id)
 	size_t payload_size;
 
 	switch (type) {
-	case GB_SVC_TYPE_PROTOCOL_VERSION:
+	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
 		payload_size = sizeof(*version_request);
 		version_request = &msg.svc_version_request;
 		version_request->major = GB_SVC_VERSION_MAJOR;

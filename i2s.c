@@ -38,7 +38,7 @@ int i2s_mgmt_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	oph = (struct gb_operation_msg_hdr *)&op_req->header;
 
 	switch (oph->type) {
-	case GB_I2S_MGMT_TYPE_PROTOCOL_VERSION:
+	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
 		payload_size = sizeof(struct gb_protocol_version_response);
 		op_rsp->pv_rsp.major = GREYBUS_VERSION_MAJOR;
 		op_rsp->pv_rsp.minor = GREYBUS_VERSION_MINOR;
@@ -106,7 +106,7 @@ int i2s_data_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	oph = (struct gb_operation_msg_hdr *)&op_req->header;
 
 	switch (oph->type) {
-	case GB_I2S_DATA_TYPE_PROTOCOL_VERSION:
+	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
 		payload_size = sizeof(struct gb_protocol_version_response);
 		op_rsp->pv_rsp.major = GREYBUS_VERSION_MAJOR;
 		op_rsp->pv_rsp.minor = GREYBUS_VERSION_MINOR;
@@ -126,7 +126,7 @@ int i2s_data_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 char *i2s_mgmt_get_operation(uint8_t type)
 {
 	switch (type) {
-	case GB_I2S_MGMT_TYPE_PROTOCOL_VERSION:
+	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
 		return "GB_I2S_MGMT_TYPE_PROTOCOL_VERSION";
 	case GB_I2S_MGMT_TYPE_GET_SUPPORTED_CONFIGURATIONS:
 		return "GB_I2S_MGMT_TYPE_GET_SUPPORTED_CONFIGURATIONS";
@@ -152,7 +152,7 @@ char *i2s_mgmt_get_operation(uint8_t type)
 char *i2s_data_get_operation(uint8_t type)
 {
 	switch (type) {
-	case GB_I2S_DATA_TYPE_PROTOCOL_VERSION:
+	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
 		return "GB_I2S_DATA_TYPE_PROTOCOL_VERSION";
 	case GB_I2S_DATA_TYPE_SEND_DATA:
 		return "GB_I2S_DATA_TYPE_SEND_DATA";

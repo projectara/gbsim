@@ -654,7 +654,7 @@ int sdio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	oph = (struct gb_operation_msg_hdr *)&op_req->header;
 
 	switch (oph->type) {
-	case GB_SDIO_TYPE_PROTOCOL_VERSION:
+	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
 		payload_size = sizeof(struct gb_protocol_version_response);
 		op_rsp->pv_rsp.major = GB_SDIO_VERSION_MAJOR;
 		op_rsp->pv_rsp.minor = GB_SDIO_VERSION_MINOR;
@@ -713,9 +713,9 @@ int sdio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 char *sdio_get_operation(uint8_t type)
 {
 	switch (type) {
-	case GB_SDIO_TYPE_INVALID:
+	case GB_REQUEST_TYPE_INVALID:
 		return "GB_SDIO_TYPE_INVALID";
-	case GB_SDIO_TYPE_PROTOCOL_VERSION:
+	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
 		return "GB_SDIO_TYPE_PROTOCOL_VERSION";
 	case GB_SDIO_TYPE_GET_CAPABILITIES:
 		return "GB_SDIO_TYPE_GET_CAPABILITIES";

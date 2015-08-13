@@ -217,7 +217,7 @@ static int enable_endpoints(void)
 	 * - Send a svc protocol version request
 	 * - For a valid response, send the 'hello' message.
 	 */
-	ret = svc_request_send(GB_SVC_TYPE_PROTOCOL_VERSION, AP_INTF_ID);
+	ret = svc_request_send(GB_REQUEST_TYPE_PROTOCOL_VERSION, AP_INTF_ID);
 	if (ret) {
 		gbsim_error("Failed to send svc version request (%d)\n", ret);
 		return ret;

@@ -568,7 +568,7 @@ int uart_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		return i;
 
 	switch (oph->type) {
-	case GB_UART_TYPE_PROTOCOL_VERSION:
+	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
 		payload_size = sizeof(struct gb_protocol_version_response);
 		op_rsp->pv_rsp.major = GREYBUS_VERSION_MAJOR;
 		op_rsp->pv_rsp.minor = GREYBUS_VERSION_MINOR;
@@ -717,9 +717,9 @@ static int uart_open(int idx)
 char *uart_get_operation(uint8_t type)
 {
 	switch (type) {
-	case GB_UART_TYPE_INVALID:
+	case GB_REQUEST_TYPE_INVALID:
 		return "GB_UART_TYPE_INVALID";
-	case GB_UART_TYPE_PROTOCOL_VERSION:
+	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
 		return "GB_UART_TYPE_PROTOCOL_VERSION";
 	case GB_UART_TYPE_SEND_DATA:
 		return "GB_UART_TYPE_SEND_DATA";

@@ -38,7 +38,7 @@ int gpio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	oph = (struct gb_operation_msg_hdr *)&op_req->header;
 
 	switch (oph->type) {
-	case GB_GPIO_TYPE_PROTOCOL_VERSION:
+	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
 		payload_size = sizeof(struct gb_protocol_version_response);
 		op_rsp->pv_rsp.major = GREYBUS_VERSION_MAJOR;
 		op_rsp->pv_rsp.minor = GREYBUS_VERSION_MINOR;
@@ -145,9 +145,9 @@ int gpio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 char *gpio_get_operation(uint8_t type)
 {
 	switch (type) {
-	case GB_GPIO_TYPE_INVALID:
+	case GB_REQUEST_TYPE_INVALID:
 		return "GB_GPIO_TYPE_INVALID";
-	case GB_GPIO_TYPE_PROTOCOL_VERSION:
+	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
 		return "GB_GPIO_TYPE_PROTOCOL_VERSION";
 	case GB_GPIO_TYPE_LINE_COUNT:
 		return "GB_GPIO_TYPE_LINE_COUNT";

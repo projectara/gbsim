@@ -29,9 +29,9 @@ static int firmware_fd;
 char *firmware_get_operation(uint8_t type)
 {
 	switch (type) {
-	case GB_FIRMWARE_TYPE_INVALID:
+	case GB_REQUEST_TYPE_INVALID:
 		return "GB_FIRMWARE_TYPE_INVALID";
-	case GB_FIRMWARE_TYPE_PROTOCOL_VERSION:
+	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
 		return "GB_FIRMWARE_TYPE_PROTOCOL_VERSION";
 	case GB_FIRMWARE_TYPE_FIRMWARE_SIZE:
 		return "GB_FIRMWARE_TYPE_FIRMWARE_SIZE";
@@ -104,7 +104,7 @@ static int firmware_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 	int ret;
 
 	switch (oph->type) {
-	case GB_FIRMWARE_TYPE_PROTOCOL_VERSION:
+	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
 		payload_size = sizeof(*version_request);
 		version_request = &op_req->fw_version_request;
 
