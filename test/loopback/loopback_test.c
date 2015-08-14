@@ -247,6 +247,7 @@ void log_csv(const char *test_name, int size, int iteration_max,
 	int fd, j;
 	struct tm tm;
 	time_t t;
+	mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 	char buf[MAX_SYSFS_PATH];
 
 	t = time(NULL);
@@ -261,7 +262,7 @@ void log_csv(const char *test_name, int size, int iteration_max,
 	snprintf(buf, sizeof(buf), "%s_%d_%d.csv", test_name, size,
 		 iteration_max);
 
-	fd = open(buf, O_WRONLY|O_CREAT|O_APPEND);
+	fd = open(buf, O_WRONLY|O_CREAT|O_APPEND, mode);
 	if (fd < 0) {
 		fprintf(stderr, "unable to open %s for appendation\n", buf);
 		abort();
