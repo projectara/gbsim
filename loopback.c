@@ -127,17 +127,16 @@ int loopback_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	char data[GB_OPERATION_DATA_SIZE_MAX];
 	struct gb_operation_msg_hdr *oph;
 	struct op_msg *op_req = rbuf;
-	struct op_msg *op_rsp;
+	struct op_msg *op_rsp = (struct op_msg *)data;
 	size_t payload_size = 0;
 	uint16_t message_size;
 	uint8_t module_id;
 	uint8_t result = PROTOCOL_STATUS_SUCCESS;
 	struct gb_loopback_transfer_request *request;
-	struct gb_loopback_transfer_response *response;
+	struct gb_loopback_transfer_response *response = &op_rsp->loopback_xfer_resp;
 
 	module_id = cport_to_module_id(cport_id);
 
-	op_rsp = (struct op_msg *)tbuf;
 	oph = (struct gb_operation_msg_hdr *)&op_req->header;
 
 	/* Associate the module_id and cport_id with the device fd */
@@ -153,7 +152,6 @@ int loopback_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		break;
 	case GB_LOOPBACK_TYPE_TRANSFER:
 		request = &op_req->loopback_xfer_req;
-		response = (struct gb_loopback_transfer_response *)&data[0];
 		gbsim_debug("%s: LOOPBACK xfer rx %hu\n", __func__,
 			    request->len);
 		if (request->len > GB_OPERATION_DATA_SIZE_MAX) {
