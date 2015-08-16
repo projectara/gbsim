@@ -184,7 +184,6 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 {
 	char buf[CSV_MAX_LINE];
 	extern int errno;
-	char *date;
 	int error, fd_dev, len;
 	float request_avg, latency_avg, latency_gb_avg, throughput_avg;
 	int request_min, request_max, request_jitter;
@@ -373,7 +372,7 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 	extern int errno;
 	fd_set fds;
 	int test_id = 0;
-	int i, percent;
+	int i;
 	int previous, err, iteration_count;
 	int fd, wd, ret;
 	struct timeval tv;
