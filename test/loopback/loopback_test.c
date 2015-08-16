@@ -247,6 +247,7 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 				dbgfs_entry, strerror(errno));
 			break;
 		}
+		lseek(fd_dev, SEEK_SET, 0);
 		len = snprintf(buf, sizeof(buf), ",%s", rx_buf);
 		if (write(fd, buf, len) != len) {
 			log_csv_error(0, errno);
