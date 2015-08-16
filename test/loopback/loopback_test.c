@@ -191,7 +191,7 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 	int latency_gb_min, latency_gb_max, latency_gb_jitter;
 	int throughput_min, throughput_max, throughput_jitter;
 	unsigned int i;
-	uint32_t val;
+	char rx_buf[SYSFS_MAX_INT];
 
 	fd_dev = open(dbgfs_entry, O_RDONLY);
 	if (fd_dev < 0) {
@@ -241,13 +241,13 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 
 	/* Write raw latency times to CSV  */
 	for (i = 0; i < iteration_max; i++) {
-		len = read(fd_dev, &val, sizeof(val));
+		len = read(fd_dev, rx_buf, sizeof(rx_buf));
 		if (len < 0) {
 			fprintf(stderr, "error reading %s %s\n",
 				dbgfs_entry, strerror(errno));
 			break;
 		}
-		len = snprintf(buf, sizeof(buf), ",%u", val);
+		len = snprintf(buf, sizeof(buf), ",%s", rx_buf);
 		if (write(fd, buf, len) != len) {
 			log_csv_error(0, errno);
 			break;
