@@ -66,10 +66,17 @@ void usage(void)
 	"          /sys/bus/greybus/devices\n"
 	"  DBGPATH indicates the debugfs path for the loopback greybus entries e.g.\n"
 	"          /sys/kernel/debug/gb_loopback/\n"
+	" Mandatory arguments\n"
+	"   -t     must be one of the test names - sink, transfer or ping\n"
+	"   -i     iteration count - the number of iterations to run the test over\n"
+	" Optional arguments\n"
+	"   -S     sysfs location - location for greybus 'endo' entires default /sys/bus/greybus/devices/\n"
+	"   -D     debugfs location - location for loopback debugfs entries default /sys/kernel/debug/gb_loopback/\n"
+	"   -s     size of data packet to send during test - defaults to zero\n"
 	"Examples:\n"
-	"  looptest transfer 128 10000 /sys/bus/greybus/devices/ /sys/kernel/debug/gb_loopback/\n"
-	"  looptest ping 0 128 /sys/bus/greybus/devices/ /sys/kernel/debug/gb_loopback/\n"
-	"  looptest sink 2030 32768 /sys/bus/greybus/devices/ /sys/kernel/debug/gb_loopback/\n");
+	"  looptest -t transfer -s 128 -i 10000 -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n"
+	"  looptest -t ping -s 0 128 -i -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n"
+	"  looptest -t sink -s 2030 -i 32768 -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n");
 	abort();
 }
 
@@ -473,9 +480,40 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 
 int main(int argc, char *argv[])
 {
-	if (argc != 6)
+	int o;
+	char *test = NULL;
+	int size = 0;
+	int iteration_count = 0;
+	char *sysfs_prefix = "/sys/bus/greybus/devices/";
+	char *debugfs_prefix = "/sys/kernel/debug/gb_loopback/";
+
+	while ((o = getopt(argc, argv, "t:s:i:S:D:")) != -1) {
+		switch (o) {
+		case 't':
+			test = optarg;
+			break;
+		case 's':
+			size = atoi(optarg);
+			break;
+		case 'i':
+			iteration_count = atoi(optarg);
+			break;
+		case 'S':
+			sysfs_prefix = optarg;
+			break;
+		case 'D':
+			debugfs_prefix = optarg;
+			break;
+		default:
+			usage();
+			return -EINVAL;
+		}
+	}
+
+	if (test == NULL || iteration_count == 0)
 		usage();
-	loopback_run(argv[1], atoi(argv[2]), atoi(argv[3]), argv[4], argv[5]);
+
+	loopback_run(test, size, iteration_count, sysfs_prefix, debugfs_prefix);
 	if (lb_name)
 		free(lb_name);
 	return 0;
