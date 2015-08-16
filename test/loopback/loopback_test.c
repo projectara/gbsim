@@ -35,10 +35,13 @@ static struct dict dict[] = {
 struct loopback_names {
 	char sysfs_entry[MAX_SYSFS_PATH];
 	char dbgfs_entry[MAX_SYSFS_PATH];
-	char *csv_pfx;
+	char *postfix;
 };
 static struct loopback_names *lb_name = NULL;
 static unsigned int lb_entries = 0;
+static char *ctrl_path;
+static char *dev = "dev";
+static char *con = "con";
 
 static int verbose = 1;
 
@@ -70,13 +73,16 @@ void usage(void)
 	abort();
 }
 
-int open_sysfs(const char *sys_pfx, const char *node, int flags)
+int open_sysfs(const char *sys_pfx, const char *postfix, const char *node, int flags)
 {
 	extern int errno;
 	int fd;
 	char path[MAX_SYSFS_PATH];
 
-	snprintf(path, sizeof(path), "%s%s", sys_pfx, node);
+	if (postfix)
+		snprintf(path, sizeof(path), "%s%s_%s", sys_pfx, node, postfix);
+	else
+		snprintf(path, sizeof(path), "%s%s", sys_pfx, node);
 	fd = open(path, flags);
 	if (fd < 0) {
 		fprintf(stderr, "unable to open %s\n", path);
@@ -85,63 +91,71 @@ int open_sysfs(const char *sys_pfx, const char *node, int flags)
 	return fd;
 }
 
-int read_sysfs_int_fd(int fd, const char *sys_pfx, const char *node)
+int read_sysfs_int_fd(int fd, const char *sys_pfx, const char *postfix, const char *node)
 {
 	char buf[SYSFS_MAX_INT];
 
 	if (read(fd, buf, sizeof(buf)) < 0) {
-		fprintf(stderr, "unable to read from %s%s %s\n", sys_pfx, node,
-			strerror(errno));
+		if (postfix)
+			fprintf(stderr, "unable to read from %s%s_%s %s\n", sys_pfx, node,
+				postfix, strerror(errno));
+		else
+			fprintf(stderr, "unable to read from %s%s %s\n", sys_pfx, node,
+				strerror(errno));
 		close(fd);
 		abort();
 	}
 	return atoi(buf);
 }
 
-float read_sysfs_float_fd(int fd, const char *sys_pfx, const char *node)
+float read_sysfs_float_fd(int fd, const char *sys_pfx, const char *postfix, const char *node)
 {
 	char buf[SYSFS_MAX_INT];
 
 	if (read(fd, buf, sizeof(buf)) < 0) {
-		fprintf(stderr, "unable to read from %s%s %s\n", sys_pfx, node,
-			strerror(errno));
+		if (postfix)
+			fprintf(stderr, "unable to read from %s%s_%s %s\n", sys_pfx, node,
+				postfix, strerror(errno));
+		else
+			fprintf(stderr, "unable to read from %s%s %s\n", sys_pfx, node,
+				strerror(errno));
 		close(fd);
 		abort();
 	}
 	return atof(buf);
 }
 
-int read_sysfs_int(const char *sys_pfx, const char *node)
+int read_sysfs_int(const char *sys_pfx, const char *postfix, const char *node)
 {
 	extern int errno;
 	int fd, val;
 
-	fd = open_sysfs(sys_pfx, node, O_RDONLY);
-	val = read_sysfs_int_fd(fd, sys_pfx, node);
+	fd = open_sysfs(sys_pfx, postfix, node, O_RDONLY);
+	val = read_sysfs_int_fd(fd, sys_pfx, postfix, node);
 	close(fd);
 	return val;
 }
 
-float read_sysfs_float(const char *sys_pfx, const char *node)
+float read_sysfs_float(const char *sys_pfx, const char *postfix, const char *node)
 {
 	extern int errno;
 	int fd;
 	float val;
 
-	fd = open_sysfs(sys_pfx, node, O_RDONLY);
-	val = read_sysfs_float_fd(fd, sys_pfx, node);
+	fd = open_sysfs(sys_pfx, postfix, node, O_RDONLY);
+	val = read_sysfs_float_fd(fd, sys_pfx, postfix, node);
 	close(fd);
 	return val;
 }
 
-void write_sysfs_val(const char *sys_pfx, const char *node, int val)
+void write_sysfs_val(const char *sys_pfx, const char *postfix, const char *node, int val)
 {
 	extern int errno;
 	int fd, len;
 	char buf[SYSFS_MAX_INT];
 
-	fd = open_sysfs(sys_pfx, node, O_RDWR);
-	len = snprintf(buf, sizeof(buf), "%d", val);
+	fd = open_sysfs(sys_pfx, postfix, node, O_RDWR);
+	len = snprintf(buf, sizeof(buf), "%d_%s", val, postfix);
 	if (write(fd, buf, len) < 0) {
 		fprintf(stderr, "unable to write to %s%s %s\n", sys_pfx, node,
 			strerror(errno));
@@ -158,8 +172,8 @@ void log_csv_error(int len, int err)
 }
 
 void __log_csv(const char *test_name, int size, int iteration_max,
-	       int fd, struct tm *tm, char *dbgfs_entry, const char *sys_pfx,
-	       const char *csv_pfx)
+	       int fd, struct tm *tm, const char *dbgfs_entry,
+	       const char *sys_pfx, const char *postfix)
 {
 	char buf[CSV_MAX_LINE];
 	extern int errno;
@@ -181,19 +195,19 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 	}
 
 	/* gather data set */
-	error = read_sysfs_int(sys_pfx, "error");
-	request_min = read_sysfs_int(sys_pfx, "requests_per_second_min");
-	request_max = read_sysfs_int(sys_pfx, "requests_per_second_max");
-	request_avg = read_sysfs_float(sys_pfx, "requests_per_second_avg");
-	latency_min = read_sysfs_int(sys_pfx, "latency_min");
-	latency_max = read_sysfs_int(sys_pfx, "latency_max");
-	latency_avg = read_sysfs_float(sys_pfx, "latency_avg");
-	latency_gb_min = read_sysfs_int(sys_pfx, "latency_gb_min");
-	latency_gb_max = read_sysfs_int(sys_pfx, "latency_gb_max");
-	latency_gb_avg = read_sysfs_float(sys_pfx, "latency_gb_avg");
-	throughput_min = read_sysfs_int(sys_pfx, "throughput_min");
-	throughput_max = read_sysfs_int(sys_pfx, "throughput_max");
-	throughput_avg = read_sysfs_float(sys_pfx, "throughput_avg");
+	error = read_sysfs_int(sys_pfx, postfix, "error");
+	request_min = read_sysfs_int(sys_pfx, postfix, "requests_per_second_min");
+	request_max = read_sysfs_int(sys_pfx, postfix, "requests_per_second_max");
+	request_avg = read_sysfs_float(sys_pfx, postfix, "requests_per_second_avg");
+	latency_min = read_sysfs_int(sys_pfx, postfix, "latency_min");
+	latency_max = read_sysfs_int(sys_pfx, postfix, "latency_max");
+	latency_avg = read_sysfs_float(sys_pfx, postfix, "latency_avg");
+	latency_gb_min = read_sysfs_int(sys_pfx, postfix, "latency_gb_min");
+	latency_gb_max = read_sysfs_int(sys_pfx, postfix, "latency_gb_max");
+	latency_gb_avg = read_sysfs_float(sys_pfx, postfix, "latency_gb_avg");
+	throughput_min = read_sysfs_int(sys_pfx, postfix, "throughput_min");
+	throughput_max = read_sysfs_int(sys_pfx, postfix, "throughput_max");
+	throughput_avg = read_sysfs_float(sys_pfx, postfix, "throughput_avg");
 
 	/* derive jitter */
 	request_jitter = request_max - request_min;
@@ -208,7 +222,7 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 		       tm->tm_hour, tm->tm_min, tm->tm_sec);
 	len += snprintf(&buf[len], sizeof(buf) - len,
 			"%s,%s,%u,%u,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u",
-			test_name, csv_pfx, size, iteration_max, error,
+			test_name, sys_pfx, size, iteration_max, error,
 			request_min, request_max, request_avg, request_jitter,
 			latency_min, latency_max, latency_avg, latency_jitter,
 			latency_gb_min, latency_gb_max, latency_gb_avg, latency_gb_jitter,
@@ -270,7 +284,7 @@ void log_csv(const char *test_name, int size, int iteration_max,
 	for (j = 0; j < lb_entries; j++) {
 		__log_csv(test_name, size, iteration_max, fd, &tm,
 			  lb_name[j].dbgfs_entry, lb_name[j].sysfs_entry,
-			  lb_name[j].csv_pfx);
+			  lb_name[j].postfix);
 	}
 	close(fd);
 }
@@ -301,31 +315,33 @@ int construct_paths(const char *sys_pfx, const char *dbgfs_pfx)
 
 		j = 0;
 		while (n--) {
-			if (strstr(namelist[n]->d_name, "raw_latency_")) {
+			if (strstr(namelist[n]->d_name, "raw_latency_endo0:")) {
 				ret = sscanf(namelist[n]->d_name,
-					     "raw_latency_%u:%u:%u:%u",
+					     "raw_latency_endo0:%u:%u:%u:%u",
 					     &module_id, &interface_id,
 					     &bundle_id, &cport_id);
-				if (ret != 4) {
-					fprintf(stderr,
-						"failed to scan from %s\n",
-						namelist[n]->d_name);
-					ret = -ENODEV;
-					goto done;
+				if (ret == 4) {
+					snprintf(lb_name[j].sysfs_entry, MAX_SYSFS_PATH,
+						 "%sendo0:%u:%u:%u:%u/", sys_pfx,
+						 module_id, interface_id,
+						 bundle_id, cport_id);
+					lb_name[j].postfix = con;
+				} else {
+					ret = sscanf(namelist[n]->d_name,
+						     "raw_latency_endo0:%u", &module_id);
+					if (ret == 1) {
+						snprintf(lb_name[j].sysfs_entry, MAX_SYSFS_PATH,
+							 "%sendo0:%u/", sys_pfx, module_id);
+						ctrl_path = lb_name[j].sysfs_entry;
+						lb_name[j].postfix = dev;
+					} else {
+						fprintf(stderr,
+							"failed to scan from %s\n",
+							namelist[n]->d_name);
+						ret = -ENODEV;
+						goto done;
+					}
 				}
-				snprintf(lb_name[j].sysfs_entry, MAX_SYSFS_PATH,
-					"%sendo0:%u:%u:%u:%u/", sys_pfx,
-					module_id, interface_id,
-					bundle_id, cport_id);
-				lb_name[j].csv_pfx = lb_name[j].sysfs_entry;
-			} else if (strstr(namelist[n]->d_name, "aggregate_latency")) {
-				/*
-				 * for the special combined node there's no endo entry
-				 * so just fake one :)
-				 */
-				memcpy(&lb_name[j].sysfs_entry, &lb_name[0].sysfs_entry,
-				       MAX_SYSFS_PATH);
-				lb_name[j].csv_pfx = lb_name[j].dbgfs_entry;
 			}
 			snprintf(lb_name[j].dbgfs_entry, MAX_SYSFS_PATH,
 				"%s%s", dbgfs_pfx, namelist[n]->d_name);
@@ -360,7 +376,7 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 		usage();
 		return;
 	}
-	sys_pfx = lb_name[0].sysfs_entry;
+	sys_pfx = ctrl_path;
 
 	for (i = 0; i < sizeof(dict) / sizeof(struct dict); i++) {
 		if (!strstr(dict[i].name, test_name))
@@ -373,19 +389,19 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 	}
 
 	/* Terminate any currently running test */
-	write_sysfs_val(sys_pfx, "type", 0);
+	write_sysfs_val(sys_pfx, NULL, "type", 0);
 
 	/* Set parameter for no wait between messages */
-	write_sysfs_val(sys_pfx, "ms_wait", 0);
+	write_sysfs_val(sys_pfx, NULL, "ms_wait", 0);
 
 	/* Set operation size */
-	write_sysfs_val(sys_pfx, "size", size);
+	write_sysfs_val(sys_pfx, NULL, "size", size);
 
 	/* Set iterations */
-	write_sysfs_val(sys_pfx, "iteration_max", iteration_max);
+	write_sysfs_val(sys_pfx, NULL, "iteration_max", iteration_max);
 
 	/* Initiate by setting loopback operation type */
-	write_sysfs_val(sys_pfx, "type", test_id);
+	write_sysfs_val(sys_pfx, NULL, "type", test_id);
 	sleep(1);
 
 	if (iteration_max == 0) {
@@ -429,7 +445,7 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 		}
 
 		/* Grab the data */
-		iteration_count = read_sysfs_int(sys_pfx, "iteration_count");
+		iteration_count = read_sysfs_int(sys_pfx, NULL, "iteration_count");
 
 		/* Validate data value is different */
 		if (previous == iteration_count) {
