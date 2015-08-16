@@ -443,6 +443,7 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 			printf("%02d%% complete %d of %d\r",
 				100 * iteration_count / iteration_max,
 				iteration_count, iteration_max);
+			fflush(stdout);
 		}
 	}
 	inotify_rm_watch(fd, wd);
