@@ -135,6 +135,24 @@ struct op_msg {
 		struct gb_firmware_get_firmware_request	fw_get_firmware_req;
 		struct gb_firmware_get_firmware_response fw_get_firmware_resp;
 		struct gb_firmware_ready_to_boot_request fw_rbt_req;
+		struct gb_lights_blink_request		lights_blink_req;
+		struct gb_lights_get_lights_response	lights_gl_rsp;
+		struct gb_lights_event_request		lights_gl_event_req;
+		struct gb_lights_set_brightness_request	lights_glc_bright_req;
+		struct gb_lights_set_fade_request	lights_glc_fade_req;
+		struct gb_lights_set_color_request	lights_glc_color_req;
+		struct gb_lights_blink_request		lights_glc_blink_req;
+		struct gb_lights_get_light_config_request	lights_gl_conf_req;
+		struct gb_lights_get_light_config_response	lights_gl_conf_rsp;
+		struct gb_lights_get_channel_config_request	lights_glc_conf_req;
+		struct gb_lights_get_channel_config_response	lights_glc_conf_rsp;
+		struct gb_lights_get_channel_flash_config_request	lights_glc_fconf_req;
+		struct gb_lights_get_channel_flash_config_response	lights_glc_fconf_rsp;
+		struct gb_lights_set_flash_intensity_request	lights_glc_fint_req;
+		struct gb_lights_set_flash_strobe_request	lights_glc_fstrobe_req;
+		struct gb_lights_set_flash_timeout_request	lights_glc_ftimeout_req;
+		struct gb_lights_get_flash_fault_request	lights_glc_ffault_req;
+		struct gb_lights_get_flash_fault_response	lights_glc_ffault_rsp;
 	};
 };
 
@@ -210,6 +228,9 @@ void pwm_init(void);
 int sdio_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
 char *sdio_get_operation(uint8_t type);
 void sdio_init(void);
+
+int lights_handler(uint16_t, uint16_t,  void *, size_t, void *, size_t);
+char *lights_get_operation(uint8_t type);
 
 int i2s_mgmt_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);
 int i2s_data_handler(uint16_t, uint16_t, void *, size_t, void *, size_t);

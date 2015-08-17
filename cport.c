@@ -115,6 +115,10 @@ static void get_protocol_operation(uint16_t cport_id, char **protocol,
 		*protocol = "SDIO";
 		*operation = sdio_get_operation(type);
 		break;
+	case GREYBUS_PROTOCOL_LIGHTS:
+		*protocol = "LIGHTS";
+		*operation = lights_get_operation(type);
+		break;
 	case GREYBUS_PROTOCOL_I2S_MGMT:
 		*protocol = "I2S_MGMT";
 		*operation = i2s_mgmt_get_operation(type);
@@ -207,6 +211,8 @@ static int cport_recv_handler(struct gbsim_cport *cport,
 		return pwm_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_SDIO:
 		return sdio_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
+	case GREYBUS_PROTOCOL_LIGHTS:
+		return lights_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_I2S_MGMT:
 		return i2s_mgmt_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_I2S_RECEIVER:
