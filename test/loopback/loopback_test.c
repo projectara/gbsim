@@ -406,7 +406,7 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 	sys_pfx = ctrl_path;
 
 	for (i = 0; i < sizeof(dict) / sizeof(struct dict); i++) {
-		if (!strstr(dict[i].name, test_name))
+		if (strstr(dict[i].name, test_name))
 			test_id = dict[i].type;
 	}
 	if (!test_id) {
