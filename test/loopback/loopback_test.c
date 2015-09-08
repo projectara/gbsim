@@ -44,7 +44,7 @@ static char *ctrl_path;
 static char *dev = "dev";
 static char *con = "con";
 
-static int verbose = 1;
+static int verbose;
 
 void abort()
 {
@@ -76,6 +76,7 @@ void usage(void)
 	"   -s     size of data packet to send during test - defaults to zero\n"
 	"   -m     mask - a bit mask of connections to include example: -m 8 = 4th connection -m 9 = 1st and 4th connection etc\n"
 	"                 default is zero which means broadcast to all connections\n"
+	"   -v     verbose output\n"
 	"Examples:\n"
 	"  Send 10000 transfers with a packet size of 128 bytes to all active connections\n"
 	"  looptest -t transfer -s 128 -i 10000 -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n"
@@ -508,7 +509,7 @@ int main(int argc, char *argv[])
 	char *sysfs_prefix = "/sys/bus/greybus/devices/";
 	char *debugfs_prefix = "/sys/kernel/debug/gb_loopback/";
 
-	while ((o = getopt(argc, argv, "t:s:i:S:D:m:")) != -1) {
+	while ((o = getopt(argc, argv, "t:s:i:S:D:m:v::")) != -1) {
 		switch (o) {
 		case 't':
 			test = optarg;
@@ -527,6 +528,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'm':
 			mask = atol(optarg);
+			break;
+		case 'v':
+			verbose = 1;
 			break;
 		default:
 			usage();
