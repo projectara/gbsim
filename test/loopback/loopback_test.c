@@ -36,6 +36,7 @@ struct loopback_names {
 	char sysfs_entry[MAX_SYSFS_PATH];
 	char dbgfs_entry[MAX_SYSFS_PATH];
 	char *postfix;
+	int module_node;
 };
 static struct loopback_names *lb_name = NULL;
 static unsigned int lb_entries = 0;
@@ -73,8 +74,14 @@ void usage(void)
 	"   -S     sysfs location - location for greybus 'endo' entires default /sys/bus/greybus/devices/\n"
 	"   -D     debugfs location - location for loopback debugfs entries default /sys/kernel/debug/gb_loopback/\n"
 	"   -s     size of data packet to send during test - defaults to zero\n"
+	"   -m     mask - a bit mask of connections to include example: -m 8 = 4th connection -m 9 = 1st and 4th connection etc\n"
+	"                 default is zero which means broadcast to all connections\n"
 	"Examples:\n"
+	"  Send 10000 transfers with a packet size of 128 bytes to all active connections\n"
 	"  looptest -t transfer -s 128 -i 10000 -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n"
+	"  looptest -t transfer -s 128 -i 10000 -m 0\n"
+	"  Send 10000 transfers with a packet size of 128 bytes to connection 1 and 4\n"
+	"  looptest -t transfer -s 128 -i 10000 -m 9\n"
 	"  looptest -t ping -s 0 128 -i -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n"
 	"  looptest -t sink -s 2030 -i 32768 -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n");
 	abort();
@@ -264,9 +271,9 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 }
 
 void log_csv(const char *test_name, int size, int iteration_max,
-	     const char *sys_pfx)
+	     const char *sys_pfx, uint32_t mask)
 {
-	int fd, j;
+	int fd, j, i;
 	struct tm tm;
 	time_t t;
 	mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
@@ -289,10 +296,14 @@ void log_csv(const char *test_name, int size, int iteration_max,
 		fprintf(stderr, "unable to open %s for appendation\n", buf);
 		abort();
 	}
-	for (j = 0; j < lb_entries; j++) {
-		__log_csv(test_name, size, iteration_max, fd, &tm,
-			  lb_name[j].dbgfs_entry, lb_name[j].sysfs_entry,
-			  lb_name[j].postfix);
+	for (j = 0, i = 0; j < lb_entries; j++) {
+		if (lb_name[j].module_node || mask & (1 << i) || (!mask))
+			__log_csv(test_name, size, iteration_max, fd, &tm,
+				  lb_name[j].dbgfs_entry,
+				  lb_name[j].sysfs_entry,
+				  lb_name[j].postfix);
+		if (!lb_name[j].module_node)
+			i++;
 	}
 	close(fd);
 }
@@ -303,7 +314,7 @@ int construct_paths(const char *sys_pfx, const char *dbgfs_pfx)
 	int i, n, ret, j;
 	unsigned int module_id, interface_id, bundle_id, cport_id;
 
-	i = n = scandir(dbgfs_pfx, &namelist, NULL, alphasort);
+	n = scandir(dbgfs_pfx, &namelist, NULL, alphasort);
 	if (n < 0) {
 		perror("scandir");
 		ret = -ENODEV;
@@ -322,9 +333,9 @@ int construct_paths(const char *sys_pfx, const char *dbgfs_pfx)
 		}
 
 		j = 0;
-		while (n--) {
-			if (strstr(namelist[n]->d_name, "raw_latency_endo0:")) {
-				ret = sscanf(namelist[n]->d_name,
+		for (i = 0; i < n; i++) {
+			if (strstr(namelist[i]->d_name, "raw_latency_endo0:")) {
+				ret = sscanf(namelist[i]->d_name,
 					     "raw_latency_endo0:%u:%u:%u:%u",
 					     &module_id, &interface_id,
 					     &bundle_id, &cport_id);
@@ -334,31 +345,35 @@ int construct_paths(const char *sys_pfx, const char *dbgfs_pfx)
 						 module_id, interface_id,
 						 bundle_id, cport_id);
 					lb_name[j].postfix = con;
+					lb_name[j].module_node = 0;
 				} else {
-					ret = sscanf(namelist[n]->d_name,
+					ret = sscanf(namelist[i]->d_name,
 						     "raw_latency_endo0:%u", &module_id);
 					if (ret == 1) {
 						snprintf(lb_name[j].sysfs_entry, MAX_SYSFS_PATH,
 							 "%sendo0:%u/", sys_pfx, module_id);
 						ctrl_path = lb_name[j].sysfs_entry;
 						lb_name[j].postfix = dev;
+						lb_name[j].module_node = 1;
 					} else {
-						fprintf(stderr,
-							"failed to scan from %s\n",
-							namelist[n]->d_name);
-						ret = -ENODEV;
-						goto done;
+						continue;
 					}
 				}
+				snprintf(lb_name[j].dbgfs_entry, MAX_SYSFS_PATH,
+					 "%s%s", dbgfs_pfx,
+					 namelist[i]->d_name);
+				if (verbose)
+					printf("add %s %s\n",
+					       lb_name[j].dbgfs_entry,
+					       lb_name[j].sysfs_entry);
+				j++;
+
 			}
-			snprintf(lb_name[j].dbgfs_entry, MAX_SYSFS_PATH,
-				"%s%s", dbgfs_pfx, namelist[n]->d_name);
-			j++;
 		}
 	}
 	ret = 0;
 done:
-	for (n = 0; n < i; n++)
+	for (i = 0; i < n; i++)
 		free(namelist[n]);
 	free(namelist);
 baddir:
@@ -366,7 +381,8 @@ baddir:
 }
 
 void loopback_run(const char *test_name, int size, int iteration_max,
-		  const char *sys_prefix, const char *dbgfs_prefix)
+		  const char *sys_prefix, const char *dbgfs_prefix,
+		  uint32_t mask)
 {
 	char buf[MAX_SYSFS_PATH];
 	char inotify_buf[0x800];
@@ -407,6 +423,9 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 
 	/* Set iterations */
 	write_sysfs_val(sys_pfx, NULL, "iteration_max", iteration_max);
+
+	/* Set mask of connections to include */
+	write_sysfs_val(sys_pfx, NULL, "mask", mask);
 
 	/* Initiate by setting loopback operation type */
 	write_sysfs_val(sys_pfx, NULL, "type", test_id);
@@ -476,7 +495,7 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 	if (err)
 		printf("\nError executing test\n");
 	else
-		log_csv(test_name, size, iteration_max, sys_pfx);
+		log_csv(test_name, size, iteration_max, sys_pfx, mask);
 }
 
 int main(int argc, char *argv[])
@@ -484,11 +503,12 @@ int main(int argc, char *argv[])
 	int o;
 	char *test = NULL;
 	int size = 0;
+	uint32_t mask = 0;
 	int iteration_count = 0;
 	char *sysfs_prefix = "/sys/bus/greybus/devices/";
 	char *debugfs_prefix = "/sys/kernel/debug/gb_loopback/";
 
-	while ((o = getopt(argc, argv, "t:s:i:S:D:")) != -1) {
+	while ((o = getopt(argc, argv, "t:s:i:S:D:m:")) != -1) {
 		switch (o) {
 		case 't':
 			test = optarg;
@@ -505,6 +525,9 @@ int main(int argc, char *argv[])
 		case 'D':
 			debugfs_prefix = optarg;
 			break;
+		case 'm':
+			mask = atol(optarg);
+			break;
 		default:
 			usage();
 			return -EINVAL;
@@ -514,7 +537,8 @@ int main(int argc, char *argv[])
 	if (test == NULL || iteration_count == 0)
 		usage();
 
-	loopback_run(test, size, iteration_count, sysfs_prefix, debugfs_prefix);
+	loopback_run(test, size, iteration_count, sysfs_prefix, debugfs_prefix,
+		     mask);
 	if (lb_name)
 		free(lb_name);
 	return 0;
