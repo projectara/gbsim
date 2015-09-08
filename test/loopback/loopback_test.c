@@ -241,6 +241,7 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 
 	/* Write raw latency times to CSV  */
 	for (i = 0; i < iteration_max; i++) {
+		memset(&rx_buf, 0x00, sizeof(rx_buf));
 		len = read(fd_dev, rx_buf, sizeof(rx_buf));
 		if (len < 0) {
 			fprintf(stderr, "error reading %s %s\n",
