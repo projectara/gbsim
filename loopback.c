@@ -129,6 +129,7 @@ int loopback_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	struct op_msg *op_req = rbuf;
 	struct op_msg *op_rsp = (struct op_msg *)data;
 	size_t payload_size = 0;
+	__le32 len;
 	uint16_t message_size;
 	uint8_t module_id;
 	uint8_t result = PROTOCOL_STATUS_SUCCESS;
@@ -159,8 +160,10 @@ int loopback_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 				    module_id, cport_id, request->len);
 			result = PROTOCOL_STATUS_INVALID;
 		} else {
-			memcpy(&response->data, request->data, request->len);
-			payload_size = sizeof(*response) + request->len;
+			len = le32toh(request->len);
+			response->len = htole32(len);
+			memcpy(&response->data, request->data, len);
+			payload_size = sizeof(*response) + len;
 		}
 		break;
 	case GB_LOOPBACK_TYPE_SINK:
