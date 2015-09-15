@@ -87,6 +87,10 @@ struct op_msg {
 		struct gb_svc_intf_hotplug_request	svc_intf_hotplug_request;
 		struct gb_svc_intf_hot_unplug_request	svc_intf_hot_unplug_request;
 		struct gb_svc_intf_reset_request	svc_intf_reset_request;
+		struct gb_svc_dme_peer_get_request	svc_dme_peer_get_request;
+		struct gb_svc_dme_peer_get_response	svc_dme_peer_get_response;
+		struct gb_svc_dme_peer_set_request	svc_dme_peer_set_request;
+		struct gb_svc_dme_peer_set_response	svc_dme_peer_set_response;
 		struct gb_svc_route_create_request	svc_route_create_request;
 		struct gb_svc_route_destroy_request	svc_route_destroy_request;
 		struct gb_gpio_line_count_response	gpio_lc_rsp;

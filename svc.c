@@ -30,6 +30,10 @@ static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 	struct gb_svc_intf_device_id_request *svc_dev_id;
 	struct gb_svc_conn_create_request *svc_conn_create;
 	struct gb_svc_conn_destroy_request *svc_conn_destroy;
+	struct gb_svc_dme_peer_get_request *dme_get_request;
+	struct gb_svc_dme_peer_get_response *dme_get_response;
+	struct gb_svc_dme_peer_set_request *dme_set_request;
+	struct gb_svc_dme_peer_set_response *dme_set_response;
 	struct gb_svc_route_create_request *svc_route_create;
 	struct gb_svc_route_destroy_request *svc_route_destroy;
 	uint16_t message_size = sizeof(*oph);
@@ -59,6 +63,32 @@ static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 		gbsim_debug("SVC connection destroy request (%hhu %hu):(%hhu %hu) response\n",
 			    svc_conn_destroy->intf1_id, svc_conn_destroy->cport1_id,
 			    svc_conn_destroy->intf2_id, svc_conn_destroy->cport2_id);
+		break;
+	case GB_SVC_TYPE_DME_PEER_GET:
+		payload_size = sizeof(*dme_get_response);
+		dme_get_request = &op_req->svc_dme_peer_get_request;
+		dme_get_response = &op_rsp->svc_dme_peer_get_response;
+		dme_get_response->result_code = 0;
+		dme_get_response->attr_value = 1;
+
+		gbsim_debug("SVC dme peer get (%hhu %hu %hu) request\n",
+			    dme_get_request->intf_id, dme_get_request->attr,
+			    dme_get_request->selector);
+		gbsim_debug("SVC dme peer get (%hu %u) response\n",
+			    dme_get_response->result_code,
+			    dme_get_response->attr_value);
+		break;
+	case GB_SVC_TYPE_DME_PEER_SET:
+		payload_size = sizeof(*dme_set_response);
+		dme_set_request = &op_req->svc_dme_peer_set_request;
+		dme_set_response = &op_rsp->svc_dme_peer_set_response;
+		dme_set_response->result_code = 0;
+
+		gbsim_debug("SVC dme peer set (%hhu %hu %hu %u) request\n",
+			    dme_set_request->intf_id, dme_set_request->attr,
+			    dme_set_request->selector, dme_set_request->value);
+		gbsim_debug("SVC dme peer set (%hu) response\n",
+			    dme_set_response->result_code);
 		break;
 	case GB_SVC_TYPE_ROUTE_CREATE:
 		svc_route_create = &op_req->svc_route_create_request;
@@ -173,6 +203,10 @@ char *svc_get_operation(uint8_t type)
 		return "GB_SVC_TYPE_CONN_CREATE";
 	case GB_SVC_TYPE_CONN_DESTROY:
 		return "GB_SVC_TYPE_CONN_DESTROY";
+	case GB_SVC_TYPE_DME_PEER_GET:
+		return "GB_SVC_TYPE_DME_PEER_GET";
+	case GB_SVC_TYPE_DME_PEER_SET:
+		return "GB_SVC_TYPE_DME_PEER_SET";
 	case GB_SVC_TYPE_ROUTE_CREATE:
 		return "GB_SVC_TYPE_ROUTE_CREATE";
 	case GB_SVC_TYPE_ROUTE_DESTROY:
