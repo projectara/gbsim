@@ -337,7 +337,7 @@ int construct_paths(const char *sys_pfx, const char *dbgfs_pfx)
 
 		j = 0;
 		for (i = 0; i < n; i++) {
-			if (strstr(namelist[i]->d_name, "raw_latency_endo0:")) {
+			if (strstr(namelist[i]->d_name, "raw_latency_endo0")) {
 				ret = sscanf(namelist[i]->d_name,
 					     "raw_latency_endo0:%u:%u:%u:%u",
 					     &module_id, &interface_id,
@@ -350,17 +350,11 @@ int construct_paths(const char *sys_pfx, const char *dbgfs_pfx)
 					lb_name[j].postfix = con;
 					lb_name[j].module_node = 0;
 				} else {
-					ret = sscanf(namelist[i]->d_name,
-						     "raw_latency_endo0:%u", &module_id);
-					if (ret == 1) {
-						snprintf(lb_name[j].sysfs_entry, MAX_SYSFS_PATH,
-							 "%sendo0:%u/", sys_pfx, module_id);
-						ctrl_path = lb_name[j].sysfs_entry;
-						lb_name[j].postfix = dev;
-						lb_name[j].module_node = 1;
-					} else {
-						continue;
-					}
+					snprintf(lb_name[j].sysfs_entry, MAX_SYSFS_PATH,
+						 "%sendo0/", sys_pfx);
+					ctrl_path = lb_name[j].sysfs_entry;
+					lb_name[j].postfix = dev;
+					lb_name[j].module_node = 1;
 				}
 				snprintf(lb_name[j].dbgfs_entry, MAX_SYSFS_PATH,
 					 "%s%s", dbgfs_pfx,
