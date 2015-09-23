@@ -198,7 +198,6 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 	float request_avg, latency_avg, latency_gb_avg, throughput_avg;
 	int request_min, request_max, request_jitter;
 	int latency_min, latency_max, latency_jitter;
-	int latency_gb_min, latency_gb_max, latency_gb_jitter;
 	int throughput_min, throughput_max, throughput_jitter;
 	unsigned int i;
 	char rx_buf[SYSFS_MAX_INT];
@@ -218,9 +217,6 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 	latency_min = read_sysfs_int(sys_pfx, postfix, "latency_min");
 	latency_max = read_sysfs_int(sys_pfx, postfix, "latency_max");
 	latency_avg = read_sysfs_float(sys_pfx, postfix, "latency_avg");
-	latency_gb_min = read_sysfs_int(sys_pfx, postfix, "latency_gb_min");
-	latency_gb_max = read_sysfs_int(sys_pfx, postfix, "latency_gb_max");
-	latency_gb_avg = read_sysfs_float(sys_pfx, postfix, "latency_gb_avg");
 	throughput_min = read_sysfs_int(sys_pfx, postfix, "throughput_min");
 	throughput_max = read_sysfs_int(sys_pfx, postfix, "throughput_max");
 	throughput_avg = read_sysfs_float(sys_pfx, postfix, "throughput_avg");
@@ -228,7 +224,6 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 	/* derive jitter */
 	request_jitter = request_max - request_min;
 	latency_jitter = latency_max - latency_min;
-	latency_gb_jitter = latency_gb_max - latency_gb_min;
 	throughput_jitter = throughput_max - throughput_min;
 
 	/* append calculated metrics to file */
@@ -237,11 +232,10 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 		       tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 		       tm->tm_hour, tm->tm_min, tm->tm_sec);
 	len += snprintf(&buf[len], sizeof(buf) - len,
-			"%s,%s,%u,%u,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u",
+			"%s,%s,%u,%u,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u",
 			test_name, sys_pfx, size, iteration_max, error,
 			request_min, request_max, request_avg, request_jitter,
 			latency_min, latency_max, latency_avg, latency_jitter,
-			latency_gb_min, latency_gb_max, latency_gb_avg, latency_gb_jitter,
 			throughput_min, throughput_max, throughput_avg,
 			throughput_jitter);
 	write(fd, buf, len);
