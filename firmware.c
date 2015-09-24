@@ -77,7 +77,6 @@ int firmware_request_send(uint8_t type, uint16_t hd_cport_id)
 		payload_size = sizeof(*rbt_request);
 		rbt_request = &msg.fw_rbt_req;
 
-		rbt_request->stage = GB_FIRMWARE_BOOT_STAGE_ONE;
 		rbt_request->status = GB_FIRMWARE_BOOT_STATUS_SECURE;
 		break;
 	default:
