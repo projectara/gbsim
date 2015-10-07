@@ -142,21 +142,22 @@ static void get_protocol_operation(uint16_t cport_id, char **protocol,
 	}
 }
 
-static int send_msg_to_ap(struct op_msg *op, uint16_t hd_cport_id,
-			  uint16_t message_size, uint16_t id, uint8_t type,
-			  uint8_t result)
+static int send_msg_to_ap(uint16_t hd_cport_id,
+			struct op_msg *message, uint16_t message_size,
+			uint16_t operation_id, uint8_t type, uint8_t result)
 {
+	struct gb_operation_msg_hdr *header = &message->header;
 	char *protocol, *operation;
 	ssize_t nbytes;
 
-	op->header.size = htole16(message_size);
-	op->header.operation_id = id;
-	op->header.type = type;
-	op->header.result = result;
+	header->size = htole16(message_size);
+	header->operation_id = operation_id;
+	header->type = type;
+	header->result = result;
 
 	/* Store the cport id in the header pad bytes */
-	op->header.pad[0] = hd_cport_id & 0xff;
-	op->header.pad[1] = (hd_cport_id >> 8) & 0xff;
+	header->pad[0] = hd_cport_id & 0xff;
+	header->pad[1] = (hd_cport_id >> 8) & 0xff;
 
 	get_protocol_operation(hd_cport_id, &protocol, &operation,
 			       type & ~OP_RESPONSE);
@@ -169,9 +170,9 @@ static int send_msg_to_ap(struct op_msg *op, uint16_t hd_cport_id,
 
 	/* Send the response to the AP */
 	if (verbose)
-		gbsim_dump(op, message_size);
+		gbsim_dump(message, message_size);
 
-	nbytes = write(to_ap, op, message_size);
+	nbytes = write(to_ap, message, message_size);
 	if (nbytes < 0)
 		return nbytes;
 
@@ -182,14 +183,14 @@ int send_response(struct op_msg *op, uint16_t hd_cport_id,
 		   uint16_t message_size, struct gb_operation_msg_hdr *oph,
 		   uint8_t result)
 {
-	return send_msg_to_ap(op, hd_cport_id, message_size, oph->operation_id,
+	return send_msg_to_ap(hd_cport_id, op, message_size, oph->operation_id,
 			oph->type | OP_RESPONSE, result);
 }
 
 int send_request(struct op_msg *op, uint16_t hd_cport_id,
 		 uint16_t message_size, uint16_t id, uint8_t type)
 {
-	return send_msg_to_ap(op, hd_cport_id, message_size, id, type, 0);
+	return send_msg_to_ap(hd_cport_id, op, message_size, id, type, 0);
 }
 
 static int cport_recv_handler(struct gbsim_cport *cport,
