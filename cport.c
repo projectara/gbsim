@@ -22,6 +22,32 @@
 static char cport_rbuf[ES1_MSG_SIZE];
 static char cport_tbuf[ES1_MSG_SIZE];
 
+/*
+ * We (ab)use the operation-message header pad bytes to transfer the
+ * cport id in order to minimise overhead.
+ */
+static void
+gbsim_message_cport_pack(struct gb_operation_msg_hdr *header, uint16_t cport_id)
+{
+	header->pad[0] = cport_id & 0xff;
+	header->pad[1] = (cport_id >> 8) & 0xff;
+}
+
+/* Clear the pad bytes used for the CPort id */
+static void gbsim_message_cport_clear(struct gb_operation_msg_hdr *header)
+{
+	header->pad[0] = 0;
+	header->pad[1] = 0;
+}
+
+/* Extract the CPort id packed into the header, and clear it */
+static uint16_t gbsim_message_cport_unpack(struct gb_operation_msg_hdr *header)
+{
+	uint16_t cport_id = header->pad[1] << 8 | header->pad[0];
+
+	return cport_id;
+}
+
 struct gbsim_cport *cport_find(uint16_t cport_id)
 {
 	struct gbsim_cport *cport;
@@ -155,9 +181,7 @@ static int send_msg_to_ap(uint16_t hd_cport_id,
 	header->type = type;
 	header->result = result;
 
-	/* Store the cport id in the header pad bytes */
-	header->pad[0] = hd_cport_id & 0xff;
-	header->pad[1] = (hd_cport_id >> 8) & 0xff;
+	gbsim_message_cport_pack(header, hd_cport_id);
 
 	get_protocol_operation(hd_cport_id, &protocol, &operation,
 			       type & ~OP_RESPONSE);
@@ -249,7 +273,7 @@ static void recv_handler(void *rbuf, size_t rsize)
 	}
 
 	/* Retreive the cport id stored in the header pad bytes */
-	hd_cport_id = hdr->pad[1] << 8 | hdr->pad[0];
+	hd_cport_id = gbsim_message_cport_unpack(hdr);
 
 	cport = cport_find(hd_cport_id);
 	if (!cport) {
@@ -270,9 +294,8 @@ static void recv_handler(void *rbuf, size_t rsize)
 	if (verbose)
 		gbsim_dump(rbuf, rsize);
 
-	/* clear the cport id stored in the header pad bytes */
-	hdr->pad[0] = 0;
-	hdr->pad[1] = 0;
+	gbsim_message_cport_clear(hdr);
+
 	ret = cport_recv_handler(cport, rbuf, rsize);
 	if (ret)
 		gbsim_debug("cport_recv_handler() returned %d\n", ret);
