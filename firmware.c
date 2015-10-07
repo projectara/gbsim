@@ -121,8 +121,9 @@ static int firmware_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 	}
 
 	message_size += payload_size;
-	ret = send_response(hd_cport_id, op_rsp, message_size, oph,
-			    PROTOCOL_STATUS_SUCCESS);
+	ret = send_response(hd_cport_id, op_rsp, message_size,
+				oph->operation_id, oph->type,
+				PROTOCOL_STATUS_SUCCESS);
 	if (ret)
 		return ret;
 

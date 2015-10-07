@@ -181,11 +181,10 @@ static int send_msg_to_ap(uint16_t hd_cport_id,
 
 int send_response(uint16_t hd_cport_id,
 			struct op_msg *message, uint16_t message_size,
-			struct gb_operation_msg_hdr *oph, uint8_t result)
+			uint16_t operation_id, uint8_t type, uint8_t result)
 {
 	return send_msg_to_ap(hd_cport_id, message, message_size,
-				oph->operation_id, oph->type | OP_RESPONSE,
-				result);
+				operation_id, type | OP_RESPONSE, result);
 }
 
 int send_request(uint16_t hd_cport_id,

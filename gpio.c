@@ -121,8 +121,9 @@ int gpio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	}
 
 	message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;
-	nbytes = send_response(hd_cport_id, op_rsp, message_size, oph,
-			       PROTOCOL_STATUS_SUCCESS);
+	nbytes = send_response(hd_cport_id, op_rsp, message_size,
+				oph->operation_id, oph->type,
+				PROTOCOL_STATUS_SUCCESS);
 	if (nbytes)
 		return nbytes;
 

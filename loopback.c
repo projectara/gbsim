@@ -176,7 +176,8 @@ int loopback_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	}
 
 	message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;
-	return send_response(hd_cport_id, op_rsp, message_size, oph, result);
+	return send_response(hd_cport_id, op_rsp, message_size,
+				oph->operation_id, oph->type, result);
 }
 
 char *loopback_get_operation(uint8_t type)

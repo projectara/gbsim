@@ -386,8 +386,9 @@ int lights_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 
 	/* send response */
 	message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;
-	ret = send_response(hd_cport_id, op_rsp, message_size, oph,
-			    PROTOCOL_STATUS_SUCCESS);
+	ret = send_response(hd_cport_id, op_rsp, message_size,
+				oph->operation_id, oph->type,
+				PROTOCOL_STATUS_SUCCESS);
 
 	/* Test hack: send release event if brightness is set to 254 */
 	if (oph->type == GB_LIGHTS_TYPE_SET_BRIGHTNESS &&

@@ -615,8 +615,9 @@ static ssize_t sdio_transfer_rsp(struct op_msg *op_rsp, uint16_t hd_cport_id,
 
 send:
 	message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;
-	return send_response(hd_cport_id, op_rsp, message_size, oph,
-			     PROTOCOL_STATUS_SUCCESS);
+	return send_response(hd_cport_id, op_rsp, message_size,
+				oph->operation_id, oph->type,
+				PROTOCOL_STATUS_SUCCESS);
 }
 
 static ssize_t sdio_command_rsp(struct op_msg *op_rsp, uint16_t hd_cport_id,
@@ -629,8 +630,9 @@ static ssize_t sdio_command_rsp(struct op_msg *op_rsp, uint16_t hd_cport_id,
 	for (i = 0; i < 4; i++)
 		op_rsp->sdio_cmd_rsp.resp[i] = htole32(sd->rsp[i]);
 
-	return send_response(hd_cport_id, op_rsp, message_size, oph,
-			     PROTOCOL_STATUS_SUCCESS);
+	return send_response(hd_cport_id, op_rsp, message_size,
+				oph->operation_id, oph->type,
+				PROTOCOL_STATUS_SUCCESS);
 }
 
 int sdio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
@@ -701,7 +703,8 @@ int sdio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	}
 
 	message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;
-	send_response(hd_cport_id, op_rsp, message_size, oph, result);
+	send_response(hd_cport_id, op_rsp, message_size,
+				oph->operation_id, oph->type, result);
 
 	/* Simulate a card insert after sending capabilities */
 	if (oph->type == GB_SDIO_TYPE_GET_CAPABILITIES)

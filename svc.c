@@ -114,8 +114,9 @@ static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 	}
 
 	message_size += payload_size;
-	return send_response(hd_cport_id, op_rsp, message_size, oph,
-			     PROTOCOL_STATUS_SUCCESS);
+	return send_response(hd_cport_id, op_rsp, message_size,
+				oph->operation_id, oph->type,
+				PROTOCOL_STATUS_SUCCESS);
 }
 
 static int svc_handler_response(uint16_t cport_id, uint16_t hd_cport_id,
