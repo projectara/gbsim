@@ -635,7 +635,7 @@ static ssize_t sdio_command_rsp(struct op_msg *op_rsp, uint16_t hd_cport_id,
 				PROTOCOL_STATUS_SUCCESS);
 }
 
-int sdio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
+int sdio_handler(struct gbsim_cport *cport, void *rbuf,
 		 size_t rsize, void *tbuf, size_t tsize)
 {
 	struct gb_operation_msg_hdr *oph;
@@ -643,6 +643,8 @@ int sdio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	struct op_msg *op_rsp;
 	size_t payload_size = 0;
 	uint16_t message_size;
+	uint16_t cport_id = cport->id;
+	uint16_t hd_cport_id = cport->hd_cport_id;
 	uint16_t data_blocks;
 	uint16_t data_blksz;
 	uint8_t *data;

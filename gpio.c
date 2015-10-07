@@ -24,15 +24,16 @@
 static int gpio_dir[6];
 static gpio *gpios[6];
 
-int gpio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
+int gpio_handler(struct gbsim_cport *cport, void *rbuf,
 		 size_t rsize, void *tbuf, size_t tsize)
 {
 	struct gb_operation_msg_hdr *oph;
 	struct op_msg *op_req = rbuf;
 	struct op_msg *op_rsp;
 	size_t payload_size;
-	uint16_t message_size;
 	ssize_t nbytes;
+	uint16_t message_size;
+	uint16_t hd_cport_id = cport->hd_cport_id;
 
 	op_rsp = (struct op_msg *)tbuf;
 	oph = (struct gb_operation_msg_hdr *)&op_req->header;

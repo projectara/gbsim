@@ -20,14 +20,15 @@
 
 #include "gbsim.h"
 
-int control_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
+int control_handler(struct gbsim_cport *cport, void *rbuf,
 		    size_t rsize, void *tbuf, size_t tsize)
 {
 	struct op_msg *op_req = rbuf;
 	struct op_msg *op_rsp = tbuf;
 	struct gb_operation_msg_hdr *oph = &op_req->header;
-	uint16_t message_size = sizeof(*oph);
 	size_t payload_size;
+	uint16_t message_size = sizeof(*oph);
+	uint16_t hd_cport_id = cport->hd_cport_id;
 
 	switch (oph->type) {
 	case GB_REQUEST_TYPE_PROTOCOL_VERSION:

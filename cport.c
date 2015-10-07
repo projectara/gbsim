@@ -205,30 +205,30 @@ static int cport_recv_handler(struct gbsim_cport *cport,
 
 	switch (cport->protocol) {
 	case GREYBUS_PROTOCOL_CONTROL:
-		return control_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
+		return control_handler(cport, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_SVC:
-		return svc_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
+		return svc_handler(cport, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_GPIO:
-		return gpio_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
+		return gpio_handler(cport, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_I2C:
-		return i2c_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
+		return i2c_handler(cport, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_UART:
-		return uart_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
+		return uart_handler(cport, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_PWM:
-		return pwm_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
+		return pwm_handler(cport, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_SDIO:
-		return sdio_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
+		return sdio_handler(cport, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_LIGHTS:
-		return lights_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
+		return lights_handler(cport, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_I2S_MGMT:
-		return i2s_mgmt_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
+		return i2s_mgmt_handler(cport, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_I2S_RECEIVER:
 	case GREYBUS_PROTOCOL_I2S_TRANSMITTER:
-		return i2s_data_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
+		return i2s_data_handler(cport, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_LOOPBACK:
-		return loopback_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
+		return loopback_handler(cport, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_FIRMWARE:
-		return firmware_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
+		return firmware_handler(cport, rbuf, rsize, tbuf, tsize);
 	default:
 		gbsim_error("handler not found for cport %u\n", cport->id);
 		return -EINVAL;

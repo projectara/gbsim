@@ -121,7 +121,7 @@ static void loopback_init_port(uint8_t module_id, uint16_t cport_id,
 }
 
 
-int loopback_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
+int loopback_handler(struct gbsim_cport *cport, void *rbuf,
 		 size_t rsize, void *tbuf, size_t tsize)
 {
 	char data[GB_OPERATION_DATA_SIZE_MAX];
@@ -131,6 +131,8 @@ int loopback_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	size_t payload_size = 0;
 	__le32 len;
 	uint16_t message_size;
+	uint16_t cport_id = cport->id;
+	uint16_t hd_cport_id = cport->hd_cport_id;
 	uint8_t module_id;
 	uint8_t result = PROTOCOL_STATUS_SUCCESS;
 	struct gb_loopback_transfer_request *request;
