@@ -258,10 +258,11 @@ char *firmware_get_operation(uint8_t type);
 
 bool manifest_parse(void *data, size_t size);
 void reset_hd_cport_id(void);
-int send_response(struct op_msg *op, uint16_t hd_cport_id,
-		   uint16_t message_size, struct gb_operation_msg_hdr *oph,
-		   uint8_t result);
-int send_request(struct op_msg *op, uint16_t hd_cport_id,
-		 uint16_t message_size, uint16_t id, uint8_t type);
+int send_response(uint16_t hd_cport_id,
+			struct op_msg *message, uint16_t message_size,
+			struct gb_operation_msg_hdr *oph, uint8_t result);
+int send_request(uint16_t hd_cport_id,
+			struct op_msg *message, uint16_t message_size,
+			uint16_t operation_id, uint8_t type);
 
 #endif /* __GBSIM_H */

@@ -108,7 +108,7 @@ static int gb_uart_send(int i, void *tbuf, size_t tsize, __u8 type, __u8 flags)
 
 	/* Operation id is 0 (unidirectional operation) */
 
-	return send_request(msg, up[i].hd_cport_id, message_size, 0, type);
+	return send_request(up[i].hd_cport_id, msg, message_size, 0, type);
 }
 
 static int tty_find_port(uint8_t module_id, uint16_t cport_id)
@@ -590,7 +590,7 @@ int uart_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	}
 
 	message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;
-	return send_response(op_rsp, hd_cport_id, message_size, oph, result);
+	return send_response(hd_cport_id, op_rsp, message_size, oph, result);
 }
 
 /* Only used when bbb_backend is true */

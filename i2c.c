@@ -117,7 +117,7 @@ int i2c_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	}
 
 	message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;
-	return send_response(op_rsp, hd_cport_id, message_size, oph, result);
+	return send_response(hd_cport_id, op_rsp, message_size, oph, result);
 }
 
 char *i2c_get_operation(uint8_t type)

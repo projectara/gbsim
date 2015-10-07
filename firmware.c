@@ -86,7 +86,7 @@ int firmware_request_send(uint8_t type, uint16_t hd_cport_id)
 	}
 
 	message_size += payload_size;
-	return send_request(&msg, hd_cport_id, message_size, 1, type);
+	return send_request(hd_cport_id, &msg, message_size, 1, type);
 }
 
 /* Request from AP to Module */
@@ -121,7 +121,7 @@ static int firmware_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 	}
 
 	message_size += payload_size;
-	ret = send_response(op_rsp, hd_cport_id, message_size, oph,
+	ret = send_response(hd_cport_id, op_rsp, message_size, oph,
 			    PROTOCOL_STATUS_SUCCESS);
 	if (ret)
 		return ret;

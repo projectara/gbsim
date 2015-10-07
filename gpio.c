@@ -121,7 +121,7 @@ int gpio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 	}
 
 	message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;
-	nbytes = send_response(op_rsp, hd_cport_id, message_size, oph,
+	nbytes = send_response(hd_cport_id, op_rsp, message_size, oph,
 			       PROTOCOL_STATUS_SUCCESS);
 	if (nbytes)
 		return nbytes;
@@ -134,7 +134,7 @@ int gpio_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 		op_req->gpio_irq_event_req.which = 1;	/* XXX HACK */
 
 		message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;
-		return send_request(op_req, hd_cport_id, message_size, 0,
+		return send_request(hd_cport_id, op_req, message_size, 0,
 				    GB_GPIO_TYPE_IRQ_EVENT);
 	}
 #endif

@@ -263,7 +263,7 @@ static ssize_t lights_send_event(struct op_msg *op_req, uint16_t hd_cport_id,
 		    light_id);
 
 	message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;
-	return send_request(op_req, hd_cport_id, message_size, 0,
+	return send_request(hd_cport_id, op_req, message_size, 0,
 			    GB_LIGHTS_TYPE_EVENT);
 }
 
@@ -386,7 +386,7 @@ int lights_handler(uint16_t cport_id, uint16_t hd_cport_id, void *rbuf,
 
 	/* send response */
 	message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;
-	ret = send_response(op_rsp, hd_cport_id, message_size, oph,
+	ret = send_response(hd_cport_id, op_rsp, message_size, oph,
 			    PROTOCOL_STATUS_SUCCESS);
 
 	/* Test hack: send release event if brightness is set to 254 */

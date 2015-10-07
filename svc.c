@@ -114,7 +114,7 @@ static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 	}
 
 	message_size += payload_size;
-	return send_response(op_rsp, hd_cport_id, message_size, oph,
+	return send_response(hd_cport_id, op_rsp, message_size, oph,
 			     PROTOCOL_STATUS_SUCCESS);
 }
 
@@ -271,7 +271,7 @@ int svc_request_send(uint8_t type, uint8_t intf_id)
 	}
 
 	message_size += payload_size;
-	return send_request(&msg, GB_SVC_CPORT_ID, message_size, 1, type);
+	return send_request(GB_SVC_CPORT_ID, &msg, message_size, 1, type);
 }
 
 void svc_init(void)
