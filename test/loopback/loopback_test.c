@@ -56,7 +56,7 @@ void abort()
 
 void usage(void)
 {
-	fprintf(stderr, "Usage: looptest TEST [SIZE] ITERATIONS [SYSPATH] [DBGPATH]\n\n"
+	fprintf(stderr, "Usage: loopback_test TEST [SIZE] ITERATIONS [SYSPATH] [DBGPATH]\n\n"
 	"  Run TEST for a number of ITERATIONS with operation data SIZE bytes\n"
 	"  TEST may be \'ping\' \'transfer\' or \'sink\'\n"
 	"  SIZE indicates the size of transfer <= greybus max payload bytes\n"
