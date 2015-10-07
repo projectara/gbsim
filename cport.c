@@ -193,9 +193,13 @@ int send_request(struct op_msg *op, uint16_t hd_cport_id,
 }
 
 static int cport_recv_handler(struct gbsim_cport *cport,
-				void *rbuf, size_t rsize,
-				void *tbuf, size_t tsize)
+				void *rbuf, size_t rsize)
 {
+	void *tbuf = &cport_tbuf[0];
+	size_t tsize = sizeof(cport_tbuf);
+
+	memset(tbuf, 0, tsize);	/* Zero buffer before use */
+
 	switch (cport->protocol) {
 	case GREYBUS_PROTOCOL_CONTROL:
 		return control_handler(cport->id, cport->hd_cport_id, rbuf, rsize, tbuf, tsize);
@@ -231,8 +235,6 @@ static int cport_recv_handler(struct gbsim_cport *cport,
 static void recv_handler(void *rbuf, size_t rsize)
 {
 	struct gb_operation_msg_hdr *hdr = rbuf;
-	void *tbuf = &cport_tbuf[0];
-	size_t tbuf_size = sizeof(cport_tbuf);
 	uint16_t hd_cport_id;
 	struct gbsim_cport *cport;
 	char *protocol, *operation, *type;
@@ -268,9 +270,7 @@ static void recv_handler(void *rbuf, size_t rsize)
 	/* clear the cport id stored in the header pad bytes */
 	hdr->pad[0] = 0;
 	hdr->pad[1] = 0;
-
-	memset(tbuf, 0, tbuf_size);	/* Zero buffer before use */
-	ret = cport_recv_handler(cport, rbuf, rsize, tbuf, tbuf_size);
+	ret = cport_recv_handler(cport, rbuf, rsize);
 	if (ret)
 		gbsim_debug("cport_recv_handler() returned %d\n", ret);
 }
