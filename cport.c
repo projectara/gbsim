@@ -284,18 +284,24 @@ void recv_thread_cleanup(void *arg)
  */
 void *recv_thread(void *param)
 {
+	void *rbuf = &cport_rbuf[0];
+	size_t rbuf_size = sizeof(cport_rbuf);
+	void *tbuf = &cport_tbuf[0];
+	size_t tbuf_size = sizeof(cport_tbuf);
+
 	while (1) {
 		ssize_t rsize;
 
-		rsize = read(from_ap, cport_rbuf, ES1_MSG_SIZE);
+		/* Zero buffers before use */
+		memset(rbuf, 0, rbuf_size);
+		memset(tbuf, 0, tbuf_size);
+
+		rsize = read(from_ap, rbuf, rbuf_size);
 		if (rsize < 0) {
 			gbsim_error("error %zd receiving from AP\n", rsize);
 			return NULL;
 		}
 
-		recv_handler(cport_rbuf, rsize, cport_tbuf, sizeof(cport_tbuf));
-
-		memset(cport_rbuf, 0, sizeof(cport_rbuf));
-		memset(cport_tbuf, 0, sizeof(cport_tbuf));
+		recv_handler(rbuf, rsize, tbuf, tbuf_size);
 	}
 }
