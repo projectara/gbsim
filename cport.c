@@ -29,23 +29,19 @@ static char cport_tbuf[ES1_MSG_SIZE];
 static void
 gbsim_message_cport_pack(struct gb_operation_msg_hdr *header, uint16_t cport_id)
 {
-	header->pad[0] = cport_id & 0xff;
-	header->pad[1] = (cport_id >> 8) & 0xff;
+	header->pad[0] = cport_id;
 }
 
 /* Clear the pad bytes used for the CPort id */
 static void gbsim_message_cport_clear(struct gb_operation_msg_hdr *header)
 {
 	header->pad[0] = 0;
-	header->pad[1] = 0;
 }
 
 /* Extract the CPort id packed into the header, and clear it */
 static uint16_t gbsim_message_cport_unpack(struct gb_operation_msg_hdr *header)
 {
-	uint16_t cport_id = header->pad[1] << 8 | header->pad[0];
-
-	return cport_id;
+	return (uint16_t)header->pad[0];
 }
 
 struct gbsim_cport *cport_find(uint16_t cport_id)
