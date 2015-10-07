@@ -79,9 +79,10 @@ static pthread_barrier_t uart_barrier;
 static int gb_uart_send(int i, void *tbuf, size_t tsize, __u8 type, __u8 flags)
 {
 	char uart_buf[GB_OPERATION_DATA_SIZE_MAX];
-	struct op_msg *op_req = (struct op_msg *)uart_buf;
+	struct op_msg *msg = (struct op_msg *)uart_buf;
+	struct gb_operation_msg_hdr *oph = &msg->header;
 	size_t payload_size = 0;
-	uint16_t message_size;
+	uint16_t message_size = sizeof(*oph);
 	struct gb_uart_recv_data_request *rdr =
 		(struct gb_uart_recv_data_request *)(uart_buf + sizeof(struct gb_operation_msg_hdr));
 	struct gb_uart_serial_state_request *ssr =
@@ -109,20 +110,20 @@ static int gb_uart_send(int i, void *tbuf, size_t tsize, __u8 type, __u8 flags)
 		    up[i].module_id, up[i].cport_id);
 
 	/* Fill in the request header */
-	message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;
-	op_req->header.size = htole16(message_size);
-	op_req->header.operation_id = 0;				/* Unidirectional */
-	op_req->header.type = type;
+	message_size += payload_size;
+	oph->size = htole16(message_size);
+	oph->operation_id = 0;				/* Unidirectional */
+	oph->type = type;
 
 	/* Store the cport id in the header pad bytes */
-	op_req->header.pad[0] = up[i].hd_cport_id & 0xff;
-	op_req->header.pad[1] = (up[i].hd_cport_id >> 8) & 0xff;
+	oph->pad[0] = up[i].hd_cport_id & 0xff;
+	oph->pad[1] = (up[i].hd_cport_id >> 8) & 0xff;
 
 	if (verbose) {
 		gbsim_debug("UART %s -> AP length %zu\n", up[i].name, tsize);
-		gbsim_dump(op_req, message_size);
+		gbsim_dump(msg, message_size);
 	}
-	ret = write(to_ap, op_req, message_size);
+	ret = write(to_ap, msg, message_size);
 	if (ret < 0)
 		return ret;
 	return 0;
