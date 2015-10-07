@@ -87,7 +87,6 @@ static int gb_uart_send(int i, void *tbuf, size_t tsize, __u8 type, __u8 flags)
 		(struct gb_uart_recv_data_request *)(uart_buf + sizeof(struct gb_operation_msg_hdr));
 	struct gb_uart_serial_state_request *ssr =
 		(struct gb_uart_serial_state_request *)(uart_buf + sizeof(struct gb_operation_msg_hdr));
-	int ret;
 
 	switch (type) {
 	case GB_UART_TYPE_RECEIVE_DATA:
@@ -105,28 +104,11 @@ static int gb_uart_send(int i, void *tbuf, size_t tsize, __u8 type, __u8 flags)
 		return -EINVAL;
 
 	}
-
-	gbsim_debug("Module %hhu -> AP CPort %hu UART protocol unsol data\n",
-		    up[i].module_id, up[i].cport_id);
-
-	/* Fill in the request header */
 	message_size += payload_size;
-	oph->size = htole16(message_size);
-	oph->operation_id = 0;				/* Unidirectional */
-	oph->type = type;
 
-	/* Store the cport id in the header pad bytes */
-	oph->pad[0] = up[i].hd_cport_id & 0xff;
-	oph->pad[1] = (up[i].hd_cport_id >> 8) & 0xff;
+	/* Operation id is 0 (unidirectional operation) */
 
-	if (verbose) {
-		gbsim_debug("UART %s -> AP length %zu\n", up[i].name, tsize);
-		gbsim_dump(msg, message_size);
-	}
-	ret = write(to_ap, msg, message_size);
-	if (ret < 0)
-		return ret;
-	return 0;
+	return send_request(msg, up[i].hd_cport_id, message_size, 0, type);
 }
 
 static int tty_find_port(uint8_t module_id, uint16_t cport_id)
