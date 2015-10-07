@@ -174,12 +174,12 @@ struct op_msg {
 
 static inline void gbsim_dump(void *data, size_t size)
 {
-	char *buf = data;
+	uint8_t *buf = data;
 	int i;
 
 	fprintf(stdout, "[R] GBSIM: DUMP ->");
 	for (i = 0; i < size; i++)
-		fprintf(stdout, " %02x", buf[i]);
+		fprintf(stdout, " %02hhx", buf[i]);
 	fprintf(stdout, "\n");
 	fflush(stdout);
 }
