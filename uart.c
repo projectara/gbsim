@@ -78,7 +78,7 @@ static pthread_barrier_t uart_barrier;
 /* Only used when bbb_backend is true */
 static int gb_uart_send(int i, void *tbuf, size_t tsize, __u8 type, __u8 flags)
 {
-	char uart_buf[GB_OPERATION_DATA_SIZE_MAX];
+	char uart_buf[GB_OPERATION_DATA_SIZE_MAX] = { };
 	struct op_msg *msg = (struct op_msg *)uart_buf;
 	struct gb_operation_msg_hdr *oph = &msg->header;
 	size_t payload_size = 0;

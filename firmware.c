@@ -47,7 +47,7 @@ char *firmware_get_operation(uint8_t type)
 /* Request from Module to AP */
 int firmware_request_send(uint8_t type, uint16_t hd_cport_id)
 {
-	struct op_msg msg;
+	struct op_msg msg = { };
 	struct gb_operation_msg_hdr *oph = &msg.header;
 	struct gb_firmware_size_request *size_request;
 	struct gb_firmware_get_firmware_request *get_fw_request;

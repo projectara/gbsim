@@ -221,7 +221,7 @@ char *svc_get_operation(uint8_t type)
 
 int svc_request_send(uint8_t type, uint8_t intf_id)
 {
-	struct op_msg msg;
+	struct op_msg msg = { };
 	struct gb_operation_msg_hdr *oph = &msg.header;
 	struct gb_protocol_version_response *version_request;
 	struct gb_svc_hello_request *hello_request;
