@@ -228,9 +228,11 @@ static int cport_recv_handler(struct gbsim_cport *cport,
 	}
 }
 
-static void recv_handler(void *rbuf, size_t rsize, void *tbuf, size_t tsize)
+static void recv_handler(void *rbuf, size_t rsize)
 {
 	struct gb_operation_msg_hdr *hdr = rbuf;
+	void *tbuf = &cport_tbuf[0];
+	size_t tbuf_size = sizeof(cport_tbuf);
 	uint16_t hd_cport_id;
 	struct gbsim_cport *cport;
 	char *protocol, *operation, *type;
@@ -267,7 +269,8 @@ static void recv_handler(void *rbuf, size_t rsize, void *tbuf, size_t tsize)
 	hdr->pad[0] = 0;
 	hdr->pad[1] = 0;
 
-	ret = cport_recv_handler(cport, rbuf, rsize, tbuf, tsize);
+	memset(tbuf, 0, tbuf_size);	/* Zero buffer before use */
+	ret = cport_recv_handler(cport, rbuf, rsize, tbuf, tbuf_size);
 	if (ret)
 		gbsim_debug("cport_recv_handler() returned %d\n", ret);
 }
@@ -286,15 +289,11 @@ void *recv_thread(void *param)
 {
 	void *rbuf = &cport_rbuf[0];
 	size_t rbuf_size = sizeof(cport_rbuf);
-	void *tbuf = &cport_tbuf[0];
-	size_t tbuf_size = sizeof(cport_tbuf);
 
 	while (1) {
 		ssize_t rsize;
 
-		/* Zero buffers before use */
-		memset(rbuf, 0, rbuf_size);
-		memset(tbuf, 0, tbuf_size);
+		memset(rbuf, 0, rbuf_size);	/* Zero buffer before use */
 
 		rsize = read(from_ap, rbuf, rbuf_size);
 		if (rsize < 0) {
@@ -302,6 +301,6 @@ void *recv_thread(void *param)
 			return NULL;
 		}
 
-		recv_handler(rbuf, rsize, tbuf, tbuf_size);
+		recv_handler(rbuf, rsize);
 	}
 }
