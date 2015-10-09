@@ -669,6 +669,8 @@ int sdio_handler(struct gbsim_cport *cport, void *rbuf,
 		payload_size = sizeof(struct gb_sdio_get_caps_response);
 		op_rsp->sdio_caps_rsp.caps = htole32(GB_SDIO_CAPS);
 		op_rsp->sdio_caps_rsp.ocr = htole32(GB_SDIO_OCR);
+		op_rsp->sdio_caps_rsp.f_min = htole32(400000);
+		op_rsp->sdio_caps_rsp.f_max = htole32(25000000);
 		op_rsp->sdio_caps_rsp.max_blk_count = htole16(1024);
 		op_rsp->sdio_caps_rsp.max_blk_size = htole16(1024);
 		gbsim_debug("Module %hhu -> AP CPort %hu SDIO protocol capabilities response\n  ",
