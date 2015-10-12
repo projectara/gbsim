@@ -44,9 +44,9 @@ static uint16_t gbsim_message_cport_unpack(struct gb_operation_msg_hdr *header)
 	return (uint16_t)header->pad[0];
 }
 
-struct gbsim_cport *cport_find(uint16_t cport_id)
+struct gbsim_connection *cport_find(uint16_t cport_id)
 {
-	struct gbsim_cport *cport;
+	struct gbsim_connection *cport;
 
 	TAILQ_FOREACH(cport, &interface.cports, cnode)
 		if (cport->hd_cport_id == cport_id)
@@ -57,17 +57,17 @@ struct gbsim_cport *cport_find(uint16_t cport_id)
 
 void allocate_cport(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id)
 {
-	struct gbsim_cport *cport;
+	struct gbsim_connection *cport;
 
 	cport = malloc(sizeof(*cport));
-	cport->id = cport_id;
+	cport->cport_id = cport_id;
 
 	cport->hd_cport_id = hd_cport_id;
 	cport->protocol = protocol_id;
 	TAILQ_INSERT_TAIL(&interface.cports, cport, cnode);
 }
 
-void free_cport(struct gbsim_cport *cport)
+void free_cport(struct gbsim_connection *cport)
 {
 	TAILQ_REMOVE(&interface.cports, cport, cnode);
 	free(cport);
@@ -75,7 +75,7 @@ void free_cport(struct gbsim_cport *cport)
 
 void free_cports(void)
 {
-	struct gbsim_cport *cport;
+	struct gbsim_connection *cport;
 
 	/*
 	 * Linux doesn't have a foreach_safe version of tailq and so the dirty
@@ -95,7 +95,7 @@ again:
 static void get_protocol_operation(uint16_t cport_id, char **protocol,
 				   char **operation, uint8_t type)
 {
-	struct gbsim_cport *cport;
+	struct gbsim_connection *cport;
 
 	cport = cport_find(cport_id);
 	if (!cport) {
@@ -215,7 +215,7 @@ int send_request(uint16_t hd_cport_id,
 				operation_id, type, 0);
 }
 
-static int cport_recv_handler(struct gbsim_cport *cport,
+static int cport_recv_handler(struct gbsim_connection *cport,
 				void *rbuf, size_t rsize)
 {
 	void *tbuf = &cport_tbuf[0];
@@ -250,7 +250,8 @@ static int cport_recv_handler(struct gbsim_cport *cport,
 	case GREYBUS_PROTOCOL_FIRMWARE:
 		return firmware_handler(cport, rbuf, rsize, tbuf, tsize);
 	default:
-		gbsim_error("handler not found for cport %u\n", cport->id);
+		gbsim_error("handler not found for cport %u\n",
+				cport->cport_id);
 		return -EINVAL;
 	}
 }
@@ -259,7 +260,7 @@ static void recv_handler(void *rbuf, size_t rsize)
 {
 	struct gb_operation_msg_hdr *hdr = rbuf;
 	uint16_t hd_cport_id;
-	struct gbsim_cport *cport;
+	struct gbsim_connection *cport;
 	char *protocol, *operation, *type;
 	int ret;
 
@@ -284,7 +285,7 @@ static void recv_handler(void *rbuf, size_t rsize)
 
 	/* FIXME: can identify module from our cport connection */
 	gbsim_debug("AP -> Module %hhu CPort %hu %s %s %s\n",
-		    cport_to_module_id(hd_cport_id), cport->id,
+		    cport_to_module_id(hd_cport_id), cport->cport_id,
 		    protocol, operation, type);
 
 	if (verbose)

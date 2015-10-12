@@ -24,7 +24,7 @@
 static int gpio_dir[6];
 static gpio *gpios[6];
 
-int gpio_handler(struct gbsim_cport *cport, void *rbuf,
+int gpio_handler(struct gbsim_connection *cport, void *rbuf,
 		 size_t rsize, void *tbuf, size_t tsize)
 {
 	struct gb_operation_msg_hdr *oph;

@@ -267,7 +267,7 @@ static ssize_t lights_send_event(struct op_msg *op_req, uint16_t hd_cport_id,
 			    GB_LIGHTS_TYPE_EVENT);
 }
 
-int lights_handler(struct gbsim_cport *cport, void *rbuf,
+int lights_handler(struct gbsim_connection *cport, void *rbuf,
 		   size_t rsize, void *tbuf, size_t tsize)
 {
 	struct gb_operation_msg_hdr *oph;

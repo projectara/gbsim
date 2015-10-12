@@ -23,7 +23,7 @@
 
 #define CONFIG_COUNT_MAX 20
 
-int i2s_mgmt_handler(struct gbsim_cport *cport, void *rbuf,
+int i2s_mgmt_handler(struct gbsim_connection *cport, void *rbuf,
 		     size_t rsize, void *tbuf, size_t tsize)
 {
 	struct gb_operation_msg_hdr *oph;
@@ -94,7 +94,7 @@ int i2s_mgmt_handler(struct gbsim_cport *cport, void *rbuf,
 }
 
 
-int i2s_data_handler(struct gbsim_cport *cport, void *rbuf,
+int i2s_data_handler(struct gbsim_connection *cport, void *rbuf,
 		     size_t rsize, void *tbuf, size_t tsize)
 {
 	struct gb_operation_msg_hdr *oph;

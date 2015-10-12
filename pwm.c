@@ -23,7 +23,7 @@
 static int pwm_on[2];
 static pwm *pwms[2];
 
-int pwm_handler(struct gbsim_cport *cport, void *rbuf,
+int pwm_handler(struct gbsim_connection *cport, void *rbuf,
 		size_t rsize, void *tbuf, size_t tsize)
 {
 	struct gb_operation_msg_hdr *oph;

@@ -20,7 +20,7 @@
 
 #include "gbsim.h"
 
-int control_handler(struct gbsim_cport *cport, void *rbuf,
+int control_handler(struct gbsim_connection *cport, void *rbuf,
 		    size_t rsize, void *tbuf, size_t tsize)
 {
 	struct op_msg *op_req = rbuf;

@@ -170,12 +170,12 @@ static int svc_handler_response(uint16_t cport_id, uint16_t hd_cport_id,
 	return 0;
 }
 
-int svc_handler(struct gbsim_cport *cport, void *rbuf,
+int svc_handler(struct gbsim_connection *cport, void *rbuf,
 		    size_t rsize, void *tbuf, size_t tsize)
 {
 	struct op_msg *op = rbuf;
 	struct gb_operation_msg_hdr *oph = &op->header;
-	uint16_t cport_id = cport->id;
+	uint16_t cport_id = cport->cport_id;
 	uint16_t hd_cport_id = cport->hd_cport_id;
 
 	if (oph->type & OP_RESPONSE)

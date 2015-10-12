@@ -25,7 +25,7 @@
 static __u8 data_byte;
 static int ifd;
 
-int i2c_handler(struct gbsim_cport *cport, void *rbuf,
+int i2c_handler(struct gbsim_connection *cport, void *rbuf,
 		size_t rsize, void *tbuf, size_t tsize)
 {
 	struct gb_operation_msg_hdr *oph;
