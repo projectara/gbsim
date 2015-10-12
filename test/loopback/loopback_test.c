@@ -198,9 +198,14 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 	extern int errno;
 	int error, fd_dev, len;
 	float request_avg, latency_avg, throughput_avg;
+	float apbridge_unipro_latency_avg, gpbridge_firmware_latency_avg;
 	int request_min, request_max, request_jitter;
 	int latency_min, latency_max, latency_jitter;
 	int throughput_min, throughput_max, throughput_jitter;
+	int apbridge_unipro_latency_min, apbridge_unipro_latency_max;
+	int apbridge_unipro_latency_jitter;
+	int gpbridge_firmware_latency_min, gpbridge_firmware_latency_max;
+	int gpbridge_firmware_latency_jitter;
 	unsigned int i;
 	char rx_buf[SYSFS_MAX_INT];
 
@@ -222,11 +227,19 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 	throughput_min = read_sysfs_int(sys_pfx, postfix, "throughput_min");
 	throughput_max = read_sysfs_int(sys_pfx, postfix, "throughput_max");
 	throughput_avg = read_sysfs_float(sys_pfx, postfix, "throughput_avg");
+	apbridge_unipro_latency_min = read_sysfs_int(sys_pfx, postfix, "apbridge_unipro_latency_min");
+	apbridge_unipro_latency_max = read_sysfs_int(sys_pfx, postfix, "apbridge_unipro_latency_max");
+	apbridge_unipro_latency_avg = read_sysfs_float(sys_pfx, postfix, "apbridge_unipro_latency_avg");
+	gpbridge_firmware_latency_min = read_sysfs_int(sys_pfx, postfix, "gpbridge_firmware_latency_min");
+	gpbridge_firmware_latency_max = read_sysfs_int(sys_pfx, postfix, "gpbridge_firmware_latency_max");
+	gpbridge_firmware_latency_avg = read_sysfs_float(sys_pfx, postfix, "gpbridge_firmware_latency_avg");
 
 	/* derive jitter */
 	request_jitter = request_max - request_min;
 	latency_jitter = latency_max - latency_min;
 	throughput_jitter = throughput_max - throughput_min;
+	apbridge_unipro_latency_jitter = apbridge_unipro_latency_max - apbridge_unipro_latency_min;
+	gpbridge_firmware_latency_jitter = gpbridge_firmware_latency_max - gpbridge_firmware_latency_min;
 
 	/* append calculated metrics to file */
 	memset(buf, 0x00, sizeof(buf));
@@ -234,12 +247,16 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 		       tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 		       tm->tm_hour, tm->tm_min, tm->tm_sec);
 	len += snprintf(&buf[len], sizeof(buf) - len,
-			"%s,%s,%u,%u,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u",
+			"%s,%s,%u,%u,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u",
 			test_name, sys_pfx, size, iteration_max, error,
 			request_min, request_max, request_avg, request_jitter,
 			latency_min, latency_max, latency_avg, latency_jitter,
 			throughput_min, throughput_max, throughput_avg,
-			throughput_jitter);
+			throughput_jitter, apbridge_unipro_latency_min,
+			apbridge_unipro_latency_max, apbridge_unipro_latency_avg,
+			apbridge_unipro_latency_jitter, gpbridge_firmware_latency_min,
+			gpbridge_firmware_latency_max, gpbridge_firmware_latency_avg,
+			gpbridge_firmware_latency_jitter);
 	write(fd, buf, len);
 
 	/* print basic metrics to stdout - requested feature add */
