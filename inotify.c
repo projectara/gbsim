@@ -34,6 +34,7 @@ static struct greybus_manifest_header *get_manifest_blob(char *mnfs)
 {
 	struct greybus_manifest_header *mh;
 	int mnf_fd, n;
+	__le16 file_size;
 	uint16_t size;
 
 	if (!(mh = malloc(64 * 1024))) {
@@ -46,12 +47,24 @@ static struct greybus_manifest_header *get_manifest_blob(char *mnfs)
 		goto out;
 	}
 
-	if ((n = read(mnf_fd, &size, 2)) != 2) {
+	/* First just get the size */
+	if ((n = read(mnf_fd, &file_size, 2)) != 2) {
 		gbsim_error("failed to read manifest size, read %d\n", n);
 		goto out;
 	}
-	lseek(mnf_fd, 0, SEEK_SET);
+	size = le16toh(file_size);
 
+	/* Size has to cover at least itself */
+	if (size < 2) {
+		gbsim_error("bad manifest size %hu\n", size);
+		goto out;
+	}
+
+	/* Now go back and read the whole thing */
+	if (lseek(mnf_fd, 0, SEEK_SET)) {
+		gbsim_error("failed to seek to front of manifest\n");
+		goto out;
+	}
 	if (read(mnf_fd, mh, size) != size) {
 		gbsim_error("failed to read manifest\n");
 		goto out;
