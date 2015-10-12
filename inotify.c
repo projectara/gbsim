@@ -93,50 +93,65 @@ static int get_interface_id(char *fname)
 static void *inotify_thread(void *param)
 {
 	char buffer[16 * INOTIFY_EVENT_BUF];
-	int i, length;
+	ssize_t length;
+	int i;
+
 	(void) param;
-
 	do {
+		size_t size;
+
 		length = read(notify_fd, buffer, sizeof(buffer));
-
-		if (length < 0)
+		if (length < 0) {
 			gbsim_error("inotify read: %s\n", strerror(errno));
-
-		i = 0;
-		while (i < length) {
+			return NULL;
+		}
+		for (i = 0; i < length; i += size) {
 			struct inotify_event *event = (struct inotify_event *)&buffer[i];
-			if (event->len) {
-				if (event->mask & IN_CLOSE_WRITE) {
-					char mnfs[256];
-					struct greybus_manifest_header *mh;
-					strcpy(mnfs, root);
-					strcat(mnfs, "/");
-					strcat(mnfs, event->name);
-					mh = get_manifest_blob(mnfs);
-					if (mh) {
-						info.manifest = mh;
-						info.manifest_size = le16toh(mh->size);
-						manifest_parse(mh, le16toh(mh->size));
+			size = sizeof(*event);
+			if (length - i < size) {
+				gbsim_error("inotify: partial event: %zd < %zu\n",
+					length - i, size);
+				return NULL;
+			}
 
-						int iid = get_interface_id(event->name);
-						if (iid > 0) {
-							gbsim_info("%s Interface inserted\n", event->name);
-							svc_request_send(GB_SVC_TYPE_INTF_HOTPLUG, iid);
-						} else
-							gbsim_error("invalid interface ID, no hotplug plug event sent\n");
-					} else
-						gbsim_error("missing manifest blob, no hotplug event sent\n");
-				}
-				else if (event->mask & IN_DELETE) {
+			if (!event->len)
+				continue;
+
+			size += event->len;
+			if (i + size > length) {
+				gbsim_error("inotify: short event: %zd < %zu\n",
+					length - i, size);
+				return NULL;
+			}
+
+			if (event->mask & IN_CLOSE_WRITE) {
+				char mnfs[256];
+				struct greybus_manifest_header *mh;
+				strcpy(mnfs, root);
+				strcat(mnfs, "/");
+				strcat(mnfs, event->name);
+				mh = get_manifest_blob(mnfs);
+				if (mh) {
+					info.manifest = mh;
+					info.manifest_size = le16toh(mh->size);
+					manifest_parse(mh, le16toh(mh->size));
+
 					int iid = get_interface_id(event->name);
 					if (iid > 0) {
-						svc_request_send(GB_SVC_TYPE_INTF_HOT_UNPLUG, iid);
-						gbsim_info("%s interface removed\n", event->name);
+						gbsim_info("%s Interface inserted\n", event->name);
+						svc_request_send(GB_SVC_TYPE_INTF_HOTPLUG, iid);
 					} else
-						gbsim_error("invalid interface ID, no hotplug unplug event sent\n");
-				}
+						gbsim_error("invalid interface ID, no hotplug plug event sent\n");
+				} else
+					gbsim_error("missing manifest blob, no hotplug event sent\n");
+			} else if (event->mask & IN_DELETE) {
+				int iid = get_interface_id(event->name);
+				if (iid > 0) {
+					svc_request_send(GB_SVC_TYPE_INTF_HOT_UNPLUG, iid);
+					gbsim_info("%s interface removed\n", event->name);
+				} else
+					gbsim_error("invalid interface ID, no hotplug unplug event sent\n");
 			}
-			i += INOTIFY_EVENT_SIZE + event->len;
 		}
 	} while (length >= 0);
 
