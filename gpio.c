@@ -24,7 +24,7 @@
 static int gpio_dir[6];
 static gpio *gpios[6];
 
-int gpio_handler(struct gbsim_connection *cport, void *rbuf,
+int gpio_handler(struct gbsim_connection *connection, void *rbuf,
 		 size_t rsize, void *tbuf, size_t tsize)
 {
 	struct gb_operation_msg_hdr *oph;
@@ -33,7 +33,7 @@ int gpio_handler(struct gbsim_connection *cport, void *rbuf,
 	size_t payload_size;
 	ssize_t nbytes;
 	uint16_t message_size;
-	uint16_t hd_cport_id = cport->hd_cport_id;
+	uint16_t hd_cport_id = connection->hd_cport_id;
 
 	op_rsp = (struct op_msg *)tbuf;
 	oph = (struct gb_operation_msg_hdr *)&op_req->header;

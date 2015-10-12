@@ -23,7 +23,7 @@
 
 #define CONFIG_COUNT_MAX 20
 
-int i2s_mgmt_handler(struct gbsim_connection *cport, void *rbuf,
+int i2s_mgmt_handler(struct gbsim_connection *connection, void *rbuf,
 		     size_t rsize, void *tbuf, size_t tsize)
 {
 	struct gb_operation_msg_hdr *oph;
@@ -32,7 +32,7 @@ int i2s_mgmt_handler(struct gbsim_connection *cport, void *rbuf,
 	struct gb_i2s_mgmt_configuration *conf;
 	size_t payload_size;
 	uint16_t message_size;
-	uint16_t hd_cport_id = cport->hd_cport_id;
+	uint16_t hd_cport_id = connection->hd_cport_id;
 	uint8_t result = PROTOCOL_STATUS_SUCCESS;
 
 	op_rsp = (struct op_msg *)tbuf;
@@ -94,7 +94,7 @@ int i2s_mgmt_handler(struct gbsim_connection *cport, void *rbuf,
 }
 
 
-int i2s_data_handler(struct gbsim_connection *cport, void *rbuf,
+int i2s_data_handler(struct gbsim_connection *connection, void *rbuf,
 		     size_t rsize, void *tbuf, size_t tsize)
 {
 	struct gb_operation_msg_hdr *oph;
@@ -102,7 +102,7 @@ int i2s_data_handler(struct gbsim_connection *cport, void *rbuf,
 	struct op_msg *op_rsp;
 	size_t payload_size;
 	uint16_t message_size;
-	uint16_t hd_cport_id = cport->hd_cport_id;
+	uint16_t hd_cport_id = connection->hd_cport_id;
 	uint8_t result = PROTOCOL_STATUS_SUCCESS;
 
 	op_rsp = (struct op_msg *)tbuf;
