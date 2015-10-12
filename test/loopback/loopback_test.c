@@ -197,7 +197,7 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 	char buf[CSV_MAX_LINE];
 	extern int errno;
 	int error, fd_dev, len;
-	float request_avg, latency_avg, latency_gb_avg, throughput_avg;
+	float request_avg, latency_avg, throughput_avg;
 	int request_min, request_max, request_jitter;
 	int latency_min, latency_max, latency_jitter;
 	int throughput_min, throughput_max, throughput_jitter;
