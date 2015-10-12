@@ -69,10 +69,13 @@ static struct greybus_manifest_header *get_manifest_blob(char *mnfs)
 		gbsim_error("failed to read manifest\n");
 		goto out;
 	}
+	close(mnf_fd);
 
 	return mh;
 out:
 	free(mh);
+	close(mnf_fd);
+
 	return NULL;
 }
 
