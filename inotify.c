@@ -33,23 +33,19 @@ static char root[256];
 static struct greybus_manifest_header *get_manifest_blob(char *mnfs)
 {
 	struct greybus_manifest_header *mh;
-	int mnf_fd, n;
+	int mnf_fd;
+	ssize_t n;
 	__le16 file_size;
 	uint16_t size;
 
-	if (!(mh = malloc(64 * 1024))) {
-		gbsim_error("failed to allocate manifest buffer\n");
-		return NULL;
-	}
-
 	if ((mnf_fd = open(mnfs, O_RDONLY)) < 0) {
 		gbsim_error("failed to open manifest blob %s\n", mnfs);
-		goto out;
+		return NULL;
 	}
 
 	/* First just get the size */
 	if ((n = read(mnf_fd, &file_size, 2)) != 2) {
-		gbsim_error("failed to read manifest size, read %d\n", n);
+		gbsim_error("failed to read manifest size, read %zd\n", n);
 		goto out;
 	}
 	size = le16toh(file_size);
@@ -60,20 +56,27 @@ static struct greybus_manifest_header *get_manifest_blob(char *mnfs)
 		goto out;
 	}
 
+	/* Allocate a big enough buffer */
+	if (!(mh = malloc(size))) {
+		gbsim_error("failed to allocate manifest buffer\n");
+		goto out;
+	}
+
 	/* Now go back and read the whole thing */
 	if (lseek(mnf_fd, 0, SEEK_SET)) {
 		gbsim_error("failed to seek to front of manifest\n");
-		goto out;
+		goto out_free;
 	}
 	if (read(mnf_fd, mh, size) != size) {
 		gbsim_error("failed to read manifest\n");
-		goto out;
+		goto out_free;
 	}
 	close(mnf_fd);
 
 	return mh;
-out:
+out_free:
 	free(mh);
+out:
 	close(mnf_fd);
 
 	return NULL;
