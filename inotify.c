@@ -138,8 +138,8 @@ static void *inotify_thread(void *param)
 				strcat(mnfs, event->name);
 				mh = get_manifest_blob(mnfs);
 				if (mh) {
-					info.manifest = mh;
-					info.manifest_size = le16toh(mh->size);
+					interface.manifest = mh;
+					interface.manifest_size = le16toh(mh->size);
 					manifest_parse(mh, le16toh(mh->size));
 
 					int iid = get_interface_id(event->name);

@@ -48,7 +48,7 @@ struct gbsim_cport *cport_find(uint16_t cport_id)
 {
 	struct gbsim_cport *cport;
 
-	TAILQ_FOREACH(cport, &info.cports, cnode)
+	TAILQ_FOREACH(cport, &interface.cports, cnode)
 		if (cport->hd_cport_id == cport_id)
 			return cport;
 
@@ -64,12 +64,12 @@ void allocate_cport(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id)
 
 	cport->hd_cport_id = hd_cport_id;
 	cport->protocol = protocol_id;
-	TAILQ_INSERT_TAIL(&info.cports, cport, cnode);
+	TAILQ_INSERT_TAIL(&interface.cports, cport, cnode);
 }
 
 void free_cport(struct gbsim_cport *cport)
 {
-	TAILQ_REMOVE(&info.cports, cport, cnode);
+	TAILQ_REMOVE(&interface.cports, cport, cnode);
 	free(cport);
 }
 
@@ -82,7 +82,7 @@ void free_cports(void)
 	 * trick of 'goto again'.
 	 */
 again:
-	TAILQ_FOREACH(cport, &info.cports, cnode) {
+	TAILQ_FOREACH(cport, &interface.cports, cnode) {
 		if (cport->hd_cport_id == GB_SVC_CPORT_ID)
 			continue;
 

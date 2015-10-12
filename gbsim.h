@@ -55,13 +55,13 @@ struct gbsim_cport {
 	int protocol;
 };
 
-struct gbsim_info {
+struct gbsim_interface {
 	void *manifest;
 	size_t manifest_size;
 	TAILQ_HEAD(chead, gbsim_cport) cports;
 };
 
-extern struct gbsim_info info;
+extern struct gbsim_interface interface;
 
 /* CPorts */
 
