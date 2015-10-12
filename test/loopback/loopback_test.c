@@ -46,6 +46,7 @@ static char *con = "con";
 
 static int verbose;
 static int debug;
+static int raw_data_dump;
 
 void abort()
 {
@@ -79,6 +80,7 @@ void usage(void)
 	"                 default is zero which means broadcast to all connections\n"
 	"   -v     verbose output\n"
 	"   -d     debug output\n"
+	"   -r     raw data output - when specified the full list of latency values are included in the output CSV\n"
 	"Examples:\n"
 	"  Send 10000 transfers with a packet size of 128 bytes to all active connections\n"
 	"  looptest -t transfer -s 128 -i 10000 -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n"
@@ -244,7 +246,7 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 	printf("\n%s\n", buf);
 
 	/* Write raw latency times to CSV  */
-	for (i = 0; i < iteration_max; i++) {
+	for (i = 0; i < iteration_max && raw_data_dump; i++) {
 		memset(&rx_buf, 0x00, sizeof(rx_buf));
 		len = read(fd_dev, rx_buf, sizeof(rx_buf));
 		if (len < 0) {
@@ -499,7 +501,7 @@ int main(int argc, char *argv[])
 	char *sysfs_prefix = "/sys/bus/greybus/devices/";
 	char *debugfs_prefix = "/sys/kernel/debug/gb_loopback/";
 
-	while ((o = getopt(argc, argv, "t:s:i:S:D:m:v::d::")) != -1) {
+	while ((o = getopt(argc, argv, "t:s:i:S:D:m:v::d::r::")) != -1) {
 		switch (o) {
 		case 't':
 			test = optarg;
@@ -524,6 +526,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'd':
 			debug = 1;
+			break;
+		case 'r':
+			raw_data_dump = 1;
 			break;
 		default:
 			usage();
