@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
 
 	signals_init();
 
-	TAILQ_INIT(&interface.cports);
+	TAILQ_INIT(&interface.connections);
 
 	ret = gadget_create(&s, &g);
 	if (ret < 0)
