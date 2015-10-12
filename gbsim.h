@@ -190,10 +190,10 @@ static inline uint8_t cport_to_module_id(uint16_t cport_id)
 	return 1;
 }
 
-struct gbsim_connection *cport_find(uint16_t cport_id);
-void allocate_cport(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id);
-void free_cport(struct gbsim_connection *cport);
-void free_cports(void);
+struct gbsim_connection *connection_find(uint16_t cport_id);
+void allocate_connection(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id);
+void free_connection(struct gbsim_connection *cport);
+void free_connections(void);
 
 int gadget_create(usbg_state **, usbg_gadget **);
 int gadget_enable(usbg_gadget *);

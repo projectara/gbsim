@@ -156,7 +156,7 @@ static int svc_handler_response(uint16_t cport_id, uint16_t hd_cport_id,
 			gbsim_error("Failed to start inotify thread\n");
 		break;
 	case GB_SVC_TYPE_INTF_HOT_UNPLUG:
-		free_cports();
+		free_connections();
 		break;
 	case GB_SVC_TYPE_INTF_HOTPLUG:
 	case GB_SVC_TYPE_INTF_RESET:
@@ -280,10 +280,10 @@ int svc_request_send(uint8_t type, uint8_t intf_id)
 void svc_init(void)
 {
 	/* Allocate cport for svc protocol between AP and SVC */
-	allocate_cport(GB_SVC_CPORT_ID, GB_SVC_CPORT_ID, GREYBUS_PROTOCOL_SVC);
+	allocate_connection(GB_SVC_CPORT_ID, GB_SVC_CPORT_ID, GREYBUS_PROTOCOL_SVC);
 }
 
 void svc_exit(void)
 {
-	free_cport(cport_find(GB_SVC_CPORT_ID));
+	free_connection(connection_find(GB_SVC_CPORT_ID));
 }

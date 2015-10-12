@@ -44,7 +44,7 @@ static uint16_t gbsim_message_cport_unpack(struct gb_operation_msg_hdr *header)
 	return (uint16_t)header->pad[0];
 }
 
-struct gbsim_connection *cport_find(uint16_t cport_id)
+struct gbsim_connection *connection_find(uint16_t cport_id)
 {
 	struct gbsim_connection *cport;
 
@@ -55,7 +55,7 @@ struct gbsim_connection *cport_find(uint16_t cport_id)
 	return NULL;
 }
 
-void allocate_cport(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id)
+void allocate_connection(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id)
 {
 	struct gbsim_connection *cport;
 
@@ -67,13 +67,13 @@ void allocate_cport(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id)
 	TAILQ_INSERT_TAIL(&interface.cports, cport, cnode);
 }
 
-void free_cport(struct gbsim_connection *cport)
+void free_connection(struct gbsim_connection *cport)
 {
 	TAILQ_REMOVE(&interface.cports, cport, cnode);
 	free(cport);
 }
 
-void free_cports(void)
+void free_connections(void)
 {
 	struct gbsim_connection *cport;
 
@@ -86,7 +86,7 @@ again:
 		if (cport->hd_cport_id == GB_SVC_CPORT_ID)
 			continue;
 
-		free_cport(cport);
+		free_connection(cport);
 		goto again;
 	}
 	reset_hd_cport_id();
@@ -97,7 +97,7 @@ static void get_protocol_operation(uint16_t cport_id, char **protocol,
 {
 	struct gbsim_connection *cport;
 
-	cport = cport_find(cport_id);
+	cport = connection_find(cport_id);
 	if (!cport) {
 		*protocol = "N/A";
 		*operation = "N/A";
@@ -215,7 +215,7 @@ int send_request(uint16_t hd_cport_id,
 				operation_id, type, 0);
 }
 
-static int cport_recv_handler(struct gbsim_connection *cport,
+static int connection_recv_handler(struct gbsim_connection *cport,
 				void *rbuf, size_t rsize)
 {
 	void *tbuf = &cport_tbuf[0];
@@ -272,7 +272,7 @@ static void recv_handler(void *rbuf, size_t rsize)
 	/* Retreive the cport id stored in the header pad bytes */
 	hd_cport_id = gbsim_message_cport_unpack(hdr);
 
-	cport = cport_find(hd_cport_id);
+	cport = connection_find(hd_cport_id);
 	if (!cport) {
 		gbsim_error("message received for unknown cport id %u\n",
 			hd_cport_id);
@@ -293,9 +293,9 @@ static void recv_handler(void *rbuf, size_t rsize)
 
 	gbsim_message_cport_clear(hdr);
 
-	ret = cport_recv_handler(cport, rbuf, rsize);
+	ret = connection_recv_handler(cport, rbuf, rsize);
 	if (ret)
-		gbsim_debug("cport_recv_handler() returned %d\n", ret);
+		gbsim_debug("connection_recv_handler() returned %d\n", ret);
 }
 
 void recv_thread_cleanup(void *arg)
