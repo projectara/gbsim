@@ -269,7 +269,7 @@ static int read_control(void)
 	nevent = ret/ sizeof event[0];
 
 	for (i = 0; i < nevent; i++) {
-		gbsim_debug("USB %s\n", names[event->type]);
+		gbsim_debug("USB %s\n", names[event[i].type]);
 
 		switch (event[i].type) {
 		case FUNCTIONFS_BIND:
