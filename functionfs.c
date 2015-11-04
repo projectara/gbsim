@@ -29,9 +29,8 @@
 
 #define FFS_PREFIX	"/dev/ffs-gbsim/"
 #define FFS_GBEMU_EP0	FFS_PREFIX"ep0"
-#define FFS_GBEMU_SVC	FFS_PREFIX"ep1"
-#define FFS_GBEMU_IN	FFS_PREFIX"ep2"
-#define FFS_GBEMU_OUT	FFS_PREFIX"ep3"
+#define FFS_GBEMU_IN	FFS_PREFIX"ep1"
+#define FFS_GBEMU_OUT	FFS_PREFIX"ep2"
 
 #define STR_INTERFACE	"gbsim"
 
@@ -65,7 +64,6 @@ static const struct {
 	} __attribute__((packed)) header;
 	struct {
 		struct usb_interface_descriptor intf;
-		struct usb_endpoint_descriptor_no_audio svc_in;
 		struct usb_endpoint_descriptor_no_audio to_ap;
 		struct usb_endpoint_descriptor_no_audio from_ap;
 	} __attribute__((packed)) fs_descs, hs_descs;
@@ -79,36 +77,28 @@ static const struct {
 				     FUNCTIONFS_HAS_HS_DESC),
 #endif
 		.length = htole32(sizeof descriptors),
-		.fs_count = htole32(4),
-		.hs_count = htole32(4),
+		.fs_count = htole32(3),
+		.hs_count = htole32(3),
 	},
 	.fs_descs = {
 		.intf = {
 			.bLength = sizeof descriptors.fs_descs.intf,
 			.bDescriptorType = USB_DT_INTERFACE,
-			.bNumEndpoints = 3,
+			.bNumEndpoints = 2,
 			.bInterfaceClass = USB_CLASS_VENDOR_SPEC,
 			.iInterface = 1,
-		},
-		.svc_in = {
-			.bLength = sizeof descriptors.fs_descs.svc_in,
-			.bDescriptorType = USB_DT_ENDPOINT,
-			.bEndpointAddress = 1 | USB_DIR_IN,
-			.bmAttributes = USB_ENDPOINT_XFER_INT,
-			.bInterval = 10,
-			.wMaxPacketSize = 64
 		},
 		.to_ap = {
 			.bLength = sizeof descriptors.fs_descs.to_ap,
 			.bDescriptorType = USB_DT_ENDPOINT,
-			.bEndpointAddress = 2 | USB_DIR_IN,
+			.bEndpointAddress = 1 | USB_DIR_IN,
 			.bmAttributes = USB_ENDPOINT_XFER_BULK,
 			.wMaxPacketSize = 64
 		},
 		.from_ap = {
 			.bLength = sizeof descriptors.fs_descs.from_ap,
 			.bDescriptorType = USB_DT_ENDPOINT,
-			.bEndpointAddress = 3 | USB_DIR_OUT,
+			.bEndpointAddress = 2 | USB_DIR_OUT,
 			.bmAttributes = USB_ENDPOINT_XFER_BULK,
 			.wMaxPacketSize = 64
 		},
@@ -117,29 +107,21 @@ static const struct {
 		.intf = {
 			.bLength = sizeof descriptors.hs_descs.intf,
 			.bDescriptorType = USB_DT_INTERFACE,
-			.bNumEndpoints = 3,
+			.bNumEndpoints = 2,
 			.bInterfaceClass = USB_CLASS_VENDOR_SPEC,
 			.iInterface = 1,
-		},
-		.svc_in = {
-			.bLength = sizeof descriptors.hs_descs.svc_in,
-			.bDescriptorType = USB_DT_ENDPOINT,
-			.bEndpointAddress = 1 | USB_DIR_IN,
-			.bmAttributes = USB_ENDPOINT_XFER_INT,
-			.bInterval = 10,
-			.wMaxPacketSize = 512,
 		},
 		.to_ap = {
 			.bLength = sizeof descriptors.hs_descs.to_ap,
 			.bDescriptorType = USB_DT_ENDPOINT,
-			.bEndpointAddress = 2 | USB_DIR_IN,
+			.bEndpointAddress = 1 | USB_DIR_IN,
 			.bmAttributes = USB_ENDPOINT_XFER_BULK,
 			.wMaxPacketSize = 512,
 		},
 		.from_ap = {
 			.bLength = sizeof descriptors.hs_descs.from_ap,
 			.bDescriptorType = USB_DT_ENDPOINT,
-			.bEndpointAddress = 3 | USB_DIR_OUT,
+			.bEndpointAddress = 2 | USB_DIR_OUT,
 			.bmAttributes = USB_ENDPOINT_XFER_BULK,
 			.wMaxPacketSize = 512,
 		},
