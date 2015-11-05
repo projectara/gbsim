@@ -46,6 +46,8 @@ static char *con = "con";
 
 static int verbose;
 static int debug;
+static int raw_data_dump;
+static int porcelain;
 
 void abort()
 {
@@ -79,6 +81,8 @@ void usage(void)
 	"                 default is zero which means broadcast to all connections\n"
 	"   -v     verbose output\n"
 	"   -d     debug output\n"
+	"   -r     raw data output - when specified the full list of latency values are included in the output CSV\n"
+	"   -p     porcelain - when specified printout is in a user-friendly non-CSV format. This option suppresses writing to CSV file\n"
 	"Examples:\n"
 	"  Send 10000 transfers with a packet size of 128 bytes to all active connections\n"
 	"  looptest -t transfer -s 128 -i 10000 -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n"
@@ -195,10 +199,15 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 	char buf[CSV_MAX_LINE];
 	extern int errno;
 	int error, fd_dev, len;
-	float request_avg, latency_avg, latency_gb_avg, throughput_avg;
+	float request_avg, latency_avg, throughput_avg;
+	float apbridge_unipro_latency_avg, gpbridge_firmware_latency_avg;
 	int request_min, request_max, request_jitter;
 	int latency_min, latency_max, latency_jitter;
 	int throughput_min, throughput_max, throughput_jitter;
+	int apbridge_unipro_latency_min, apbridge_unipro_latency_max;
+	int apbridge_unipro_latency_jitter;
+	int gpbridge_firmware_latency_min, gpbridge_firmware_latency_max;
+	int gpbridge_firmware_latency_jitter;
 	unsigned int i;
 	char rx_buf[SYSFS_MAX_INT];
 
@@ -220,31 +229,68 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 	throughput_min = read_sysfs_int(sys_pfx, postfix, "throughput_min");
 	throughput_max = read_sysfs_int(sys_pfx, postfix, "throughput_max");
 	throughput_avg = read_sysfs_float(sys_pfx, postfix, "throughput_avg");
+	apbridge_unipro_latency_min = read_sysfs_int(sys_pfx, postfix, "apbridge_unipro_latency_min");
+	apbridge_unipro_latency_max = read_sysfs_int(sys_pfx, postfix, "apbridge_unipro_latency_max");
+	apbridge_unipro_latency_avg = read_sysfs_float(sys_pfx, postfix, "apbridge_unipro_latency_avg");
+	gpbridge_firmware_latency_min = read_sysfs_int(sys_pfx, postfix, "gpbridge_firmware_latency_min");
+	gpbridge_firmware_latency_max = read_sysfs_int(sys_pfx, postfix, "gpbridge_firmware_latency_max");
+	gpbridge_firmware_latency_avg = read_sysfs_float(sys_pfx, postfix, "gpbridge_firmware_latency_avg");
 
 	/* derive jitter */
 	request_jitter = request_max - request_min;
 	latency_jitter = latency_max - latency_min;
 	throughput_jitter = throughput_max - throughput_min;
+	apbridge_unipro_latency_jitter = apbridge_unipro_latency_max - apbridge_unipro_latency_min;
+	gpbridge_firmware_latency_jitter = gpbridge_firmware_latency_max - gpbridge_firmware_latency_min;
 
 	/* append calculated metrics to file */
 	memset(buf, 0x00, sizeof(buf));
-	len = snprintf(buf, sizeof(buf), "%u-%u-%u %u:%u:%u,",
+	len = snprintf(buf, sizeof(buf), "%u-%u-%u %u:%u:%u",
 		       tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 		       tm->tm_hour, tm->tm_min, tm->tm_sec);
-	len += snprintf(&buf[len], sizeof(buf) - len,
-			"%s,%s,%u,%u,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u",
+	if (porcelain) {
+		len += snprintf(&buf[len], sizeof(buf) - len,
+			"\n test:\t\t\t%s\n path:\t\t\t%s\n size:\t\t\t%u\n iterations:\t\t%u\n errors:\t\t%u\n",
+			test_name, sys_pfx, size, iteration_max, error);
+		len += snprintf(&buf[len], sizeof(buf) - len,
+			" requests per-sec:\tmin=%u, max=%u, average=%f, jitter=%u\n",
+			request_min, request_max, request_avg, request_jitter);
+		len += snprintf(&buf[len], sizeof(buf) - len,
+			" ap-throughput B/s:\tmin=%u max=%u average=%f jitter=%u\n",
+			throughput_min, throughput_max, throughput_avg, throughput_jitter);
+		len += snprintf(&buf[len], sizeof(buf) - len,
+			" ap-latency usec:\tmin=%u max=%u average=%f jitter=%u\n",
+			latency_min, latency_max, latency_avg, latency_jitter);
+		len += snprintf(&buf[len], sizeof(buf) - len,
+			" apbridge-latency usec:\tmin=%u max=%u average=%f jitter=%u\n",
+			apbridge_unipro_latency_min,
+			apbridge_unipro_latency_max, apbridge_unipro_latency_avg,
+			apbridge_unipro_latency_jitter);
+		len += snprintf(&buf[len], sizeof(buf) - len,
+			" gpbridge-latency usec:\tmin=%u max=%u average=%f jitter=%u\n",
+			gpbridge_firmware_latency_min,
+			gpbridge_firmware_latency_max, gpbridge_firmware_latency_avg,
+			gpbridge_firmware_latency_jitter);
+	} else {
+		len += snprintf(&buf[len], sizeof(buf) - len,
+			",%s,%s,%u,%u,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u",
 			test_name, sys_pfx, size, iteration_max, error,
 			request_min, request_max, request_avg, request_jitter,
 			latency_min, latency_max, latency_avg, latency_jitter,
 			throughput_min, throughput_max, throughput_avg,
-			throughput_jitter);
-	write(fd, buf, len);
+			throughput_jitter, apbridge_unipro_latency_min,
+			apbridge_unipro_latency_max, apbridge_unipro_latency_avg,
+			apbridge_unipro_latency_jitter, gpbridge_firmware_latency_min,
+			gpbridge_firmware_latency_max, gpbridge_firmware_latency_avg,
+			gpbridge_firmware_latency_jitter);
+		write(fd, buf, len);
+	}
 
 	/* print basic metrics to stdout - requested feature add */
 	printf("\n%s\n", buf);
 
 	/* Write raw latency times to CSV  */
-	for (i = 0; i < iteration_max; i++) {
+	for (i = 0; i < iteration_max && raw_data_dump && !porcelain; i++) {
 		memset(&rx_buf, 0x00, sizeof(rx_buf));
 		len = read(fd_dev, rx_buf, sizeof(rx_buf));
 		if (len < 0) {
@@ -259,8 +305,10 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 			break;
 		}
 	}
-	if (write(fd, "\n", 1) < 1)
-		log_csv_error(1, errno);
+	if (!porcelain) {
+		if (write(fd, "\n", 1) < 1)
+			log_csv_error(1, errno);
+	}
 
 	/* skip printing large set to stdout just close open handles */
 	close(fd_dev);
@@ -288,10 +336,12 @@ void log_csv(const char *test_name, int size, int iteration_max,
 	snprintf(buf, sizeof(buf), "%s_%d_%d.csv", test_name, size,
 		 iteration_max);
 
-	fd = open(buf, O_WRONLY|O_CREAT|O_APPEND, mode);
-	if (fd < 0) {
-		fprintf(stderr, "unable to open %s for appendation\n", buf);
-		abort();
+	if (!porcelain) {
+		fd = open(buf, O_WRONLY | O_CREAT | O_APPEND, mode);
+		if (fd < 0) {
+			fprintf(stderr, "unable to open %s for appendation\n", buf);
+			abort();
+		}
 	}
 	for (j = 0, i = 0; j < lb_entries; j++) {
 		if (lb_name[j].module_node || mask & (1 << i) || (!mask))
@@ -302,7 +352,8 @@ void log_csv(const char *test_name, int size, int iteration_max,
 		if (!lb_name[j].module_node)
 			i++;
 	}
-	close(fd);
+	if (!porcelain)
+		close(fd);
 }
 
 int construct_paths(const char *sys_pfx, const char *dbgfs_pfx)
@@ -499,7 +550,7 @@ int main(int argc, char *argv[])
 	char *sysfs_prefix = "/sys/bus/greybus/devices/";
 	char *debugfs_prefix = "/sys/kernel/debug/gb_loopback/";
 
-	while ((o = getopt(argc, argv, "t:s:i:S:D:m:v::d::")) != -1) {
+	while ((o = getopt(argc, argv, "t:s:i:S:D:m:v::d::r::p::")) != -1) {
 		switch (o) {
 		case 't':
 			test = optarg;
@@ -524,6 +575,12 @@ int main(int argc, char *argv[])
 			break;
 		case 'd':
 			debug = 1;
+			break;
+		case 'r':
+			raw_data_dump = 1;
+			break;
+		case 'p':
+			porcelain = 1;
 			break;
 		default:
 			usage();

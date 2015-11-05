@@ -48,20 +48,20 @@ extern int control;
 extern int to_ap;
 extern int from_ap;
 
-struct gbsim_cport {
-	TAILQ_ENTRY(gbsim_cport) cnode;
-	uint16_t id;
+struct gbsim_connection {
+	TAILQ_ENTRY(gbsim_connection) cnode;
+	uint16_t cport_id;
 	uint16_t hd_cport_id;
 	int protocol;
 };
 
-struct gbsim_info {
+struct gbsim_interface {
 	void *manifest;
 	size_t manifest_size;
-	TAILQ_HEAD(chead, gbsim_cport) cports;
+	TAILQ_HEAD(chead, gbsim_connection) connections;
 };
 
-extern struct gbsim_info info;
+extern struct gbsim_interface interface;
 
 /* CPorts */
 
@@ -190,10 +190,10 @@ static inline uint8_t cport_to_module_id(uint16_t cport_id)
 	return 1;
 }
 
-struct gbsim_cport *cport_find(uint16_t cport_id);
-void allocate_cport(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id);
-void free_cport(struct gbsim_cport *cport);
-void free_cports(void);
+struct gbsim_connection *connection_find(uint16_t cport_id);
+void allocate_connection(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id);
+void free_connection(struct gbsim_connection *connections);
+void free_connections(void);
 
 int gadget_create(usbg_state **, usbg_gadget **);
 int gadget_enable(usbg_gadget *);
@@ -209,51 +209,51 @@ int inotify_start(char *);
 void *recv_thread(void *);
 void recv_thread_cleanup(void *);
 
-int control_handler(struct gbsim_cport *, void *, size_t, void *, size_t);
+int control_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
 char *control_get_operation(uint8_t type);
 
-int svc_handler(struct gbsim_cport *, void *, size_t, void *, size_t);
+int svc_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
 int svc_request_send(uint8_t, uint8_t);
 char *svc_get_operation(uint8_t type);
 void svc_init(void);
 void svc_exit(void);
 
-int gpio_handler(struct gbsim_cport *, void *, size_t, void *, size_t);
+int gpio_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
 char *gpio_get_operation(uint8_t type);
 void gpio_init(void);
 
-int i2c_handler(struct gbsim_cport *, void *, size_t, void *, size_t);
+int i2c_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
 char *i2c_get_operation(uint8_t type);
 void i2c_init(void);
 
-int pwm_handler(struct gbsim_cport *, void *, size_t, void *, size_t);
+int pwm_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
 char *pwm_get_operation(uint8_t type);
 void pwm_init(void);
 
-int sdio_handler(struct gbsim_cport *, void *, size_t, void *, size_t);
+int sdio_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
 char *sdio_get_operation(uint8_t type);
 void sdio_init(void);
 
-int lights_handler(struct gbsim_cport *,  void *, size_t, void *, size_t);
+int lights_handler(struct gbsim_connection *,  void *, size_t, void *, size_t);
 char *lights_get_operation(uint8_t type);
 
-int i2s_mgmt_handler(struct gbsim_cport *, void *, size_t, void *, size_t);
-int i2s_data_handler(struct gbsim_cport *, void *, size_t, void *, size_t);
+int i2s_mgmt_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
+int i2s_data_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
 char *i2s_mgmt_get_operation(uint8_t type);
 char *i2s_data_get_operation(uint8_t type);
 void i2s_init(void);
 
-int uart_handler(struct gbsim_cport *, void *, size_t, void *, size_t);
+int uart_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
 char *uart_get_operation(uint8_t type);
 void uart_init(void);
 void uart_cleanup(void);
 
-int loopback_handler(struct gbsim_cport *, void *, size_t, void *, size_t);
+int loopback_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
 char *loopback_get_operation(uint8_t type);
 void loopback_init(void);
 void loopback_cleanup(void);
 
-int firmware_handler(struct gbsim_cport *, void *, size_t, void *, size_t);
+int firmware_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
 char *firmware_get_operation(uint8_t type);
 
 bool manifest_parse(void *data, size_t size);

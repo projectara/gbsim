@@ -93,13 +93,13 @@ static int identify_descriptor(struct greybus_descriptor *desc, size_t size)
 		 */
 		if (!control_done &&
 			(le16toh(desc->cport.id) != GB_CONTROL_CPORT_ID)) {
-			allocate_cport(GB_CONTROL_CPORT_ID,
+			allocate_connection(GB_CONTROL_CPORT_ID,
 					allocate_hd_cport_id(),
 					GREYBUS_PROTOCOL_CONTROL);
 		}
 
 		control_done = 1;
-		allocate_cport(le16toh(desc->cport.id), allocate_hd_cport_id(),
+		allocate_connection(le16toh(desc->cport.id), allocate_hd_cport_id(),
 				desc->cport.protocol_id);
 		break;
 	case GREYBUS_TYPE_INVALID:

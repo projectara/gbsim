@@ -523,7 +523,7 @@ static int uart_init_port(uint8_t module_id, uint16_t cport_id,
 	return i;
 }
 
-int uart_handler(struct gbsim_cport *cport, void *rbuf,
+int uart_handler(struct gbsim_connection *connection, void *rbuf,
 		 size_t rsize, void *tbuf, size_t tsize)
 {
 	struct gb_operation_msg_hdr *oph;
@@ -531,8 +531,8 @@ int uart_handler(struct gbsim_cport *cport, void *rbuf,
 	struct op_msg *op_rsp;
 	size_t payload_size = 0;
 	uint16_t message_size;
-	uint16_t cport_id = cport->id;
-	uint16_t hd_cport_id = cport->hd_cport_id;
+	uint16_t cport_id = connection->cport_id;
+	uint16_t hd_cport_id = connection->hd_cport_id;
 	uint8_t module_id;
 	uint8_t result = PROTOCOL_STATUS_SUCCESS;
 	struct gb_uart_set_break_request *set_break;

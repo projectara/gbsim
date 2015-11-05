@@ -20,7 +20,7 @@
 
 #include "gbsim.h"
 
-int control_handler(struct gbsim_cport *cport, void *rbuf,
+int control_handler(struct gbsim_connection *connection, void *rbuf,
 		    size_t rsize, void *tbuf, size_t tsize)
 {
 	struct op_msg *op_req = rbuf;
@@ -28,7 +28,7 @@ int control_handler(struct gbsim_cport *cport, void *rbuf,
 	struct gb_operation_msg_hdr *oph = &op_req->header;
 	size_t payload_size;
 	uint16_t message_size = sizeof(*oph);
-	uint16_t hd_cport_id = cport->hd_cport_id;
+	uint16_t hd_cport_id = connection->hd_cport_id;
 
 	switch (oph->type) {
 	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
@@ -38,11 +38,12 @@ int control_handler(struct gbsim_cport *cport, void *rbuf,
 		break;
 	case GB_CONTROL_TYPE_GET_MANIFEST_SIZE:
 		payload_size = sizeof(op_rsp->control_msize_rsp);
-		op_rsp->control_msize_rsp.size = htole16(info.manifest_size);
+		op_rsp->control_msize_rsp.size =
+				htole16(interface.manifest_size);
 		break;
 	case GB_CONTROL_TYPE_GET_MANIFEST:
-		payload_size = info.manifest_size;
-		memcpy(&op_rsp->control_manifest_rsp.data, info.manifest,
+		payload_size = interface.manifest_size;
+		memcpy(&op_rsp->control_manifest_rsp.data, interface.manifest,
 		       payload_size);
 		break;
 	case GB_CONTROL_TYPE_CONNECTED:

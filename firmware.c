@@ -232,13 +232,13 @@ static int firmware_handler_response(uint16_t cport_id, uint16_t hd_cport_id,
 	return ret;
 }
 
-int firmware_handler(struct gbsim_cport *cport, void *rbuf,
+int firmware_handler(struct gbsim_connection *connection, void *rbuf,
 		    size_t rsize, void *tbuf, size_t tsize)
 {
 	struct op_msg *op = rbuf;
 	struct gb_operation_msg_hdr *oph = &op->header;
-	uint16_t cport_id = cport->id;
-	uint16_t hd_cport_id = cport->hd_cport_id;
+	uint16_t cport_id = connection->cport_id;
+	uint16_t hd_cport_id = connection->hd_cport_id;
 
 	if (oph->type & OP_RESPONSE)
 		return firmware_handler_response(cport_id, hd_cport_id, rbuf, rsize);

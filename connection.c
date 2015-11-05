@@ -44,49 +44,49 @@ static uint16_t gbsim_message_cport_unpack(struct gb_operation_msg_hdr *header)
 	return (uint16_t)header->pad[0];
 }
 
-struct gbsim_cport *cport_find(uint16_t cport_id)
+struct gbsim_connection *connection_find(uint16_t cport_id)
 {
-	struct gbsim_cport *cport;
+	struct gbsim_connection *connection;
 
-	TAILQ_FOREACH(cport, &info.cports, cnode)
-		if (cport->hd_cport_id == cport_id)
-			return cport;
+	TAILQ_FOREACH(connection, &interface.connections, cnode)
+		if (connection->hd_cport_id == cport_id)
+			return connection;
 
 	return NULL;
 }
 
-void allocate_cport(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id)
+void allocate_connection(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id)
 {
-	struct gbsim_cport *cport;
+	struct gbsim_connection *connection;
 
-	cport = malloc(sizeof(*cport));
-	cport->id = cport_id;
+	connection = malloc(sizeof(*connection));
+	connection->cport_id = cport_id;
 
-	cport->hd_cport_id = hd_cport_id;
-	cport->protocol = protocol_id;
-	TAILQ_INSERT_TAIL(&info.cports, cport, cnode);
+	connection->hd_cport_id = hd_cport_id;
+	connection->protocol = protocol_id;
+	TAILQ_INSERT_TAIL(&interface.connections, connection, cnode);
 }
 
-void free_cport(struct gbsim_cport *cport)
+void free_connection(struct gbsim_connection *connection)
 {
-	TAILQ_REMOVE(&info.cports, cport, cnode);
-	free(cport);
+	TAILQ_REMOVE(&interface.connections, connection, cnode);
+	free(connection);
 }
 
-void free_cports(void)
+void free_connections(void)
 {
-	struct gbsim_cport *cport;
+	struct gbsim_connection *connection;
 
 	/*
 	 * Linux doesn't have a foreach_safe version of tailq and so the dirty
 	 * trick of 'goto again'.
 	 */
 again:
-	TAILQ_FOREACH(cport, &info.cports, cnode) {
-		if (cport->hd_cport_id == GB_SVC_CPORT_ID)
+	TAILQ_FOREACH(connection, &interface.connections, cnode) {
+		if (connection->hd_cport_id == GB_SVC_CPORT_ID)
 			continue;
 
-		free_cport(cport);
+		free_connection(connection);
 		goto again;
 	}
 	reset_hd_cport_id();
@@ -95,16 +95,16 @@ again:
 static void get_protocol_operation(uint16_t cport_id, char **protocol,
 				   char **operation, uint8_t type)
 {
-	struct gbsim_cport *cport;
+	struct gbsim_connection *connection;
 
-	cport = cport_find(cport_id);
-	if (!cport) {
+	connection = connection_find(cport_id);
+	if (!connection) {
 		*protocol = "N/A";
 		*operation = "N/A";
 		return;
 	}
 
-	switch (cport->protocol) {
+	switch (connection->protocol) {
 	case GREYBUS_PROTOCOL_CONTROL:
 		*protocol = "CONTROL";
 		*operation = control_get_operation(type);
@@ -215,7 +215,7 @@ int send_request(uint16_t hd_cport_id,
 				operation_id, type, 0);
 }
 
-static int cport_recv_handler(struct gbsim_cport *cport,
+static int connection_recv_handler(struct gbsim_connection *connection,
 				void *rbuf, size_t rsize)
 {
 	void *tbuf = &cport_tbuf[0];
@@ -223,34 +223,35 @@ static int cport_recv_handler(struct gbsim_cport *cport,
 
 	memset(tbuf, 0, tsize);	/* Zero buffer before use */
 
-	switch (cport->protocol) {
+	switch (connection->protocol) {
 	case GREYBUS_PROTOCOL_CONTROL:
-		return control_handler(cport, rbuf, rsize, tbuf, tsize);
+		return control_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_SVC:
-		return svc_handler(cport, rbuf, rsize, tbuf, tsize);
+		return svc_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_GPIO:
-		return gpio_handler(cport, rbuf, rsize, tbuf, tsize);
+		return gpio_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_I2C:
-		return i2c_handler(cport, rbuf, rsize, tbuf, tsize);
+		return i2c_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_UART:
-		return uart_handler(cport, rbuf, rsize, tbuf, tsize);
+		return uart_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_PWM:
-		return pwm_handler(cport, rbuf, rsize, tbuf, tsize);
+		return pwm_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_SDIO:
-		return sdio_handler(cport, rbuf, rsize, tbuf, tsize);
+		return sdio_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_LIGHTS:
-		return lights_handler(cport, rbuf, rsize, tbuf, tsize);
+		return lights_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_I2S_MGMT:
-		return i2s_mgmt_handler(cport, rbuf, rsize, tbuf, tsize);
+		return i2s_mgmt_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_I2S_RECEIVER:
 	case GREYBUS_PROTOCOL_I2S_TRANSMITTER:
-		return i2s_data_handler(cport, rbuf, rsize, tbuf, tsize);
+		return i2s_data_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_LOOPBACK:
-		return loopback_handler(cport, rbuf, rsize, tbuf, tsize);
+		return loopback_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_FIRMWARE:
-		return firmware_handler(cport, rbuf, rsize, tbuf, tsize);
+		return firmware_handler(connection, rbuf, rsize, tbuf, tsize);
 	default:
-		gbsim_error("handler not found for cport %u\n", cport->id);
+		gbsim_error("handler not found for cport %u\n",
+				connection->cport_id);
 		return -EINVAL;
 	}
 }
@@ -259,7 +260,7 @@ static void recv_handler(void *rbuf, size_t rsize)
 {
 	struct gb_operation_msg_hdr *hdr = rbuf;
 	uint16_t hd_cport_id;
-	struct gbsim_cport *cport;
+	struct gbsim_connection *connection;
 	char *protocol, *operation, *type;
 	int ret;
 
@@ -271,8 +272,8 @@ static void recv_handler(void *rbuf, size_t rsize)
 	/* Retreive the cport id stored in the header pad bytes */
 	hd_cport_id = gbsim_message_cport_unpack(hdr);
 
-	cport = cport_find(hd_cport_id);
-	if (!cport) {
+	connection = connection_find(hd_cport_id);
+	if (!connection) {
 		gbsim_error("message received for unknown cport id %u\n",
 			hd_cport_id);
 		return;
@@ -284,7 +285,7 @@ static void recv_handler(void *rbuf, size_t rsize)
 
 	/* FIXME: can identify module from our cport connection */
 	gbsim_debug("AP -> Module %hhu CPort %hu %s %s %s\n",
-		    cport_to_module_id(hd_cport_id), cport->id,
+		    cport_to_module_id(hd_cport_id), connection->cport_id,
 		    protocol, operation, type);
 
 	if (verbose)
@@ -292,9 +293,9 @@ static void recv_handler(void *rbuf, size_t rsize)
 
 	gbsim_message_cport_clear(hdr);
 
-	ret = cport_recv_handler(cport, rbuf, rsize);
+	ret = connection_recv_handler(connection, rbuf, rsize);
 	if (ret)
-		gbsim_debug("cport_recv_handler() returned %d\n", ret);
+		gbsim_debug("connection_recv_handler() returned %d\n", ret);
 }
 
 void recv_thread_cleanup(void *arg)
