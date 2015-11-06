@@ -140,7 +140,6 @@ int main(int argc, char *argv[])
 	svc_init();
 	gpio_init();
 	i2c_init();
-	i2s_init();
 	uart_init();
 	sdio_init();
 	loopback_init();

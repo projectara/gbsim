@@ -118,8 +118,6 @@ struct op_msg {
 		struct gb_pwm_polarity_request		pwm_pol_req;
 		struct gb_pwm_enable_request		pwm_enb_req;
 		struct gb_pwm_disable_request		pwm_dis_req;
-		struct gb_i2s_mgmt_get_supported_configurations_response i2s_mgmt_get_sup_conf_rsp;
-		struct gb_i2s_mgmt_get_processing_delay_response i2s_mgmt_get_proc_delay_rsp;
 		struct gb_uart_send_data_request	uart_send_data_req;
 		struct gb_uart_recv_data_request	uart_recv_data_rsp;
 		struct gb_uart_set_break_request	uart_sb_req;
@@ -236,12 +234,6 @@ void sdio_init(void);
 
 int lights_handler(struct gbsim_connection *,  void *, size_t, void *, size_t);
 char *lights_get_operation(uint8_t type);
-
-int i2s_mgmt_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
-int i2s_data_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
-char *i2s_mgmt_get_operation(uint8_t type);
-char *i2s_data_get_operation(uint8_t type);
-void i2s_init(void);
 
 int uart_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
 char *uart_get_operation(uint8_t type);

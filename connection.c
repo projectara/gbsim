@@ -141,18 +141,6 @@ static void get_protocol_operation(uint16_t cport_id, char **protocol,
 		*protocol = "LIGHTS";
 		*operation = lights_get_operation(type);
 		break;
-	case GREYBUS_PROTOCOL_I2S_MGMT:
-		*protocol = "I2S_MGMT";
-		*operation = i2s_mgmt_get_operation(type);
-		break;
-	case GREYBUS_PROTOCOL_I2S_RECEIVER:
-		*protocol = "I2S_RECEIVER";
-		*operation = i2s_data_get_operation(type);
-		break;
-	case GREYBUS_PROTOCOL_I2S_TRANSMITTER:
-		*protocol = "I2S_TRANSMITTER";
-		*operation = i2s_data_get_operation(type);
-		break;
 	case GREYBUS_PROTOCOL_FIRMWARE:
 		*protocol = "FIRMWARE";
 		*operation = firmware_get_operation(type);
@@ -240,11 +228,6 @@ static int connection_recv_handler(struct gbsim_connection *connection,
 		return sdio_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_LIGHTS:
 		return lights_handler(connection, rbuf, rsize, tbuf, tsize);
-	case GREYBUS_PROTOCOL_I2S_MGMT:
-		return i2s_mgmt_handler(connection, rbuf, rsize, tbuf, tsize);
-	case GREYBUS_PROTOCOL_I2S_RECEIVER:
-	case GREYBUS_PROTOCOL_I2S_TRANSMITTER:
-		return i2s_data_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_LOOPBACK:
 		return loopback_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_FIRMWARE:
