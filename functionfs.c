@@ -39,6 +39,22 @@
 /* Number of bulk in and bulk out couple */
 #define NUM_BULKS		7
 
+/* vendor request APB1 log */
+#define REQUEST_LOG		0x02
+
+/* vendor request to map a cport to bulk in and bulk out endpoints */
+#define REQUEST_EP_MAPPING	0x03
+
+/* vendor request to get the number of cports available */
+#define REQUEST_CPORT_COUNT	0x04
+
+/* vendor request to reset a cport state */
+#define REQUEST_RESET_CPORT	0x05
+
+/* vendor request to time the latency of messages on a given cport */
+#define REQUEST_LATENCY_TAG_EN	0x06
+#define REQUEST_LATENCY_TAG_DIS	0x07
+
 int control = -ENXIO;
 int to_ap = -ENXIO;
 int from_ap = -ENXIO;
@@ -198,6 +214,79 @@ static void disable_endpoints(void)
 	to_ap = -EINVAL;
 }
 
+static int dump_control_msg(const struct usb_ctrlrequest *setup)
+{
+	uint8_t buf[256];
+	int count, i;
+
+	if ((count = read(control, buf, setup->wLength)) < 0) {
+		perror("Message data not present\n");
+		return 0;
+	}
+
+	if (verbose) {
+		gbsim_debug("AP->SVC message:\n");
+		for (i = 0; i < count; i++)
+			fprintf(stdout, "%02x ", buf[i]);
+		fprintf(stdout, "\n");
+	}
+
+	return count;
+}
+
+static void handle_setup(const struct usb_ctrlrequest *setup)
+{
+	uint16_t count;
+	int ret;
+
+	if (verbose) {
+		gbsim_debug("AP->AP Bridge setup message:\n");
+		gbsim_debug("  bRequestType = %02x\n", setup->bRequestType);
+		gbsim_debug("  bRequest     = %02x\n", setup->bRequest);
+		gbsim_debug("  wValue       = %04x\n", le16toh(setup->wValue));
+		gbsim_debug("  wIndex       = %04x\n", le16toh(setup->wIndex));
+		gbsim_debug("  wLength      = %04x\n", le16toh(setup->wLength));
+	}
+
+	if (!(setup->bRequestType & USB_TYPE_VENDOR)) {
+		gbsim_error("Not USB_TYPE_VENDOR request\n");
+		return;
+	}
+
+	switch (setup->bRequest) {
+	case REQUEST_LOG:
+		gbsim_debug("log request, nothing to do\n");
+		break;
+	case REQUEST_EP_MAPPING:
+		dump_control_msg(setup);
+		gbsim_debug("ep_mapping request, nothing to do\n");
+		break;
+	case REQUEST_CPORT_COUNT:
+		count = htole16(16);
+		ret = write(control, &count, 2);
+		gbsim_debug("cport_count request, count: %d: ret: %d\n",
+			    le16toh(count), ret);
+		break;
+	case REQUEST_RESET_CPORT:
+		dump_control_msg(setup);
+		gbsim_debug("reset_cport request for cport: %04x\n",
+			    le16toh(setup->wValue));
+		break;
+	case REQUEST_LATENCY_TAG_EN:
+		dump_control_msg(setup);
+		gbsim_debug("latency_tag_en request for cport: %04x\n",
+			    le16toh(setup->wValue));
+		break;
+	case REQUEST_LATENCY_TAG_DIS:
+		dump_control_msg(setup);
+		gbsim_debug("latency_tag_dis request for cport: %04x\n",
+			    le16toh(setup->wValue));
+		break;
+	default:
+		gbsim_error("Invalid request type %02x\n", setup->bRequest);
+	}
+}
+
 static int read_control(void)
 {
 	struct usb_functionfs_event event[NEVENT];
@@ -239,6 +328,7 @@ static int read_control(void)
 			disable_endpoints();
 			break;
 		case FUNCTIONFS_SETUP:
+			handle_setup(&event[i].u.setup);
 			break;
 		case FUNCTIONFS_SUSPEND:
 			break;
