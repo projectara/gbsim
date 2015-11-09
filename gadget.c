@@ -13,8 +13,8 @@
 
 #include "gbsim.h"
 
-#define VENDOR		0xffff
-#define PRODUCT		0x0001
+#define VENDOR		0x18d1
+#define PRODUCT		0x1eaf
 
 int gadget_create(usbg_state **s, usbg_gadget **g)
 {
