@@ -44,13 +44,12 @@ static pthread_t recv_pthread;
 
 #define GBSIM_LEGACY_DESCRIPTORS
 
-/* 
+/*
  * Descriptors:
  *
  * EP0 [control]	- Ch9 and SVC inbound messages
- * EP1 [interrupt in]	- SVC outbound events/messages
- * EP2 [bulk in]	- CPort outbound messages
- * EP3 [bulk out]	- CPort inbound messages
+ * EP1 [bulk in]	- CPort outbound messages
+ * EP2 [bulk out]	- CPort inbound messages
  */
 static const struct {
 	struct {
@@ -177,8 +176,8 @@ static int enable_endpoints(void)
 {
 	int ret;
 
-	/* Start SVC/CPort endpoints here */
-	gbsim_debug("Start SVC/CPort endpoints\n");
+	/* Start Bulk In/Out endpoints here */
+	gbsim_debug("Start Bulk In/Out endpoints\n");
 
 	to_ap = open(FFS_GBEMU_IN, O_RDWR);
 	if (to_ap < 0)
@@ -210,7 +209,7 @@ static int enable_endpoints(void)
 
 static void disable_endpoints(void)
 {
-	gbsim_debug("Disable SVC/CPort endpoints\n");
+	gbsim_debug("Disable CPort endpoints\n");
 
 	if (to_ap < 0 || from_ap < 0)
 		return;
