@@ -184,17 +184,6 @@ static int enable_endpoints(void)
 		return ret;
 	}
 
-	/*
-	 * Start communication with the AP in following sequence:
-	 * - Send a svc protocol version request
-	 * - For a valid response, send the 'hello' message.
-	 */
-	ret = svc_request_send(GB_REQUEST_TYPE_PROTOCOL_VERSION, AP_INTF_ID);
-	if (ret) {
-		gbsim_error("Failed to send svc version request (%d)\n", ret);
-		return ret;
-	}
-
 	return 0;
 }
 
@@ -266,6 +255,16 @@ static void handle_setup(const struct usb_ctrlrequest *setup)
 		ret = write(control, &count, 2);
 		gbsim_debug("cport_count request, count: %d: ret: %d\n",
 			    le16toh(count), ret);
+
+		/*
+		 * Start communication with the AP in following sequence:
+		 * - Send a svc protocol version request
+		 * - For a valid response, send the 'hello' message.
+		 */
+		ret = svc_request_send(GB_REQUEST_TYPE_PROTOCOL_VERSION, AP_INTF_ID);
+		if (ret)
+			gbsim_error("Failed to send svc version request (%d)\n", ret);
+
 		break;
 	case REQUEST_RESET_CPORT:
 		dump_control_msg(setup);
