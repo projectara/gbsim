@@ -156,6 +156,14 @@ struct op_msg {
 		struct gb_lights_set_flash_timeout_request	lights_glc_ftimeout_req;
 		struct gb_lights_get_flash_fault_request	lights_glc_ffault_req;
 		struct gb_lights_get_flash_fault_response	lights_glc_ffault_rsp;
+		struct gb_power_supply_get_supplies_response	psy_get_supplies_rsp;
+		struct gb_power_supply_get_description_request	psy_get_desc_req;
+		struct gb_power_supply_get_description_response	psy_get_desc_rsp;
+		struct gb_power_supply_get_property_descriptors_request	psy_get_props_req;
+		struct gb_power_supply_get_property_descriptors_response psy_get_props_rsp;
+		struct gb_power_supply_get_property_request		psy_get_prop_req;
+		struct gb_power_supply_get_property_response		psy_get_prop_rsp;
+		struct gb_power_supply_set_property_request		psy_set_prop_req;
 	};
 };
 
@@ -234,6 +242,9 @@ void sdio_init(void);
 
 int lights_handler(struct gbsim_connection *,  void *, size_t, void *, size_t);
 char *lights_get_operation(uint8_t type);
+
+int power_supply_handler(struct gbsim_connection *,  void *, size_t, void *, size_t);
+char *power_supply_get_operation(uint8_t type);
 
 int uart_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
 char *uart_get_operation(uint8_t type);

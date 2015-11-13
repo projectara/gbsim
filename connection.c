@@ -141,6 +141,10 @@ static void get_protocol_operation(uint16_t cport_id, char **protocol,
 		*protocol = "LIGHTS";
 		*operation = lights_get_operation(type);
 		break;
+	case GREYBUS_PROTOCOL_POWER_SUPPLY:
+		*protocol = "POWER_SUPPLY";
+		*operation = power_supply_get_operation(type);
+		break;
 	case GREYBUS_PROTOCOL_FIRMWARE:
 		*protocol = "FIRMWARE";
 		*operation = firmware_get_operation(type);
@@ -228,6 +232,8 @@ static int connection_recv_handler(struct gbsim_connection *connection,
 		return sdio_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_LIGHTS:
 		return lights_handler(connection, rbuf, rsize, tbuf, tsize);
+	case GREYBUS_PROTOCOL_POWER_SUPPLY:
+		return power_supply_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_LOOPBACK:
 		return loopback_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_FIRMWARE:
