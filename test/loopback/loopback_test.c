@@ -347,7 +347,7 @@ void log_csv(const char *test_name, int size, int iteration_max,
 		if (lb_name[j].module_node || mask & (1 << i) || (!mask))
 			__log_csv(test_name, size, iteration_max, fd, &tm,
 				  lb_name[j].dbgfs_entry,
-				  lb_name[j].sysfs_entry,
+				  ctrl_path,
 				  lb_name[j].postfix);
 		if (!lb_name[j].module_node)
 			i++;
@@ -392,12 +392,12 @@ int construct_paths(const char *sys_pfx, const char *dbgfs_pfx)
 						 "%sendo0:%u:%u:%u/", sys_pfx,
 						 module_id, interface_id,
 						 bundle_id);
+					ctrl_path = lb_name[j].sysfs_entry;
 					lb_name[j].postfix = con;
 					lb_name[j].module_node = 0;
 				} else {
-					snprintf(lb_name[j].sysfs_entry, MAX_SYSFS_PATH,
-						 "%sendo0/", sys_pfx);
-					ctrl_path = lb_name[j].sysfs_entry;
+					memset(&lb_name[j].sysfs_entry, 0,
+					       MAX_SYSFS_PATH);
 					lb_name[j].postfix = dev;
 					lb_name[j].module_node = 1;
 				}
