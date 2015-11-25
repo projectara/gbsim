@@ -96,7 +96,6 @@ void usage(void)
 
 int open_sysfs(const char *sys_pfx, const char *postfix, const char *node, int flags)
 {
-	extern int errno;
 	int fd;
 	char path[MAX_SYSFS_PATH];
 
@@ -148,7 +147,6 @@ float read_sysfs_float_fd(int fd, const char *sys_pfx, const char *postfix, cons
 
 int read_sysfs_int(const char *sys_pfx, const char *postfix, const char *node)
 {
-	extern int errno;
 	int fd, val;
 
 	fd = open_sysfs(sys_pfx, postfix, node, O_RDONLY);
@@ -159,7 +157,6 @@ int read_sysfs_int(const char *sys_pfx, const char *postfix, const char *node)
 
 float read_sysfs_float(const char *sys_pfx, const char *postfix, const char *node)
 {
-	extern int errno;
 	int fd;
 	float val;
 
@@ -171,7 +168,6 @@ float read_sysfs_float(const char *sys_pfx, const char *postfix, const char *nod
 
 void write_sysfs_val(const char *sys_pfx, const char *postfix, const char *node, int val)
 {
-	extern int errno;
 	int fd, len;
 	char buf[SYSFS_MAX_INT];
 
@@ -197,7 +193,6 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 	       const char *sys_pfx, const char *postfix)
 {
 	char buf[CSV_MAX_LINE];
-	extern int errno;
 	int error, fd_dev, len;
 	float request_avg, latency_avg, throughput_avg;
 	float apbridge_unipro_latency_avg, gpbridge_firmware_latency_avg;
@@ -429,7 +424,6 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 	char buf[MAX_SYSFS_PATH];
 	char inotify_buf[0x800];
 	char *sys_pfx = (char*)sys_prefix;
-	extern int errno;
 	fd_set fds;
 	int test_id = 0;
 	int i;
