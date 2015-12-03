@@ -164,6 +164,11 @@ struct op_msg {
 		struct gb_power_supply_get_property_request		psy_get_prop_req;
 		struct gb_power_supply_get_property_response		psy_get_prop_rsp;
 		struct gb_power_supply_set_property_request		psy_set_prop_req;
+		struct gb_spi_master_config_response	spi_mc_rsp;
+		struct gb_spi_device_config_request	spi_dc_req;
+		struct gb_spi_device_config_response	spi_dc_rsp;
+		struct gb_spi_transfer_request		spi_xfer_req;
+		struct gb_spi_transfer_response		spi_xfer_rsp;
 	};
 };
 
@@ -239,6 +244,9 @@ void pwm_init(void);
 int sdio_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
 char *sdio_get_operation(uint8_t type);
 void sdio_init(void);
+
+int spi_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
+char *spi_get_operation(uint8_t type);
 
 int lights_handler(struct gbsim_connection *,  void *, size_t, void *, size_t);
 char *lights_get_operation(uint8_t type);

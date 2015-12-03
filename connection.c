@@ -137,6 +137,10 @@ static void get_protocol_operation(uint16_t cport_id, char **protocol,
 		*protocol = "SDIO";
 		*operation = sdio_get_operation(type);
 		break;
+	case GREYBUS_PROTOCOL_SPI:
+		*protocol = "SPI";
+		*operation = spi_get_operation(type);
+		break;
 	case GREYBUS_PROTOCOL_LIGHTS:
 		*protocol = "LIGHTS";
 		*operation = lights_get_operation(type);
@@ -230,6 +234,8 @@ static int connection_recv_handler(struct gbsim_connection *connection,
 		return pwm_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_SDIO:
 		return sdio_handler(connection, rbuf, rsize, tbuf, tsize);
+	case GREYBUS_PROTOCOL_SPI:
+		return spi_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_LIGHTS:
 		return lights_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_POWER_SUPPLY:

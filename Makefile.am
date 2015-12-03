@@ -25,6 +25,7 @@ gbsim_SOURCES = \
 	manifest.c \
 	pwm.c \
 	sdio.c \
+	spi.c \
 	power_supply.c \
 	light.c \
 	uart.c
