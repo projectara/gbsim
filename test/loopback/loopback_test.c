@@ -355,7 +355,7 @@ int construct_paths(const char *sys_pfx, const char *dbgfs_pfx)
 {
 	struct dirent **namelist;
 	int i, n, ret, j;
-	unsigned int module_id, interface_id, bundle_id;
+	unsigned int bus_id, interface_id, bundle_id;
 
 	n = scandir(dbgfs_pfx, &namelist, NULL, alphasort);
 	if (n < 0) {
@@ -377,15 +377,15 @@ int construct_paths(const char *sys_pfx, const char *dbgfs_pfx)
 
 		j = 0;
 		for (i = 0; i < n; i++) {
-			if (strstr(namelist[i]->d_name, "raw_latency_endo0")) {
+			if (strstr(namelist[i]->d_name, "raw_latency_")) {
 				ret = sscanf(namelist[i]->d_name,
-					     "raw_latency_endo0:%u:%u:%u",
-					     &module_id, &interface_id,
+					     "raw_latency_%u-%u.%u",
+					     &bus_id, &interface_id,
 					     &bundle_id);
 				if (ret == 3) {
 					snprintf(lb_name[j].sysfs_entry, MAX_SYSFS_PATH,
-						 "%sendo0:%u:%u:%u/", sys_pfx,
-						 module_id, interface_id,
+						 "%s%u-%u.%u/", sys_pfx,
+						 bus_id, interface_id,
 						 bundle_id);
 					ctrl_path = lb_name[j].sysfs_entry;
 					lb_name[j].postfix = con;
@@ -404,7 +404,6 @@ int construct_paths(const char *sys_pfx, const char *dbgfs_pfx)
 					       lb_name[j].dbgfs_entry,
 					       lb_name[j].sysfs_entry);
 				j++;
-
 			}
 		}
 	}
