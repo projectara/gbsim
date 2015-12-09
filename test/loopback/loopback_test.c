@@ -85,6 +85,7 @@ struct loopback_test {
 	int test_id;
 	int device_count;
 	int inotify_fd;
+	int list_devices;
 	char test_name[MAX_STR_LEN];
 	char sysfs_prefix[MAX_SYSFS_PATH];
 	char debugfs_prefix[MAX_SYSFS_PATH];
@@ -190,6 +191,7 @@ void usage(void)
 	"   -r     raw data output - when specified the full list of latency values are included in the output CSV\n"
 	"   -p     porcelain - when specified printout is in a user-friendly non-CSV format. This option suppresses writing to CSV file\n"
 	"   -a     aggregate - show aggregation of all enabled devies\n"
+	"   -l     list found loopback devices and exit.\n"
 	"Examples:\n"
 	"  Send 10000 transfers with a packet size of 128 bytes to all active connections\n"
 	"  looptest -t transfer -s 128 -i 10000 -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n"
@@ -207,6 +209,20 @@ static inline int device_enabled(struct loopback_test *t, int dev_idx)
 		return 1;
 
 	return 0;
+}
+
+static void show_loopback_devices(struct loopback_test *t)
+{
+	int i;
+
+	if (t->device_count == 0) {
+		printf("No loopback devices.\n");
+		return;
+	}
+
+	for (i = 0; i < t->device_count; i++)
+		printf("device[%d] = %s\n", i, t->devices[i].name);
+
 }
 
 int open_sysfs(const char *sys_pfx, const char *node, int flags)
@@ -835,7 +851,7 @@ int main(int argc, char *argv[])
 
 	memset(&t, 0, sizeof(t));
 
-	while ((o = getopt(argc, argv, "t:s:i:S:D:m:v::d::r::p::a::")) != -1) {
+	while ((o = getopt(argc, argv, "t:s:i:S:D:m:v::d::r::p::a::l::")) != -1) {
 		switch (o) {
 		case 't':
 			snprintf(t.test_name, MAX_STR_LEN, "%s", optarg);
@@ -870,6 +886,9 @@ int main(int argc, char *argv[])
 		case 'a':
 			t.aggregate_output = 1;
 			break;
+		case 'l':
+			t.list_devices = 1;
+			break;
 		default:
 			usage();
 			return -EINVAL;
@@ -891,6 +910,12 @@ int main(int argc, char *argv[])
 	ret = sanity_check(&t);
 	if (ret)
 		return ret;
+
+	if (t.list_devices) {
+		show_loopback_devices(&t);
+		return 0;
+	}
+
 	loopback_run(&t);
 
 	return 0;
