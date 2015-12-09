@@ -449,11 +449,6 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 	write_sysfs_val(sys_pfx, "type", test_id);
 	sleep(1);
 
-	if (iteration_max == 0) {
-		printf("Infinite test initiated CSV won't be logged\n");
-		return;
-	}
-
 	/* Setup for inotify on the sysfs entry */
 	fd = inotify_init();
 	if (fd < 0) {
