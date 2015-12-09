@@ -81,6 +81,7 @@ struct loopback_test {
 	int mask;
 	int size;
 	int iteration_max;
+	int aggregate_output;
 	int test_id;
 	int device_count;
 	int inotify_fd;
@@ -90,7 +91,6 @@ struct loopback_test {
 	struct loopback_device devices[MAX_NUM_DEVICES];
 };
 struct loopback_test t;
-
 
 void abort()
 {
@@ -221,168 +221,210 @@ void write_sysfs_val(const char *sys_pfx, const char *node, int val)
 	close(fd);
 }
 
+static int get_results(struct loopback_test *t)
+{
+	struct loopback_device *d;
+	struct loopback_results *r;
+	int i;
+
+	for (i = 0; i < t->device_count; i++) {
+		if (!device_enabled(t, i))
+			continue;
+
+		d = &t->devices[i];
+		r = &d->results;
+
+		r->error = read_sysfs_int(d->sysfs_entry, "error");
+		r->request_min = read_sysfs_int(d->sysfs_entry, "requests_per_second_min");
+		r->request_max = read_sysfs_int(d->sysfs_entry, "requests_per_second_max");
+		r->request_avg = read_sysfs_float(d->sysfs_entry, "requests_per_second_avg");
+
+		r->latency_min = read_sysfs_int(d->sysfs_entry, "latency_min");
+		r->latency_max = read_sysfs_int(d->sysfs_entry, "latency_max");
+		r->latency_avg = read_sysfs_float(d->sysfs_entry, "latency_avg");
+
+		r->throughput_min = read_sysfs_int(d->sysfs_entry, "throughput_min");
+		r->throughput_max = read_sysfs_int(d->sysfs_entry, "throughput_max");
+		r->throughput_avg = read_sysfs_float(d->sysfs_entry, "throughput_avg");
+
+		r->apbridge_unipro_latency_min =
+			read_sysfs_int(d->sysfs_entry, "apbridge_unipro_latency_min");
+		r->apbridge_unipro_latency_max =
+			read_sysfs_int(d->sysfs_entry, "apbridge_unipro_latency_max");
+		r->apbridge_unipro_latency_avg =
+			read_sysfs_float(d->sysfs_entry, "apbridge_unipro_latency_avg");
+
+		r->gpbridge_firmware_latency_min =
+			read_sysfs_int(d->sysfs_entry, "gpbridge_firmware_latency_min");
+		r->gpbridge_firmware_latency_max =
+			read_sysfs_int(d->sysfs_entry, "gpbridge_firmware_latency_max");
+		r->gpbridge_firmware_latency_avg =
+			read_sysfs_float(d->sysfs_entry, "gpbridge_firmware_latency_avg");
+
+		r->request_jitter = r->request_max - r->request_min;
+		r->latency_jitter = r->latency_max - r->latency_min;
+		r->throughput_jitter = r->throughput_max - r->throughput_min;
+		r->apbridge_unipro_latency_jitter =
+			r->apbridge_unipro_latency_max - r->apbridge_unipro_latency_min;
+		r->gpbridge_firmware_latency_jitter =
+			r->gpbridge_firmware_latency_max - r->gpbridge_firmware_latency_min;
+
+	}
+
+	return 0;
+}
+
 void log_csv_error(int len, int err)
 {
 	fprintf(stderr, "unable to write %d bytes to csv %s\n", len,
 		strerror(err));
 }
 
-void __log_csv(struct loopback_test *t, struct loopback_device *d,
-	       int fd, struct tm *tm, const char *dbgfs_entry)
+int format_output(struct loopback_test *t,
+			struct loopback_results *r,
+			const char *dev_name,
+			char *buf, int buf_len,
+			struct tm *tm)
 {
-	char buf[CSV_MAX_LINE];
-	int error, fd_dev, len;
-	float request_avg, latency_avg, throughput_avg;
-	float apbridge_unipro_latency_avg, gpbridge_firmware_latency_avg;
-	int request_min, request_max, request_jitter;
-	int latency_min, latency_max, latency_jitter;
-	int throughput_min, throughput_max, throughput_jitter;
-	int apbridge_unipro_latency_min, apbridge_unipro_latency_max;
-	int apbridge_unipro_latency_jitter;
-	int gpbridge_firmware_latency_min, gpbridge_firmware_latency_max;
-	int gpbridge_firmware_latency_jitter;
-	unsigned int i;
-	char rx_buf[SYSFS_MAX_INT];
+	int len = 0;
 
-	fd_dev = open(dbgfs_entry, O_RDONLY);
-	if (fd_dev < 0) {
-		fprintf(stderr, "unable to open specified device %s\n",
-			dbgfs_entry);
-		return;
-	}
-
-	/* gather data set */
-	error = read_sysfs_int(d->sysfs_entry, "error");
-	request_min = read_sysfs_int(d->sysfs_entry, "requests_per_second_min");
-	request_max = read_sysfs_int(d->sysfs_entry, "requests_per_second_max");
-	request_avg = read_sysfs_float(d->sysfs_entry, "requests_per_second_avg");
-	latency_min = read_sysfs_int(d->sysfs_entry, "latency_min");
-	latency_max = read_sysfs_int(d->sysfs_entry, "latency_max");
-	latency_avg = read_sysfs_float(d->sysfs_entry, "latency_avg");
-	throughput_min = read_sysfs_int(d->sysfs_entry, "throughput_min");
-	throughput_max = read_sysfs_int(d->sysfs_entry, "throughput_max");
-	throughput_avg = read_sysfs_float(d->sysfs_entry, "throughput_avg");
-	apbridge_unipro_latency_min = read_sysfs_int(d->sysfs_entry, "apbridge_unipro_latency_min");
-	apbridge_unipro_latency_max = read_sysfs_int(d->sysfs_entry, "apbridge_unipro_latency_max");
-	apbridge_unipro_latency_avg = read_sysfs_float(d->sysfs_entry, "apbridge_unipro_latency_avg");
-	gpbridge_firmware_latency_min = read_sysfs_int(d->sysfs_entry, "gpbridge_firmware_latency_min");
-	gpbridge_firmware_latency_max = read_sysfs_int(d->sysfs_entry, "gpbridge_firmware_latency_max");
-	gpbridge_firmware_latency_avg = read_sysfs_float(d->sysfs_entry, "gpbridge_firmware_latency_avg");
-
-	/* derive jitter */
-	request_jitter = request_max - request_min;
-	latency_jitter = latency_max - latency_min;
-	throughput_jitter = throughput_max - throughput_min;
-	apbridge_unipro_latency_jitter = apbridge_unipro_latency_max - apbridge_unipro_latency_min;
-	gpbridge_firmware_latency_jitter = gpbridge_firmware_latency_max - gpbridge_firmware_latency_min;
-
-	/* append calculated metrics to file */
-	memset(buf, 0x00, sizeof(buf));
-	len = snprintf(buf, sizeof(buf), "%u-%u-%u %u:%u:%u",
+	memset(buf, 0x00, buf_len);
+	len = snprintf(buf, buf_len, "%u-%u-%u %u:%u:%u",
 		       tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 		       tm->tm_hour, tm->tm_min, tm->tm_sec);
+
 	if (t->porcelain) {
-		len += snprintf(&buf[len], sizeof(buf) - len,
+		len += snprintf(&buf[len], buf_len - len,
 			"\n test:\t\t\t%s\n path:\t\t\t%s\n size:\t\t\t%u\n iterations:\t\t%u\n errors:\t\t%u\n",
-			t->test_name, d->sysfs_entry, t->size, t->iteration_max, error);
-		len += snprintf(&buf[len], sizeof(buf) - len,
+			t->test_name,
+			dev_name,
+			t->size,
+			t->iteration_max,
+			r->error);
+
+		len += snprintf(&buf[len], buf_len - len,
 			" requests per-sec:\tmin=%u, max=%u, average=%f, jitter=%u\n",
-			request_min, request_max, request_avg, request_jitter);
-		len += snprintf(&buf[len], sizeof(buf) - len,
+			r->request_min,
+			r->request_max,
+			r->request_avg,
+			r->request_jitter);
+
+		len += snprintf(&buf[len], buf_len - len,
 			" ap-throughput B/s:\tmin=%u max=%u average=%f jitter=%u\n",
-			throughput_min, throughput_max, throughput_avg, throughput_jitter);
-		len += snprintf(&buf[len], sizeof(buf) - len,
+			r->throughput_min,
+			r->throughput_max,
+			r->throughput_avg,
+			r->throughput_jitter);
+		len += snprintf(&buf[len], buf_len - len,
 			" ap-latency usec:\tmin=%u max=%u average=%f jitter=%u\n",
-			latency_min, latency_max, latency_avg, latency_jitter);
-		len += snprintf(&buf[len], sizeof(buf) - len,
+			r->latency_min,
+			r->latency_max,
+			r->latency_avg,
+			r->latency_jitter);
+		len += snprintf(&buf[len], buf_len - len,
 			" apbridge-latency usec:\tmin=%u max=%u average=%f jitter=%u\n",
-			apbridge_unipro_latency_min,
-			apbridge_unipro_latency_max, apbridge_unipro_latency_avg,
-			apbridge_unipro_latency_jitter);
-		len += snprintf(&buf[len], sizeof(buf) - len,
+			r->apbridge_unipro_latency_min,
+			r->apbridge_unipro_latency_max,
+			r->apbridge_unipro_latency_avg,
+			r->apbridge_unipro_latency_jitter);
+
+		len += snprintf(&buf[len], buf_len - len,
 			" gpbridge-latency usec:\tmin=%u max=%u average=%f jitter=%u\n",
-			gpbridge_firmware_latency_min,
-			gpbridge_firmware_latency_max, gpbridge_firmware_latency_avg,
-			gpbridge_firmware_latency_jitter);
+			r->gpbridge_firmware_latency_min,
+			r->gpbridge_firmware_latency_max,
+			r->gpbridge_firmware_latency_avg,
+			r->gpbridge_firmware_latency_jitter);
+
 	} else {
-		len += snprintf(&buf[len], sizeof(buf) - len,
-			",%s,%s,%u,%u,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u",
-			t->test_name, d->sysfs_entry, t->size, t->iteration_max, error,
-			request_min, request_max, request_avg, request_jitter,
-			latency_min, latency_max, latency_avg, latency_jitter,
-			throughput_min, throughput_max, throughput_avg,
-			throughput_jitter, apbridge_unipro_latency_min,
-			apbridge_unipro_latency_max, apbridge_unipro_latency_avg,
-			apbridge_unipro_latency_jitter, gpbridge_firmware_latency_min,
-			gpbridge_firmware_latency_max, gpbridge_firmware_latency_avg,
-			gpbridge_firmware_latency_jitter);
-		write(fd, buf, len);
+		len += snprintf(&buf[len], buf_len- len, ",%s,%s,%u,%u,%u",
+			t->test_name, dev_name, t->size, t->iteration_max,
+			r->error);
+
+		len += snprintf(&buf[len], buf_len - len, ",%u,%u,%f,%u",
+			r->request_min,
+			r->request_max,
+			r->request_avg,
+			r->request_jitter);
+
+		len += snprintf(&buf[len], buf_len - len, ",%u,%u,%f,%u",
+			r->latency_min,
+			r->latency_max,
+			r->latency_avg,
+			r->latency_jitter);
+
+		len += snprintf(&buf[len], buf_len - len, ",%u,%u,%f,%u",
+			r->throughput_min,
+			r->throughput_max,
+			r->throughput_avg,
+			r->throughput_jitter);
+
+		len += snprintf(&buf[len], buf_len - len, ",%u,%u,%f,%u",
+			r->apbridge_unipro_latency_min,
+			r->apbridge_unipro_latency_max,
+			r->apbridge_unipro_latency_avg,
+			r->apbridge_unipro_latency_jitter);
+
+		len += snprintf(&buf[len], buf_len - len, ",%u,%u,%f,%u",
+			r->gpbridge_firmware_latency_min,
+			r->gpbridge_firmware_latency_max,
+			r->gpbridge_firmware_latency_avg,
+			r->gpbridge_firmware_latency_jitter);
 	}
 
-	/* print basic metrics to stdout - requested feature add */
 	printf("\n%s\n", buf);
 
-	/* Write raw latency times to CSV  */
-	for (i = 0; i < t->iteration_max && t->raw_data_dump && !t->porcelain; i++) {
-		memset(&rx_buf, 0x00, sizeof(rx_buf));
-		len = read(fd_dev, rx_buf, sizeof(rx_buf));
-		if (len < 0) {
-			fprintf(stderr, "error reading %s %s\n",
-				t->debugfs_prefix, strerror(errno));
-			break;
-		}
-		lseek(fd_dev, SEEK_SET, 0);
-		len = snprintf(buf, sizeof(buf), ",%s", rx_buf);
-		if (write(fd, buf, len) != len) {
-			log_csv_error(0, errno);
-			break;
-		}
-	}
-	if (!t->porcelain) {
-		if (write(fd, "\n", 1) < 1)
-			log_csv_error(1, errno);
-	}
-
-	/* skip printing large set to stdout just close open handles */
-	close(fd_dev);
-
+	return len;
 }
 
-void log_csv(struct loopback_test *t)
+static int log_results(struct loopback_test *t)
 {
-	int fd, i;
+	int fd, i, len, ret;
 	struct tm tm;
-	time_t cur_time;
+	time_t local_time;
 	mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
-	char buf[MAX_SYSFS_PATH];
+	char file_name[MAX_SYSFS_PATH];
+	char data[CSV_MAX_LINE];
 
-	cur_time = time(NULL);
-	tm = *localtime(&cur_time);
+	local_time = time(NULL);
+	tm = *localtime(&local_time);
 
 	/*
-	 * file name will test_name_size_iteration_max.csv
-	 * every time the same test with the same parameters is run we will then
-	 * append to the same CSV with datestamp - representing each test
-	 * dataset.
-	 */
-	snprintf(buf, sizeof(buf), "%s_%d_%d.csv", t->test_name, t->size,
-		 t->iteration_max);
-
+	* file name will test_name_size_iteration_max.csv
+	* every time the same test with the same parameters is run we will then
+	* append to the same CSV with datestamp - representing each test
+	* dataset.
+	*/
 	if (!t->porcelain) {
-		fd = open(buf, O_WRONLY | O_CREAT | O_APPEND, mode);
+		snprintf(file_name, sizeof(file_name), "%s_%d_%d.csv",
+			t->test_name, t->size, t->iteration_max);
+
+		fd = open(file_name, O_WRONLY | O_CREAT | O_APPEND, mode);
 		if (fd < 0) {
-			fprintf(stderr, "unable to open %s for appendation\n", buf);
+			fprintf(stderr, "unable to open %s for appendation\n", file_name);
 			abort();
 		}
+
 	}
 	for (i = 0; i < t->device_count; i++) {
 		if (!device_enabled(t, i))
 			continue;
 
-		__log_csv(t, &t->devices[i], fd, &tm, t->devices[i].debugfs_entry);
+		len = format_output(t, &t->devices[i].results,
+					t->devices[i].name,
+					data, sizeof(data), &tm);
+		if (!t->porcelain) {
+			ret = write(fd, data, len);
+			if (ret == -1)
+				fprintf(stderr, "unable to write %d bytes to csv.\n", len);
+		}
+
 	}
+
+
 	if (!t->porcelain)
 		close(fd);
+
+	return 0;
 }
 
 int is_loopback_device(const char *path, const char *node)
@@ -635,7 +677,9 @@ void loopback_run(struct loopback_test *t)
 
 	unregister_for_notification(t);
 
-	log_csv(t);
+	get_results(t);
+
+	log_results(t);
 
 	return;
 
