@@ -22,6 +22,8 @@
 #define CSV_MAX_LINE	0x1000
 #define SYSFS_MAX_INT	0x20
 #define MAX_STR_LEN	255
+#define MAX_TIMEOUT_COUNT 5
+#define TIMEOUT_SEC 1
 
 struct dict {
 	char *name;
@@ -81,6 +83,7 @@ struct loopback_test {
 	int iteration_max;
 	int test_id;
 	int device_count;
+	int inotify_fd;
 	char test_name[MAX_STR_LEN];
 	char sysfs_prefix[MAX_SYSFS_PATH];
 	char debugfs_prefix[MAX_SYSFS_PATH];
@@ -451,6 +454,117 @@ baddir:
 }
 
 
+static int register_for_notification(struct loopback_test *t)
+{
+	char buf[MAX_SYSFS_PATH];
+	int i;
+
+	t->inotify_fd = inotify_init();
+	if (t->inotify_fd < 0) {
+		fprintf(stderr, "inotify_init fail %s\n", strerror(errno));
+		abort();
+	}
+
+	for (i = 0; i < t->device_count; i++) {
+		if (!device_enabled(t, i))
+			continue;
+
+		snprintf(buf, sizeof(buf), "%s%s", t->devices[i].sysfs_entry,
+			"iteration_count");
+
+		t->devices[i].inotify_wd = inotify_add_watch(t->inotify_fd,
+							buf, IN_MODIFY);
+		if (t->devices[i].inotify_wd < 0) {
+			fprintf(stderr, "inotify_add_watch %s fail %s\n",
+				buf, strerror(errno));
+			close(t->inotify_fd);
+			abort();
+		}
+	}
+
+	return 0;
+}
+
+static int unregister_for_notification(struct loopback_test *t)
+{
+	int i;
+	int ret = 0;
+
+	for (i = 0; i < t->device_count; i++) {
+		if (!device_enabled(t, i))
+			continue;
+
+		ret = inotify_rm_watch(t->inotify_fd, t->devices[i].inotify_wd);
+		if (ret) {
+			fprintf(stderr, "inotify_rm_watch error.\n");
+			return ret;
+		}
+	}
+
+	close(t->inotify_fd);
+	return 0;
+}
+
+static int is_complete(struct loopback_test *t)
+{
+	uint32_t iteration_count = 0;
+	int i;
+
+	for (i = 0; i < t->device_count; i++) {
+		if (!device_enabled(t, i))
+			continue;
+
+		iteration_count = read_sysfs_int(t->devices[i].sysfs_entry,
+						 "iteration_count");
+
+		/* at least one device did not finish yet */
+		if (iteration_count != t->iteration_max)
+			return 0;
+	}
+
+	return 1;
+}
+
+static int wait_for_complete(struct loopback_test *t)
+{
+	int remaining_timeouts = MAX_TIMEOUT_COUNT;
+	char buf[MAX_SYSFS_PATH];
+	struct timeval timeout;
+	fd_set read_fds;
+	int ret;
+
+	while (1) {
+		/* Wait for change */
+		timeout.tv_sec = TIMEOUT_SEC;
+		timeout.tv_usec = 0;
+		FD_ZERO(&read_fds);
+		FD_SET(t->inotify_fd, &read_fds);
+		ret = select(FD_SETSIZE, &read_fds, NULL, NULL, &timeout);
+		if (ret < 0) {
+			fprintf(stderr, "Select error.\n");
+			return -1;
+		}
+
+		/* timeout - test may be finished.*/
+		if (!FD_ISSET(t->inotify_fd, &read_fds)) {
+			remaining_timeouts--;
+
+			if (is_complete(t))
+				return 0;
+
+			if (!remaining_timeouts) {
+				fprintf(stderr, "Too many timeouts\n");
+				return -1;
+			}
+		}
+
+		/* read to clear the event */
+		ret = read(t->inotify_fd, buf, sizeof(buf));
+	}
+
+	return 0;
+}
+
 static void prepare_devices(struct loopback_test *t)
 {
 	int i;
@@ -494,17 +608,8 @@ static int start(struct loopback_test *t)
 
 void loopback_run(struct loopback_test *t)
 {
-	char buf[MAX_SYSFS_PATH];
-	char inotify_buf[0x800];
-	char *sys_pfx = (char *)t->sysfs_prefix;
-	fd_set fds;
 	int i;
-	int previous, err, iteration_count;
-	int fd, wd, ret;
-	struct timeval tv;
-
-
-	sys_pfx = t->devices[0].sysfs_entry;
+	int ret;
 
 	for (i = 0; i < sizeof(dict) / sizeof(struct dict); i++) {
 		if (strstr(dict[i].name, t->test_name))
@@ -518,70 +623,25 @@ void loopback_run(struct loopback_test *t)
 
 	prepare_devices(t);
 
+	ret = register_for_notification(t);
+	if (ret)
+		goto err;
+
 	start(t);
 
 	sleep(1);
 
-	/* Setup for inotify on the sysfs entry */
-	fd = inotify_init();
-	if (fd < 0) {
-		fprintf(stderr, "inotify_init fail %s\n", strerror(errno));
-		abort();
-	}
-	snprintf(buf, sizeof(buf), "%s%s", sys_pfx, "iteration_count");
-	wd = inotify_add_watch(fd, buf, IN_MODIFY);
-	if (wd < 0) {
-		fprintf(stderr, "inotify_add_watch %s fail %s\n",
-			buf, strerror(errno));
-		close(fd);
-		abort();
-	}
+	wait_for_complete(t);
 
-	previous = 0;
-	err = 0;
-	while (1) {
-		/* Wait for change */
-		tv.tv_sec = 1;
-		tv.tv_usec = 0;
-		FD_ZERO(&fds);
-		FD_SET(fd, &fds);
-		ret = select(fd + 1, &fds, NULL, NULL, &tv);
+	unregister_for_notification(t);
 
-		if (ret > 0) {
-			if (!FD_ISSET(fd, &fds)) {
-				fprintf(stderr, "error - FD_ISSET fd=%d flase!\n",
-					fd);
-				break;
-			}
-			/* Read to clear the event */
-			ret = read(fd, inotify_buf, sizeof(inotify_buf));
-		}
+	log_csv(t);
 
-		/* Grab the data */
-		iteration_count = read_sysfs_int(sys_pfx, "iteration_count");
+	return;
 
-		/* Validate data value is different */
-		if (previous == iteration_count) {
-			err = 1;
-			break;
-		} else if (iteration_count == t->iteration_max) {
-			break;
-		}
-		previous = iteration_count;
-		if (t->verbose) {
-			printf("%02d%% complete %d of %d\r",
-				100 * iteration_count / t->iteration_max,
-				iteration_count, t->iteration_max);
-			fflush(stdout);
-		}
-	}
-	inotify_rm_watch(fd, wd);
-	close(fd);
-
-	if (err)
-		printf("\nError executing test\n");
-	else
-		log_csv(t);
+err:
+	printf("Error running test\n");
+	return;
 }
 
 static int sanity_check(struct loopback_test *t)
