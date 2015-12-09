@@ -434,7 +434,7 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 	write_sysfs_val(sys_pfx, "type", 0);
 
 	/* Set parameter for no wait between messages */
-	write_sysfs_val(sys_pfx, "ms_wait", 0);
+	write_sysfs_val(sys_pfx, "us_wait", 0);
 
 	/* Set operation size */
 	write_sysfs_val(sys_pfx, "size", size);
