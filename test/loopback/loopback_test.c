@@ -450,6 +450,48 @@ baddir:
 	return ret;
 }
 
+
+static void prepare_devices(struct loopback_test *t)
+{
+	int i;
+
+	/* Cancel any running tests */
+	for (i = 0; i < t->device_count; i++)
+		write_sysfs_val(t->devices[i].sysfs_entry, "type", 0);
+
+
+	for (i = 0; i < t->device_count; i++) {
+		if (!device_enabled(t, i))
+			continue;
+
+		write_sysfs_val(t->devices[i].sysfs_entry, "us_wait", 0);
+
+		/* Set operation size */
+		write_sysfs_val(t->devices[i].sysfs_entry, "size", t->size);
+
+		/* Set iterations */
+		write_sysfs_val(t->devices[i].sysfs_entry, "iteration_max",
+				t->iteration_max);
+
+	}
+}
+
+static int start(struct loopback_test *t)
+{
+	int i;
+
+	/* the test starts by writing test_id to the type file. */
+	for (i = 0; i < t->device_count; i++) {
+		if (!device_enabled(t, i))
+			continue;
+
+		write_sysfs_val(t->devices[i].sysfs_entry, "type", t->test_id);
+	}
+
+	return 0;
+}
+
+
 void loopback_run(struct loopback_test *t)
 {
 	char buf[MAX_SYSFS_PATH];
@@ -474,23 +516,10 @@ void loopback_run(struct loopback_test *t)
 		return;
 	}
 
-	/* Terminate any currently running test */
-	write_sysfs_val(sys_pfx, "type", 0);
+	prepare_devices(t);
 
-	/* Set parameter for no wait between messages */
-	write_sysfs_val(sys_pfx, "us_wait", 0);
+	start(t);
 
-	/* Set operation size */
-	write_sysfs_val(sys_pfx, "size", t->size);
-
-	/* Set iterations */
-	write_sysfs_val(sys_pfx, "iteration_max", t->iteration_max);
-
-	/* Set mask of connections to include */
-	write_sysfs_val(sys_pfx, "mask", t->mask);
-
-	/* Initiate by setting loopback operation type */
-	write_sysfs_val(sys_pfx, "type", t->test_id);
 	sleep(1);
 
 	/* Setup for inotify on the sysfs entry */
