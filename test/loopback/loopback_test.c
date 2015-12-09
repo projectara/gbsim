@@ -24,6 +24,7 @@
 #define MAX_STR_LEN	255
 #define MAX_TIMEOUT_COUNT 5
 #define TIMEOUT_SEC 1
+#define DEFAULT_ASYNC_TIMEOUT 200000
 
 struct dict {
 	char *name;
@@ -86,6 +87,8 @@ struct loopback_test {
 	int device_count;
 	int inotify_fd;
 	int list_devices;
+	int use_async;
+	int async_timeout;
 	char test_name[MAX_STR_LEN];
 	char sysfs_prefix[MAX_SYSFS_PATH];
 	char debugfs_prefix[MAX_SYSFS_PATH];
@@ -192,6 +195,8 @@ void usage(void)
 	"   -p     porcelain - when specified printout is in a user-friendly non-CSV format. This option suppresses writing to CSV file\n"
 	"   -a     aggregate - show aggregation of all enabled devies\n"
 	"   -l     list found loopback devices and exit.\n"
+	"   -x     Async - Enable async transfers.\n"
+	"   -o     Async Timeout - Timeout in uSec for async operations.\n"
 	"Examples:\n"
 	"  Send 10000 transfers with a packet size of 128 bytes to all active connections\n"
 	"  looptest -t transfer -s 128 -i 10000 -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n"
@@ -417,12 +422,13 @@ int format_output(struct loopback_test *t,
 
 	if (t->porcelain) {
 		len += snprintf(&buf[len], buf_len - len,
-			"\n test:\t\t\t%s\n path:\t\t\t%s\n size:\t\t\t%u\n iterations:\t\t%u\n errors:\t\t%u\n",
+			"\n test:\t\t\t%s\n path:\t\t\t%s\n size:\t\t\t%u\n iterations:\t\t%u\n errors:\t\t%u\n async:\t\t\t%s\n",
 			t->test_name,
 			dev_name,
 			t->size,
 			t->iteration_max,
-			r->error);
+			r->error,
+			t->use_async ? "Enabled" : "Disabled");
 
 		len += snprintf(&buf[len], buf_len - len,
 			" requests per-sec:\tmin=%u, max=%u, average=%f, jitter=%u\n",
@@ -761,6 +767,14 @@ static void prepare_devices(struct loopback_test *t)
 		write_sysfs_val(t->devices[i].sysfs_entry, "iteration_max",
 				t->iteration_max);
 
+		if (t->use_async) {
+			write_sysfs_val(t->devices[i].sysfs_entry,
+				"async", 1);
+			write_sysfs_val(t->devices[i].sysfs_entry,
+				"timeout", t->async_timeout);
+		} else
+			write_sysfs_val(t->devices[i].sysfs_entry,
+				"async", 0);
 	}
 }
 
@@ -851,7 +865,7 @@ int main(int argc, char *argv[])
 
 	memset(&t, 0, sizeof(t));
 
-	while ((o = getopt(argc, argv, "t:s:i:S:D:m:v::d::r::p::a::l::")) != -1) {
+	while ((o = getopt(argc, argv, "t:s:i:S:D:m:v::d::r::p::a::l::x::o:")) != -1) {
 		switch (o) {
 		case 't':
 			snprintf(t.test_name, MAX_STR_LEN, "%s", optarg);
@@ -889,6 +903,12 @@ int main(int argc, char *argv[])
 		case 'l':
 			t.list_devices = 1;
 			break;
+		case 'x':
+			t.use_async = 1;
+			break;
+		case 'o':
+			t.async_timeout = atoi(optarg);
+			break;
 		default:
 			usage();
 			return -EINVAL;
@@ -897,6 +917,9 @@ int main(int argc, char *argv[])
 
 	if (t.test_name == NULL || t.iteration_max == 0)
 		usage();
+
+	if (t.async_timeout == 0)
+		t.async_timeout = DEFAULT_ASYNC_TIMEOUT;
 
 	if (!strcmp(t.sysfs_prefix, ""))
 		snprintf(t.sysfs_prefix, MAX_SYSFS_PATH, "%s", sysfs_prefix);
