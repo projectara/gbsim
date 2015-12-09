@@ -35,15 +35,11 @@ static struct dict dict[] = {
 struct loopback_names {
 	char sysfs_entry[MAX_SYSFS_PATH];
 	char dbgfs_entry[MAX_SYSFS_PATH];
-	char *postfix;
 	int module_node;
 };
 static struct loopback_names *lb_name = NULL;
 static unsigned int lb_entries = 0;
 static char *ctrl_path;
-static char *dev = "dev";
-static char *con = "con";
-
 static int verbose;
 static int debug;
 static int raw_data_dump;
@@ -94,15 +90,12 @@ void usage(void)
 	abort();
 }
 
-int open_sysfs(const char *sys_pfx, const char *postfix, const char *node, int flags)
+int open_sysfs(const char *sys_pfx, const char *node, int flags)
 {
 	int fd;
 	char path[MAX_SYSFS_PATH];
 
-	if (postfix)
-		snprintf(path, sizeof(path), "%s%s_%s", sys_pfx, node, postfix);
-	else
-		snprintf(path, sizeof(path), "%s%s", sys_pfx, node);
+	snprintf(path, sizeof(path), "%s%s", sys_pfx, node);
 	fd = open(path, flags);
 	if (fd < 0) {
 		fprintf(stderr, "unable to open %s\n", path);
@@ -111,68 +104,61 @@ int open_sysfs(const char *sys_pfx, const char *postfix, const char *node, int f
 	return fd;
 }
 
-int read_sysfs_int_fd(int fd, const char *sys_pfx, const char *postfix, const char *node)
+int read_sysfs_int_fd(int fd, const char *sys_pfx, const char *node)
 {
 	char buf[SYSFS_MAX_INT];
 
 	if (read(fd, buf, sizeof(buf)) < 0) {
-		if (postfix)
-			fprintf(stderr, "unable to read from %s%s_%s %s\n", sys_pfx, node,
-				postfix, strerror(errno));
-		else
-			fprintf(stderr, "unable to read from %s%s %s\n", sys_pfx, node,
-				strerror(errno));
+		fprintf(stderr, "unable to read from %s%s %s\n", sys_pfx, node,
+			strerror(errno));
 		close(fd);
 		abort();
 	}
 	return atoi(buf);
 }
 
-float read_sysfs_float_fd(int fd, const char *sys_pfx, const char *postfix, const char *node)
+float read_sysfs_float_fd(int fd, const char *sys_pfx, const char *node)
 {
 	char buf[SYSFS_MAX_INT];
 
 	if (read(fd, buf, sizeof(buf)) < 0) {
-		if (postfix)
-			fprintf(stderr, "unable to read from %s%s_%s %s\n", sys_pfx, node,
-				postfix, strerror(errno));
-		else
-			fprintf(stderr, "unable to read from %s%s %s\n", sys_pfx, node,
-				strerror(errno));
+
+		fprintf(stderr, "unable to read from %s%s %s\n", sys_pfx, node,
+			strerror(errno));
 		close(fd);
 		abort();
 	}
 	return atof(buf);
 }
 
-int read_sysfs_int(const char *sys_pfx, const char *postfix, const char *node)
+int read_sysfs_int(const char *sys_pfx, const char *node)
 {
 	int fd, val;
 
-	fd = open_sysfs(sys_pfx, postfix, node, O_RDONLY);
-	val = read_sysfs_int_fd(fd, sys_pfx, postfix, node);
+	fd = open_sysfs(sys_pfx, node, O_RDONLY);
+	val = read_sysfs_int_fd(fd, sys_pfx, node);
 	close(fd);
 	return val;
 }
 
-float read_sysfs_float(const char *sys_pfx, const char *postfix, const char *node)
+float read_sysfs_float(const char *sys_pfx, const char *node)
 {
 	int fd;
 	float val;
 
-	fd = open_sysfs(sys_pfx, postfix, node, O_RDONLY);
-	val = read_sysfs_float_fd(fd, sys_pfx, postfix, node);
+	fd = open_sysfs(sys_pfx, node, O_RDONLY);
+	val = read_sysfs_float_fd(fd, sys_pfx, node);
 	close(fd);
 	return val;
 }
 
-void write_sysfs_val(const char *sys_pfx, const char *postfix, const char *node, int val)
+void write_sysfs_val(const char *sys_pfx, const char *node, int val)
 {
 	int fd, len;
 	char buf[SYSFS_MAX_INT];
 
-	fd = open_sysfs(sys_pfx, postfix, node, O_RDWR);
-	len = snprintf(buf, sizeof(buf), "%d_%s", val, postfix);
+	fd = open_sysfs(sys_pfx, node, O_RDWR);
+	len = snprintf(buf, sizeof(buf), "%d", val);
 	if (write(fd, buf, len) < 0) {
 		fprintf(stderr, "unable to write to %s%s %s\n", sys_pfx, node,
 			strerror(errno));
@@ -190,7 +176,7 @@ void log_csv_error(int len, int err)
 
 void __log_csv(const char *test_name, int size, int iteration_max,
 	       int fd, struct tm *tm, const char *dbgfs_entry,
-	       const char *sys_pfx, const char *postfix)
+	       const char *sys_pfx)
 {
 	char buf[CSV_MAX_LINE];
 	int error, fd_dev, len;
@@ -214,22 +200,22 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 	}
 
 	/* gather data set */
-	error = read_sysfs_int(sys_pfx, postfix, "error");
-	request_min = read_sysfs_int(sys_pfx, postfix, "requests_per_second_min");
-	request_max = read_sysfs_int(sys_pfx, postfix, "requests_per_second_max");
-	request_avg = read_sysfs_float(sys_pfx, postfix, "requests_per_second_avg");
-	latency_min = read_sysfs_int(sys_pfx, postfix, "latency_min");
-	latency_max = read_sysfs_int(sys_pfx, postfix, "latency_max");
-	latency_avg = read_sysfs_float(sys_pfx, postfix, "latency_avg");
-	throughput_min = read_sysfs_int(sys_pfx, postfix, "throughput_min");
-	throughput_max = read_sysfs_int(sys_pfx, postfix, "throughput_max");
-	throughput_avg = read_sysfs_float(sys_pfx, postfix, "throughput_avg");
-	apbridge_unipro_latency_min = read_sysfs_int(sys_pfx, postfix, "apbridge_unipro_latency_min");
-	apbridge_unipro_latency_max = read_sysfs_int(sys_pfx, postfix, "apbridge_unipro_latency_max");
-	apbridge_unipro_latency_avg = read_sysfs_float(sys_pfx, postfix, "apbridge_unipro_latency_avg");
-	gpbridge_firmware_latency_min = read_sysfs_int(sys_pfx, postfix, "gpbridge_firmware_latency_min");
-	gpbridge_firmware_latency_max = read_sysfs_int(sys_pfx, postfix, "gpbridge_firmware_latency_max");
-	gpbridge_firmware_latency_avg = read_sysfs_float(sys_pfx, postfix, "gpbridge_firmware_latency_avg");
+	error = read_sysfs_int(sys_pfx, "error");
+	request_min = read_sysfs_int(sys_pfx, "requests_per_second_min");
+	request_max = read_sysfs_int(sys_pfx, "requests_per_second_max");
+	request_avg = read_sysfs_float(sys_pfx, "requests_per_second_avg");
+	latency_min = read_sysfs_int(sys_pfx, "latency_min");
+	latency_max = read_sysfs_int(sys_pfx, "latency_max");
+	latency_avg = read_sysfs_float(sys_pfx, "latency_avg");
+	throughput_min = read_sysfs_int(sys_pfx, "throughput_min");
+	throughput_max = read_sysfs_int(sys_pfx, "throughput_max");
+	throughput_avg = read_sysfs_float(sys_pfx, "throughput_avg");
+	apbridge_unipro_latency_min = read_sysfs_int(sys_pfx, "apbridge_unipro_latency_min");
+	apbridge_unipro_latency_max = read_sysfs_int(sys_pfx, "apbridge_unipro_latency_max");
+	apbridge_unipro_latency_avg = read_sysfs_float(sys_pfx, "apbridge_unipro_latency_avg");
+	gpbridge_firmware_latency_min = read_sysfs_int(sys_pfx, "gpbridge_firmware_latency_min");
+	gpbridge_firmware_latency_max = read_sysfs_int(sys_pfx, "gpbridge_firmware_latency_max");
+	gpbridge_firmware_latency_avg = read_sysfs_float(sys_pfx, "gpbridge_firmware_latency_avg");
 
 	/* derive jitter */
 	request_jitter = request_max - request_min;
@@ -342,8 +328,7 @@ void log_csv(const char *test_name, int size, int iteration_max,
 		if (lb_name[j].module_node || mask & (1 << i) || (!mask))
 			__log_csv(test_name, size, iteration_max, fd, &tm,
 				  lb_name[j].dbgfs_entry,
-				  ctrl_path,
-				  lb_name[j].postfix);
+				  ctrl_path);
 		if (!lb_name[j].module_node)
 			i++;
 	}
@@ -388,12 +373,10 @@ int construct_paths(const char *sys_pfx, const char *dbgfs_pfx)
 						 bus_id, interface_id,
 						 bundle_id);
 					ctrl_path = lb_name[j].sysfs_entry;
-					lb_name[j].postfix = con;
 					lb_name[j].module_node = 0;
 				} else {
 					memset(&lb_name[j].sysfs_entry, 0,
 					       MAX_SYSFS_PATH);
-					lb_name[j].postfix = dev;
 					lb_name[j].module_node = 1;
 				}
 				snprintf(lb_name[j].dbgfs_entry, MAX_SYSFS_PATH,
@@ -448,22 +431,22 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 	}
 
 	/* Terminate any currently running test */
-	write_sysfs_val(sys_pfx, NULL, "type", 0);
+	write_sysfs_val(sys_pfx, "type", 0);
 
 	/* Set parameter for no wait between messages */
-	write_sysfs_val(sys_pfx, NULL, "ms_wait", 0);
+	write_sysfs_val(sys_pfx, "ms_wait", 0);
 
 	/* Set operation size */
-	write_sysfs_val(sys_pfx, NULL, "size", size);
+	write_sysfs_val(sys_pfx, "size", size);
 
 	/* Set iterations */
-	write_sysfs_val(sys_pfx, NULL, "iteration_max", iteration_max);
+	write_sysfs_val(sys_pfx, "iteration_max", iteration_max);
 
 	/* Set mask of connections to include */
-	write_sysfs_val(sys_pfx, NULL, "mask", mask);
+	write_sysfs_val(sys_pfx, "mask", mask);
 
 	/* Initiate by setting loopback operation type */
-	write_sysfs_val(sys_pfx, NULL, "type", test_id);
+	write_sysfs_val(sys_pfx, "type", test_id);
 	sleep(1);
 
 	if (iteration_max == 0) {
@@ -507,7 +490,7 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 		}
 
 		/* Grab the data */
-		iteration_count = read_sysfs_int(sys_pfx, NULL, "iteration_count");
+		iteration_count = read_sysfs_int(sys_pfx, "iteration_count");
 
 		/* Validate data value is different */
 		if (previous == iteration_count) {
