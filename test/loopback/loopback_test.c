@@ -382,14 +382,24 @@ void log_csv(struct loopback_test *t)
 		close(fd);
 }
 
-int construct_paths(struct loopback_test *t)
+int is_loopback_device(const char *path, const char *node)
+{
+	char file[MAX_SYSFS_PATH];
+
+	snprintf(file, MAX_SYSFS_PATH, "%s%s/iteration_count", path, node);
+	if (access(file, F_OK) == 0)
+		return 1;
+	return 0;
+}
+
+int find_loopback_devices(struct loopback_test *t)
 {
 	struct dirent **namelist;
 	int i, n, ret;
 	unsigned int bus_id, interface_id, bundle_id;
 	struct loopback_device *d;
 
-	n = scandir(t->debugfs_prefix, &namelist, NULL, alphasort);
+	n = scandir(t->sysfs_prefix, &namelist, NULL, alphasort);
 	if (n < 0) {
 		perror("scandir");
 		ret = -ENODEV;
@@ -403,27 +413,32 @@ int construct_paths(struct loopback_test *t)
 	}
 
 	for (i = 0; i < n; i++) {
-		if (!strstr(namelist[i]->d_name, "raw_latency_"))
+		ret = sscanf(namelist[i]->d_name, "%u-%u.%u",
+				&bus_id, &interface_id, &bundle_id);
+		if (ret != 3)
 			continue;
-		ret = sscanf(namelist[i]->d_name,
-				"raw_latency_%u-%u.%u",
-				&bus_id, &interface_id,
-				&bundle_id);
-		if (ret == 3) {
-			d = &t->devices[t->device_count++];
 
-			snprintf(d->sysfs_entry, MAX_SYSFS_PATH,
-					"%s%u-%u.%u/", t->sysfs_prefix,
-					bus_id, interface_id, bundle_id);
+		if (!is_loopback_device(t->sysfs_prefix, namelist[i]->d_name))
+			continue;
 
-			snprintf(d->debugfs_entry, MAX_SYSFS_PATH,
-				"%s%s", t->debugfs_prefix,
-				namelist[i]->d_name);
-
-			if (t->debug)
-				printf("add %s %s\n", d->sysfs_entry,
-					d->debugfs_entry);
+		if (t->device_count == MAX_NUM_DEVICES) {
+			fprintf(stderr, "max number of devices reached!\n");
+			break;
 		}
+
+		d = &t->devices[t->device_count++];
+		snprintf(d->name, MAX_STR_LEN, "%u-%u.%u",
+				bus_id, interface_id, bundle_id);
+
+		snprintf(d->sysfs_entry, MAX_SYSFS_PATH, "%s%s/",
+			t->sysfs_prefix, d->name);
+
+		snprintf(d->debugfs_entry, MAX_SYSFS_PATH, "%sraw_latency_%s",
+			t->debugfs_prefix, d->name);
+
+		if (t->debug)
+			printf("add %s %s\n", d->sysfs_entry,
+				d->debugfs_entry);
 	}
 
 	ret = 0;
@@ -446,11 +461,7 @@ void loopback_run(struct loopback_test *t)
 	int fd, wd, ret;
 	struct timeval tv;
 
-	if (construct_paths(t)) {
-		fprintf(stderr, "unable to construct sysfs/dbgfs path names\n");
-		usage();
-		return;
-	}
+
 	sys_pfx = t->devices[0].sysfs_entry;
 
 	for (i = 0; i < sizeof(dict) / sizeof(struct dict); i++) {
@@ -544,9 +555,32 @@ void loopback_run(struct loopback_test *t)
 		log_csv(t);
 }
 
+static int sanity_check(struct loopback_test *t)
+{
+	int i;
+
+	if (t->device_count == 0) {
+		fprintf(stderr, "No loopback devices found\n");
+		return -1;
+	}
+
+	for (i = 0; i < MAX_NUM_DEVICES; i++) {
+		if (!device_enabled(t, i))
+			continue;
+
+		if (t->mask && !strcmp(t->devices[i].name, "")) {
+			fprintf(stderr, "Bad device mask %x\n", (1 << i));
+			return -1;
+		}
+
+	}
+
+
+	return 0;
+}
 int main(int argc, char *argv[])
 {
-	int o;
+	int o, ret;
 	char *sysfs_prefix = "/sys/bus/greybus/devices/";
 	char *debugfs_prefix = "/sys/kernel/debug/gb_loopback/";
 
@@ -599,6 +633,12 @@ int main(int argc, char *argv[])
 	if (!strcmp(t.debugfs_prefix, ""))
 		snprintf(t.debugfs_prefix, MAX_SYSFS_PATH, "%s", debugfs_prefix);
 
+	ret = find_loopback_devices(&t);
+	if (ret)
+		return ret;
+	ret = sanity_check(&t);
+	if (ret)
+		return ret;
 	loopback_run(&t);
 
 	return 0;
