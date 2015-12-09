@@ -89,8 +89,73 @@ struct loopback_test {
 	char sysfs_prefix[MAX_SYSFS_PATH];
 	char debugfs_prefix[MAX_SYSFS_PATH];
 	struct loopback_device devices[MAX_NUM_DEVICES];
+	struct loopback_results aggregate_results;
 };
 struct loopback_test t;
+
+/* Helper macros to calculate the aggregate results for all devices */
+static inline int device_enabled(struct loopback_test *t, int dev_idx);
+
+#define GET_MAX(field)							\
+static int get_##field##_aggregate(struct loopback_test *t)		\
+{									\
+	uint32_t max = 0;						\
+	int i;								\
+	for (i = 0; i < t->device_count; i++) {				\
+		if (!device_enabled(t, i))				\
+			continue;					\
+		if (t->devices[i].results.field > max)			\
+			max = t->devices[i].results.field;		\
+	}								\
+	return max;							\
+}									\
+
+#define GET_MIN(field)							\
+static int get_##field##_aggregate(struct loopback_test *t)		\
+{									\
+	uint32_t min = ~0;						\
+	int i;								\
+	for (i = 0; i < t->device_count; i++) {				\
+		if (!device_enabled(t, i))				\
+			continue;					\
+		if (t->devices[i].results.field < min)			\
+			min = t->devices[i].results.field;		\
+	}								\
+	return min;							\
+}									\
+
+#define GET_AVG(field)							\
+static int get_##field##_aggregate(struct loopback_test *t)		\
+{									\
+	uint32_t val = 0;						\
+	uint32_t count = 0;						\
+	int i;								\
+	for (i = 0; i < t->device_count; i++) {				\
+		if (!device_enabled(t, i))				\
+			continue;					\
+		count++;						\
+		val += t->devices[i].results.field;			\
+	}								\
+	if (count)							\
+		val /= count;						\
+	return val;							\
+}									\
+
+GET_MAX(throughput_max);
+GET_MAX(request_max);
+GET_MAX(latency_max);
+GET_MAX(apbridge_unipro_latency_max);
+GET_MAX(gpbridge_firmware_latency_max);
+GET_MIN(throughput_min);
+GET_MIN(request_min);
+GET_MIN(latency_min);
+GET_MIN(apbridge_unipro_latency_min);
+GET_MIN(gpbridge_firmware_latency_min);
+GET_AVG(throughput_avg);
+GET_AVG(request_avg);
+GET_AVG(latency_avg);
+GET_AVG(apbridge_unipro_latency_avg);
+GET_AVG(gpbridge_firmware_latency_avg);
 
 void abort()
 {
@@ -124,6 +189,7 @@ void usage(void)
 	"   -d     debug output\n"
 	"   -r     raw data output - when specified the full list of latency values are included in the output CSV\n"
 	"   -p     porcelain - when specified printout is in a user-friendly non-CSV format. This option suppresses writing to CSV file\n"
+	"   -a     aggregate - show aggregation of all enabled devies\n"
 	"Examples:\n"
 	"  Send 10000 transfers with a packet size of 128 bytes to all active connections\n"
 	"  looptest -t transfer -s 128 -i 10000 -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n"
@@ -260,6 +326,46 @@ static int get_results(struct loopback_test *t)
 			read_sysfs_int(d->sysfs_entry, "gpbridge_firmware_latency_max");
 		r->gpbridge_firmware_latency_avg =
 			read_sysfs_float(d->sysfs_entry, "gpbridge_firmware_latency_avg");
+
+		r->request_jitter = r->request_max - r->request_min;
+		r->latency_jitter = r->latency_max - r->latency_min;
+		r->throughput_jitter = r->throughput_max - r->throughput_min;
+		r->apbridge_unipro_latency_jitter =
+			r->apbridge_unipro_latency_max - r->apbridge_unipro_latency_min;
+		r->gpbridge_firmware_latency_jitter =
+			r->gpbridge_firmware_latency_max - r->gpbridge_firmware_latency_min;
+
+	}
+
+	/*calculate the aggregate results of all enabled devices */
+	if (t->aggregate_output) {
+		r = &t->aggregate_results;
+
+		r->request_min = get_request_min_aggregate(t);
+		r->request_max = get_request_max_aggregate(t);
+		r->request_avg = get_request_avg_aggregate(t);
+
+		r->latency_min = get_latency_min_aggregate(t);
+		r->latency_max = get_latency_max_aggregate(t);
+		r->latency_avg = get_latency_avg_aggregate(t);
+
+		r->throughput_min = get_throughput_min_aggregate(t);
+		r->throughput_max = get_throughput_max_aggregate(t);
+		r->throughput_avg = get_throughput_avg_aggregate(t);
+
+		r->apbridge_unipro_latency_min =
+			get_apbridge_unipro_latency_min_aggregate(t);
+		r->apbridge_unipro_latency_max =
+			get_apbridge_unipro_latency_max_aggregate(t);
+		r->apbridge_unipro_latency_avg =
+			get_apbridge_unipro_latency_avg_aggregate(t);
+
+		r->gpbridge_firmware_latency_min =
+			get_gpbridge_firmware_latency_min_aggregate(t);
+		r->gpbridge_firmware_latency_max =
+			get_gpbridge_firmware_latency_max_aggregate(t);
+		r->gpbridge_firmware_latency_avg =
+			get_gpbridge_firmware_latency_avg_aggregate(t);
 
 		r->request_jitter = r->request_max - r->request_min;
 		r->latency_jitter = r->latency_max - r->latency_min;
@@ -420,6 +526,16 @@ static int log_results(struct loopback_test *t)
 
 	}
 
+
+	if (t->aggregate_output) {
+		len = format_output(t, &t->aggregate_results, "aggregate",
+					data, sizeof(data), &tm);
+		if (!t->porcelain) {
+			ret = write(fd, data, len);
+			if (ret == -1)
+				fprintf(stderr, "unable to write %d bytes to csv.\n", len);
+		}
+	}
 
 	if (!t->porcelain)
 		close(fd);
@@ -719,7 +835,7 @@ int main(int argc, char *argv[])
 
 	memset(&t, 0, sizeof(t));
 
-	while ((o = getopt(argc, argv, "t:s:i:S:D:m:v::d::r::p::")) != -1) {
+	while ((o = getopt(argc, argv, "t:s:i:S:D:m:v::d::r::p::a::")) != -1) {
 		switch (o) {
 		case 't':
 			snprintf(t.test_name, MAX_STR_LEN, "%s", optarg);
@@ -750,6 +866,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'p':
 			t.porcelain = 1;
+			break;
+		case 'a':
+			t.aggregate_output = 1;
 			break;
 		default:
 			usage();
