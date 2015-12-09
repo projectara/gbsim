@@ -17,9 +17,11 @@
 #include <unistd.h>
 #include <dirent.h>
 
+#define MAX_NUM_DEVICES 50
 #define MAX_SYSFS_PATH	0x200
 #define CSV_MAX_LINE	0x1000
 #define SYSFS_MAX_INT	0x20
+#define MAX_STR_LEN	255
 
 struct dict {
 	char *name;
@@ -32,23 +34,63 @@ static struct dict dict[] = {
 	{"sink", 4}
 };
 
-struct loopback_names {
-	char sysfs_entry[MAX_SYSFS_PATH];
-	char dbgfs_entry[MAX_SYSFS_PATH];
-	int module_node;
+struct loopback_results {
+	float latency_avg;
+	uint32_t latency_max;
+	uint32_t latency_min;
+	uint32_t latency_jitter;
+
+	float request_avg;
+	uint32_t request_max;
+	uint32_t request_min;
+	uint32_t request_jitter;
+
+	float throughput_avg;
+	uint32_t throughput_max;
+	uint32_t throughput_min;
+	uint32_t throughput_jitter;
+
+	float apbridge_unipro_latency_avg;
+	uint32_t apbridge_unipro_latency_max;
+	uint32_t apbridge_unipro_latency_min;
+	uint32_t apbridge_unipro_latency_jitter;
+
+	float gpbridge_firmware_latency_avg;
+	uint32_t gpbridge_firmware_latency_max;
+	uint32_t gpbridge_firmware_latency_min;
+	uint32_t gpbridge_firmware_latency_jitter;
+
+	uint32_t error;
 };
-static struct loopback_names *lb_name = NULL;
-static unsigned int lb_entries = 0;
-static char *ctrl_path;
-static int verbose;
-static int debug;
-static int raw_data_dump;
-static int porcelain;
+
+struct loopback_device {
+	char name[MAX_SYSFS_PATH];
+	char sysfs_entry[MAX_SYSFS_PATH];
+	char debugfs_entry[MAX_SYSFS_PATH];
+	int inotify_wd;
+	struct loopback_results results;
+};
+
+struct loopback_test {
+	int verbose;
+	int debug;
+	int raw_data_dump;
+	int porcelain;
+	int mask;
+	int size;
+	int iteration_max;
+	int test_id;
+	int device_count;
+	char test_name[MAX_STR_LEN];
+	char sysfs_prefix[MAX_SYSFS_PATH];
+	char debugfs_prefix[MAX_SYSFS_PATH];
+	struct loopback_device devices[MAX_NUM_DEVICES];
+};
+struct loopback_test t;
+
 
 void abort()
 {
-	if (lb_name)
-		free(lb_name);
 	_exit(1);
 }
 
@@ -88,6 +130,14 @@ void usage(void)
 	"  looptest -t ping -s 0 128 -i -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n"
 	"  looptest -t sink -s 2030 -i 32768 -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n");
 	abort();
+}
+
+static inline int device_enabled(struct loopback_test *t, int dev_idx)
+{
+	if (!t->mask || (t->mask & (1 << dev_idx)))
+		return 1;
+
+	return 0;
 }
 
 int open_sysfs(const char *sys_pfx, const char *node, int flags)
@@ -174,9 +224,8 @@ void log_csv_error(int len, int err)
 		strerror(err));
 }
 
-void __log_csv(const char *test_name, int size, int iteration_max,
-	       int fd, struct tm *tm, const char *dbgfs_entry,
-	       const char *sys_pfx)
+void __log_csv(struct loopback_test *t, struct loopback_device *d,
+	       int fd, struct tm *tm, const char *dbgfs_entry)
 {
 	char buf[CSV_MAX_LINE];
 	int error, fd_dev, len;
@@ -200,22 +249,22 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 	}
 
 	/* gather data set */
-	error = read_sysfs_int(sys_pfx, "error");
-	request_min = read_sysfs_int(sys_pfx, "requests_per_second_min");
-	request_max = read_sysfs_int(sys_pfx, "requests_per_second_max");
-	request_avg = read_sysfs_float(sys_pfx, "requests_per_second_avg");
-	latency_min = read_sysfs_int(sys_pfx, "latency_min");
-	latency_max = read_sysfs_int(sys_pfx, "latency_max");
-	latency_avg = read_sysfs_float(sys_pfx, "latency_avg");
-	throughput_min = read_sysfs_int(sys_pfx, "throughput_min");
-	throughput_max = read_sysfs_int(sys_pfx, "throughput_max");
-	throughput_avg = read_sysfs_float(sys_pfx, "throughput_avg");
-	apbridge_unipro_latency_min = read_sysfs_int(sys_pfx, "apbridge_unipro_latency_min");
-	apbridge_unipro_latency_max = read_sysfs_int(sys_pfx, "apbridge_unipro_latency_max");
-	apbridge_unipro_latency_avg = read_sysfs_float(sys_pfx, "apbridge_unipro_latency_avg");
-	gpbridge_firmware_latency_min = read_sysfs_int(sys_pfx, "gpbridge_firmware_latency_min");
-	gpbridge_firmware_latency_max = read_sysfs_int(sys_pfx, "gpbridge_firmware_latency_max");
-	gpbridge_firmware_latency_avg = read_sysfs_float(sys_pfx, "gpbridge_firmware_latency_avg");
+	error = read_sysfs_int(d->sysfs_entry, "error");
+	request_min = read_sysfs_int(d->sysfs_entry, "requests_per_second_min");
+	request_max = read_sysfs_int(d->sysfs_entry, "requests_per_second_max");
+	request_avg = read_sysfs_float(d->sysfs_entry, "requests_per_second_avg");
+	latency_min = read_sysfs_int(d->sysfs_entry, "latency_min");
+	latency_max = read_sysfs_int(d->sysfs_entry, "latency_max");
+	latency_avg = read_sysfs_float(d->sysfs_entry, "latency_avg");
+	throughput_min = read_sysfs_int(d->sysfs_entry, "throughput_min");
+	throughput_max = read_sysfs_int(d->sysfs_entry, "throughput_max");
+	throughput_avg = read_sysfs_float(d->sysfs_entry, "throughput_avg");
+	apbridge_unipro_latency_min = read_sysfs_int(d->sysfs_entry, "apbridge_unipro_latency_min");
+	apbridge_unipro_latency_max = read_sysfs_int(d->sysfs_entry, "apbridge_unipro_latency_max");
+	apbridge_unipro_latency_avg = read_sysfs_float(d->sysfs_entry, "apbridge_unipro_latency_avg");
+	gpbridge_firmware_latency_min = read_sysfs_int(d->sysfs_entry, "gpbridge_firmware_latency_min");
+	gpbridge_firmware_latency_max = read_sysfs_int(d->sysfs_entry, "gpbridge_firmware_latency_max");
+	gpbridge_firmware_latency_avg = read_sysfs_float(d->sysfs_entry, "gpbridge_firmware_latency_avg");
 
 	/* derive jitter */
 	request_jitter = request_max - request_min;
@@ -229,10 +278,10 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 	len = snprintf(buf, sizeof(buf), "%u-%u-%u %u:%u:%u",
 		       tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 		       tm->tm_hour, tm->tm_min, tm->tm_sec);
-	if (porcelain) {
+	if (t->porcelain) {
 		len += snprintf(&buf[len], sizeof(buf) - len,
 			"\n test:\t\t\t%s\n path:\t\t\t%s\n size:\t\t\t%u\n iterations:\t\t%u\n errors:\t\t%u\n",
-			test_name, sys_pfx, size, iteration_max, error);
+			t->test_name, d->sysfs_entry, t->size, t->iteration_max, error);
 		len += snprintf(&buf[len], sizeof(buf) - len,
 			" requests per-sec:\tmin=%u, max=%u, average=%f, jitter=%u\n",
 			request_min, request_max, request_avg, request_jitter);
@@ -255,7 +304,7 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 	} else {
 		len += snprintf(&buf[len], sizeof(buf) - len,
 			",%s,%s,%u,%u,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u,%u,%u,%f,%u",
-			test_name, sys_pfx, size, iteration_max, error,
+			t->test_name, d->sysfs_entry, t->size, t->iteration_max, error,
 			request_min, request_max, request_avg, request_jitter,
 			latency_min, latency_max, latency_avg, latency_jitter,
 			throughput_min, throughput_max, throughput_avg,
@@ -271,12 +320,12 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 	printf("\n%s\n", buf);
 
 	/* Write raw latency times to CSV  */
-	for (i = 0; i < iteration_max && raw_data_dump && !porcelain; i++) {
+	for (i = 0; i < t->iteration_max && t->raw_data_dump && !t->porcelain; i++) {
 		memset(&rx_buf, 0x00, sizeof(rx_buf));
 		len = read(fd_dev, rx_buf, sizeof(rx_buf));
 		if (len < 0) {
 			fprintf(stderr, "error reading %s %s\n",
-				dbgfs_entry, strerror(errno));
+				t->debugfs_prefix, strerror(errno));
 			break;
 		}
 		lseek(fd_dev, SEEK_SET, 0);
@@ -286,7 +335,7 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 			break;
 		}
 	}
-	if (!porcelain) {
+	if (!t->porcelain) {
 		if (write(fd, "\n", 1) < 1)
 			log_csv_error(1, errno);
 	}
@@ -296,17 +345,16 @@ void __log_csv(const char *test_name, int size, int iteration_max,
 
 }
 
-void log_csv(const char *test_name, int size, int iteration_max,
-	     const char *sys_pfx, uint32_t mask)
+void log_csv(struct loopback_test *t)
 {
-	int fd, j, i;
+	int fd, i;
 	struct tm tm;
-	time_t t;
+	time_t cur_time;
 	mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 	char buf[MAX_SYSFS_PATH];
 
-	t = time(NULL);
-	tm = *localtime(&t);
+	cur_time = time(NULL);
+	tm = *localtime(&cur_time);
 
 	/*
 	 * file name will test_name_size_iteration_max.csv
@@ -314,82 +362,70 @@ void log_csv(const char *test_name, int size, int iteration_max,
 	 * append to the same CSV with datestamp - representing each test
 	 * dataset.
 	 */
-	snprintf(buf, sizeof(buf), "%s_%d_%d.csv", test_name, size,
-		 iteration_max);
+	snprintf(buf, sizeof(buf), "%s_%d_%d.csv", t->test_name, t->size,
+		 t->iteration_max);
 
-	if (!porcelain) {
+	if (!t->porcelain) {
 		fd = open(buf, O_WRONLY | O_CREAT | O_APPEND, mode);
 		if (fd < 0) {
 			fprintf(stderr, "unable to open %s for appendation\n", buf);
 			abort();
 		}
 	}
-	for (j = 0, i = 0; j < lb_entries; j++) {
-		if (lb_name[j].module_node || mask & (1 << i) || (!mask))
-			__log_csv(test_name, size, iteration_max, fd, &tm,
-				  lb_name[j].dbgfs_entry,
-				  ctrl_path);
-		if (!lb_name[j].module_node)
-			i++;
+	for (i = 0; i < t->device_count; i++) {
+		if (!device_enabled(t, i))
+			continue;
+
+		__log_csv(t, &t->devices[i], fd, &tm, t->devices[i].debugfs_entry);
 	}
-	if (!porcelain)
+	if (!t->porcelain)
 		close(fd);
 }
 
-int construct_paths(const char *sys_pfx, const char *dbgfs_pfx)
+int construct_paths(struct loopback_test *t)
 {
 	struct dirent **namelist;
-	int i, n, ret, j;
+	int i, n, ret;
 	unsigned int bus_id, interface_id, bundle_id;
+	struct loopback_device *d;
 
-	n = scandir(dbgfs_pfx, &namelist, NULL, alphasort);
+	n = scandir(t->debugfs_prefix, &namelist, NULL, alphasort);
 	if (n < 0) {
 		perror("scandir");
 		ret = -ENODEV;
 		goto baddir;
-	} else {
-		/* Don't include '.' and '..' */
-		lb_entries = n - 2;
-		if (!lb_entries) {
-			ret = -ENOMEM;
-			goto done;
-		}
-		lb_name = malloc(lb_entries * sizeof(*lb_name));
-		if (lb_name == NULL) {
-			ret = -ENOMEM;
-			goto done;
-		}
+	}
 
-		j = 0;
-		for (i = 0; i < n; i++) {
-			if (strstr(namelist[i]->d_name, "raw_latency_")) {
-				ret = sscanf(namelist[i]->d_name,
-					     "raw_latency_%u-%u.%u",
-					     &bus_id, &interface_id,
-					     &bundle_id);
-				if (ret == 3) {
-					snprintf(lb_name[j].sysfs_entry, MAX_SYSFS_PATH,
-						 "%s%u-%u.%u/", sys_pfx,
-						 bus_id, interface_id,
-						 bundle_id);
-					ctrl_path = lb_name[j].sysfs_entry;
-					lb_name[j].module_node = 0;
-				} else {
-					memset(&lb_name[j].sysfs_entry, 0,
-					       MAX_SYSFS_PATH);
-					lb_name[j].module_node = 1;
-				}
-				snprintf(lb_name[j].dbgfs_entry, MAX_SYSFS_PATH,
-					 "%s%s", dbgfs_pfx,
-					 namelist[i]->d_name);
-				if (debug)
-					printf("add %s %s\n",
-					       lb_name[j].dbgfs_entry,
-					       lb_name[j].sysfs_entry);
-				j++;
-			}
+	/* Don't include '.' and '..' */
+	if (n <= 2) {
+		ret = -ENOMEM;
+		goto done;
+	}
+
+	for (i = 0; i < n; i++) {
+		if (!strstr(namelist[i]->d_name, "raw_latency_"))
+			continue;
+		ret = sscanf(namelist[i]->d_name,
+				"raw_latency_%u-%u.%u",
+				&bus_id, &interface_id,
+				&bundle_id);
+		if (ret == 3) {
+			d = &t->devices[t->device_count++];
+
+			snprintf(d->sysfs_entry, MAX_SYSFS_PATH,
+					"%s%u-%u.%u/", t->sysfs_prefix,
+					bus_id, interface_id, bundle_id);
+
+			snprintf(d->debugfs_entry, MAX_SYSFS_PATH,
+				"%s%s", t->debugfs_prefix,
+				namelist[i]->d_name);
+
+			if (t->debug)
+				printf("add %s %s\n", d->sysfs_entry,
+					d->debugfs_entry);
 		}
 	}
+
 	ret = 0;
 done:
 	for (i = 0; i < n; i++)
@@ -399,33 +435,30 @@ baddir:
 	return ret;
 }
 
-void loopback_run(const char *test_name, int size, int iteration_max,
-		  const char *sys_prefix, const char *dbgfs_prefix,
-		  uint32_t mask)
+void loopback_run(struct loopback_test *t)
 {
 	char buf[MAX_SYSFS_PATH];
 	char inotify_buf[0x800];
-	char *sys_pfx = (char*)sys_prefix;
+	char *sys_pfx = (char *)t->sysfs_prefix;
 	fd_set fds;
-	int test_id = 0;
 	int i;
 	int previous, err, iteration_count;
 	int fd, wd, ret;
 	struct timeval tv;
 
-	if (construct_paths(sys_prefix, dbgfs_prefix)) {
+	if (construct_paths(t)) {
 		fprintf(stderr, "unable to construct sysfs/dbgfs path names\n");
 		usage();
 		return;
 	}
-	sys_pfx = ctrl_path;
+	sys_pfx = t->devices[0].sysfs_entry;
 
 	for (i = 0; i < sizeof(dict) / sizeof(struct dict); i++) {
-		if (strstr(dict[i].name, test_name))
-			test_id = dict[i].type;
+		if (strstr(dict[i].name, t->test_name))
+			t->test_id = dict[i].type;
 	}
-	if (!test_id) {
-		fprintf(stderr, "invalid test %s\n", test_name);
+	if (!t->test_id) {
+		fprintf(stderr, "invalid test %s\n", t->test_name);
 		usage();
 		return;
 	}
@@ -437,16 +470,16 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 	write_sysfs_val(sys_pfx, "us_wait", 0);
 
 	/* Set operation size */
-	write_sysfs_val(sys_pfx, "size", size);
+	write_sysfs_val(sys_pfx, "size", t->size);
 
 	/* Set iterations */
-	write_sysfs_val(sys_pfx, "iteration_max", iteration_max);
+	write_sysfs_val(sys_pfx, "iteration_max", t->iteration_max);
 
 	/* Set mask of connections to include */
-	write_sysfs_val(sys_pfx, "mask", mask);
+	write_sysfs_val(sys_pfx, "mask", t->mask);
 
 	/* Initiate by setting loopback operation type */
-	write_sysfs_val(sys_pfx, "type", test_id);
+	write_sysfs_val(sys_pfx, "type", t->test_id);
 	sleep(1);
 
 	/* Setup for inotify on the sysfs entry */
@@ -491,14 +524,14 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 		if (previous == iteration_count) {
 			err = 1;
 			break;
-		} else if (iteration_count == iteration_max) {
+		} else if (iteration_count == t->iteration_max) {
 			break;
 		}
 		previous = iteration_count;
-		if (verbose) {
+		if (t->verbose) {
 			printf("%02d%% complete %d of %d\r",
-				100 * iteration_count / iteration_max,
-				iteration_count, iteration_max);
+				100 * iteration_count / t->iteration_max,
+				iteration_count, t->iteration_max);
 			fflush(stdout);
 		}
 	}
@@ -508,50 +541,48 @@ void loopback_run(const char *test_name, int size, int iteration_max,
 	if (err)
 		printf("\nError executing test\n");
 	else
-		log_csv(test_name, size, iteration_max, sys_pfx, mask);
+		log_csv(t);
 }
 
 int main(int argc, char *argv[])
 {
 	int o;
-	char *test = NULL;
-	int size = 0;
-	uint32_t mask = 0;
-	int iteration_count = 0;
 	char *sysfs_prefix = "/sys/bus/greybus/devices/";
 	char *debugfs_prefix = "/sys/kernel/debug/gb_loopback/";
+
+	memset(&t, 0, sizeof(t));
 
 	while ((o = getopt(argc, argv, "t:s:i:S:D:m:v::d::r::p::")) != -1) {
 		switch (o) {
 		case 't':
-			test = optarg;
+			snprintf(t.test_name, MAX_STR_LEN, "%s", optarg);
 			break;
 		case 's':
-			size = atoi(optarg);
+			t.size = atoi(optarg);
 			break;
 		case 'i':
-			iteration_count = atoi(optarg);
+			t.iteration_max = atoi(optarg);
 			break;
 		case 'S':
-			sysfs_prefix = optarg;
+			snprintf(t.sysfs_prefix, MAX_SYSFS_PATH, "%s", optarg);
 			break;
 		case 'D':
-			debugfs_prefix = optarg;
+			snprintf(t.debugfs_prefix, MAX_SYSFS_PATH, "%s", optarg);
 			break;
 		case 'm':
-			mask = atol(optarg);
+			t.mask = atol(optarg);
 			break;
 		case 'v':
-			verbose = 1;
+			t.verbose = 1;
 			break;
 		case 'd':
-			debug = 1;
+			t.debug = 1;
 			break;
 		case 'r':
-			raw_data_dump = 1;
+			t.raw_data_dump = 1;
 			break;
 		case 'p':
-			porcelain = 1;
+			t.porcelain = 1;
 			break;
 		default:
 			usage();
@@ -559,12 +590,16 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (test == NULL || iteration_count == 0)
+	if (t.test_name == NULL || t.iteration_max == 0)
 		usage();
 
-	loopback_run(test, size, iteration_count, sysfs_prefix, debugfs_prefix,
-		     mask);
-	if (lb_name)
-		free(lb_name);
+	if (!strcmp(t.sysfs_prefix, ""))
+		snprintf(t.sysfs_prefix, MAX_SYSFS_PATH, "%s", sysfs_prefix);
+
+	if (!strcmp(t.debugfs_prefix, ""))
+		snprintf(t.debugfs_prefix, MAX_SYSFS_PATH, "%s", debugfs_prefix);
+
+	loopback_run(&t);
+
 	return 0;
 }
