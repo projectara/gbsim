@@ -89,6 +89,7 @@ struct loopback_test {
 	int list_devices;
 	int use_async;
 	int async_timeout;
+	int us_wait;
 	char test_name[MAX_STR_LEN];
 	char sysfs_prefix[MAX_SYSFS_PATH];
 	char debugfs_prefix[MAX_SYSFS_PATH];
@@ -197,6 +198,7 @@ void usage(void)
 	"   -l     list found loopback devices and exit.\n"
 	"   -x     Async - Enable async transfers.\n"
 	"   -o     Async Timeout - Timeout in uSec for async operations.\n"
+	"   -w     Wait in uSec between operations"
 	"Examples:\n"
 	"  Send 10000 transfers with a packet size of 128 bytes to all active connections\n"
 	"  looptest -t transfer -s 128 -i 10000 -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n"
@@ -758,7 +760,8 @@ static void prepare_devices(struct loopback_test *t)
 		if (!device_enabled(t, i))
 			continue;
 
-		write_sysfs_val(t->devices[i].sysfs_entry, "us_wait", 0);
+		write_sysfs_val(t->devices[i].sysfs_entry, "us_wait",
+				t->us_wait);
 
 		/* Set operation size */
 		write_sysfs_val(t->devices[i].sysfs_entry, "size", t->size);
@@ -865,7 +868,8 @@ int main(int argc, char *argv[])
 
 	memset(&t, 0, sizeof(t));
 
-	while ((o = getopt(argc, argv, "t:s:i:S:D:m:v::d::r::p::a::l::x::o:")) != -1) {
+	while ((o = getopt(argc, argv,
+			   "t:s:i:S:D:m:v::d::r::p::a::l::x::o:w:")) != -1) {
 		switch (o) {
 		case 't':
 			snprintf(t.test_name, MAX_STR_LEN, "%s", optarg);
@@ -908,6 +912,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'o':
 			t.async_timeout = atoi(optarg);
+			break;
+		case 'w':
+			t.us_wait = atoi(optarg);
 			break;
 		default:
 			usage();
