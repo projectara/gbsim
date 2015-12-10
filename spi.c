@@ -329,7 +329,7 @@ int spi_handler(struct gbsim_connection *connection, void *rbuf,
 	case GB_SPI_TYPE_DEVICE_CONFIG:
 		payload_size = sizeof(struct gb_spi_device_config_response);
 
-		cs = le16toh(op_req->spi_dc_req.chip_select);
+		cs = op_req->spi_dc_req.chip_select;
 		spi_dev = &master->devices[cs];
 		conf = spi_dev->conf;
 
