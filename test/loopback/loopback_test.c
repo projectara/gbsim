@@ -581,7 +581,7 @@ int find_loopback_devices(struct loopback_test *t)
 {
 	struct dirent **namelist;
 	int i, n, ret;
-	unsigned int bus_id, interface_id, bundle_id;
+	unsigned int dev_id;
 	struct loopback_device *d;
 
 	n = scandir(t->sysfs_prefix, &namelist, NULL, alphasort);
@@ -598,9 +598,8 @@ int find_loopback_devices(struct loopback_test *t)
 	}
 
 	for (i = 0; i < n; i++) {
-		ret = sscanf(namelist[i]->d_name, "%u-%u.%u",
-				&bus_id, &interface_id, &bundle_id);
-		if (ret != 3)
+		ret = sscanf(namelist[i]->d_name, "gb_loopback%u", &dev_id);
+		if (ret != 1)
 			continue;
 
 		if (!is_loopback_device(t->sysfs_prefix, namelist[i]->d_name))
@@ -612,8 +611,7 @@ int find_loopback_devices(struct loopback_test *t)
 		}
 
 		d = &t->devices[t->device_count++];
-		snprintf(d->name, MAX_STR_LEN, "%u-%u.%u",
-				bus_id, interface_id, bundle_id);
+		snprintf(d->name, MAX_STR_LEN, "gb_loopback%u", dev_id);
 
 		snprintf(d->sysfs_entry, MAX_SYSFS_PATH, "%s%s/",
 			t->sysfs_prefix, d->name);
@@ -863,7 +861,7 @@ static int sanity_check(struct loopback_test *t)
 int main(int argc, char *argv[])
 {
 	int o, ret;
-	char *sysfs_prefix = "/sys/bus/greybus/devices/";
+	char *sysfs_prefix = "/sys/class/gb_loopback/";
 	char *debugfs_prefix = "/sys/kernel/debug/gb_loopback/";
 
 	memset(&t, 0, sizeof(t));
