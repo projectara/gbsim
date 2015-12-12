@@ -928,12 +928,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (t.test_name == NULL || t.iteration_max == 0)
-		usage();
-
-	if (t.async_timeout == 0)
-		t.async_timeout = DEFAULT_ASYNC_TIMEOUT;
-
 	if (!strcmp(t.sysfs_prefix, ""))
 		snprintf(t.sysfs_prefix, MAX_SYSFS_PATH, "%s", sysfs_prefix);
 
@@ -951,6 +945,12 @@ int main(int argc, char *argv[])
 		show_loopback_devices(&t);
 		return 0;
 	}
+
+	if (t.test_name[0] == '\0' || t.iteration_max == 0)
+		usage();
+
+	if (t.async_timeout == 0)
+		t.async_timeout = DEFAULT_ASYNC_TIMEOUT;
 
 	loopback_run(&t);
 
