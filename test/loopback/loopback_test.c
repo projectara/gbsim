@@ -89,6 +89,7 @@ struct loopback_test {
 	int list_devices;
 	int use_async;
 	int async_timeout;
+	int async_outstanding_operations;
 	int us_wait;
 	char test_name[MAX_STR_LEN];
 	char sysfs_prefix[MAX_SYSFS_PATH];
@@ -194,19 +195,20 @@ void usage(void)
 	"   -d     debug output\n"
 	"   -r     raw data output - when specified the full list of latency values are included in the output CSV\n"
 	"   -p     porcelain - when specified printout is in a user-friendly non-CSV format. This option suppresses writing to CSV file\n"
-	"   -a     aggregate - show aggregation of all enabled devies\n"
-	"   -l     list found loopback devices and exit.\n"
-	"   -x     Async - Enable async transfers.\n"
-	"   -o     Async Timeout - Timeout in uSec for async operations.\n"
-	"   -w     Wait in uSec between operations"
+	"   -a     aggregate - show aggregation of all enabled devices\n"
+	"   -l     list found loopback devices and exit\n"
+	"   -x     Async - Enable async transfers\n"
+	"   -o     Async Timeout - Timeout in uSec for async operations\n"
+	"   -c     Max number of outstanding operations for async operations\n"
+	"   -w     Wait in uSec between operations\n"
 	"Examples:\n"
 	"  Send 10000 transfers with a packet size of 128 bytes to all active connections\n"
-	"  looptest -t transfer -s 128 -i 10000 -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n"
-	"  looptest -t transfer -s 128 -i 10000 -m 0\n"
+	"  loopback_test -t transfer -s 128 -i 10000 -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n"
+	"  loopback_test -t transfer -s 128 -i 10000 -m 0\n"
 	"  Send 10000 transfers with a packet size of 128 bytes to connection 1 and 4\n"
-	"  looptest -t transfer -s 128 -i 10000 -m 9\n"
-	"  looptest -t ping -s 0 128 -i -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n"
-	"  looptest -t sink -s 2030 -i 32768 -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n");
+	"  loopback_test -t transfer -s 128 -i 10000 -m 9\n"
+	"  loopback_test -t ping -s 0 128 -i -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n"
+	"  loopback_test -t sink -s 2030 -i 32768 -S /sys/bus/greybus/devices/ -D /sys/kernel/debug/gb_loopback/\n");
 	abort();
 }
 
@@ -773,6 +775,9 @@ static void prepare_devices(struct loopback_test *t)
 				"async", 1);
 			write_sysfs_val(t->devices[i].sysfs_entry,
 				"timeout", t->async_timeout);
+			write_sysfs_val(t->devices[i].sysfs_entry,
+				"outstanding_operations_max",
+				t->async_outstanding_operations);
 		} else
 			write_sysfs_val(t->devices[i].sysfs_entry,
 				"async", 0);
@@ -867,7 +872,7 @@ int main(int argc, char *argv[])
 	memset(&t, 0, sizeof(t));
 
 	while ((o = getopt(argc, argv,
-			   "t:s:i:S:D:m:v::d::r::p::a::l::x::o:w:")) != -1) {
+			   "t:s:i:S:D:m:v::d::r::p::a::l::x::o:c:w:")) != -1) {
 		switch (o) {
 		case 't':
 			snprintf(t.test_name, MAX_STR_LEN, "%s", optarg);
@@ -910,6 +915,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'o':
 			t.async_timeout = atoi(optarg);
+			break;
+		case 'c':
+			t.async_outstanding_operations = atoi(optarg);
 			break;
 		case 'w':
 			t.us_wait = atoi(optarg);
