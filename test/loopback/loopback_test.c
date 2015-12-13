@@ -738,10 +738,10 @@ static int wait_for_complete(struct loopback_test *t)
 				fprintf(stderr, "Too many timeouts\n");
 				return -1;
 			}
+		} else {
+			/* read to clear the event */
+			ret = read(t->inotify_fd, buf, sizeof(buf));
 		}
-
-		/* read to clear the event */
-		ret = read(t->inotify_fd, buf, sizeof(buf));
 	}
 
 	return 0;
