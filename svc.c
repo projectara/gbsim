@@ -252,8 +252,8 @@ int svc_request_send(uint8_t type, uint8_t intf_id)
 		hotplug->intf_id = intf_id;
 
 		//FIXME: Use some real version numbers here ?
-		hotplug->data.unipro_mfg_id = htole32(1);
-		hotplug->data.unipro_prod_id = htole32(1);
+		hotplug->data.ddbl1_mfr_id = htole32(1);
+		hotplug->data.ddbl1_prod_id = htole32(1);
 		hotplug->data.ara_vend_id = htole32(1);
 		hotplug->data.ara_prod_id = htole32(1);
 		break;
