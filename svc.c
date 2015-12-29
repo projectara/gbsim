@@ -256,6 +256,7 @@ int svc_request_send(uint8_t type, uint8_t intf_id)
 		hotplug->data.ddbl1_prod_id = htole32(1);
 		hotplug->data.ara_vend_id = htole32(1);
 		hotplug->data.ara_prod_id = htole32(1);
+		hotplug->data.serial_number = htole64(0x0000000000001234);
 		break;
 	case GB_SVC_TYPE_INTF_HOT_UNPLUG:
 		payload_size = sizeof(*hotunplug);
