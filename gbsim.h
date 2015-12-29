@@ -79,6 +79,7 @@ struct op_msg {
 		struct gb_protocol_version_response	pv_rsp;
 		struct gb_control_get_manifest_size_response control_msize_rsp;
 		struct gb_control_get_manifest_response control_manifest_rsp;
+		struct gb_control_interface_version_response control_version_rsp;
 		struct gb_protocol_version_response	svc_version_request;
 		struct gb_svc_hello_request		hello_request;
 		struct gb_svc_intf_device_id_request	svc_intf_device_id_request;
