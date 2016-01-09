@@ -20,6 +20,12 @@
 
 #include "gbsim.h"
 
+
+/* Version of the Greybus control protocol implemented */
+#define GBSIM_CONTROL_VERSION_MAJOR	0
+#define GBSIM_CONTROL_VERSION_MINOR	1
+
+
 int control_handler(struct gbsim_connection *connection, void *rbuf,
 		    size_t rsize, void *tbuf, size_t tsize)
 {
@@ -33,8 +39,8 @@ int control_handler(struct gbsim_connection *connection, void *rbuf,
 	switch (oph->type) {
 	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
 		payload_size = sizeof(op_rsp->pv_rsp);
-		op_rsp->pv_rsp.major = GB_CONTROL_VERSION_MAJOR;
-		op_rsp->pv_rsp.minor = GB_CONTROL_VERSION_MINOR;
+		op_rsp->pv_rsp.major = GBSIM_CONTROL_VERSION_MAJOR;
+		op_rsp->pv_rsp.minor = GBSIM_CONTROL_VERSION_MINOR;
 		break;
 	case GB_CONTROL_TYPE_GET_MANIFEST_SIZE:
 		payload_size = sizeof(op_rsp->control_msize_rsp);
