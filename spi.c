@@ -159,13 +159,16 @@ static int spidev_xfer_req_recv(struct gb_spi_dev *dev,
 {
 	int i;
 	int fd;
-
+	int ret;
 
 	/* if it is only a write transfer write it to a file in tmp */
 	if (xfer->rdwr & ~GB_SPI_XFER_READ) {
 		fd = open("/tmp/spi_file", O_WRONLY | O_CREAT | O_APPEND, 0);
 		lseek(fd, SEEK_END, 0);
-		write(fd, xfer_data, xfer->len);
+		ret = write(fd, xfer_data, xfer->len);
+		if (ret < xfer->len)
+			gbsim_debug("%s: Failed to write %u bytes: %d\n",
+				    __func__, xfer->len, ret);
 		close(fd);
 		return 0;
 	}
