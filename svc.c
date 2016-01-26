@@ -104,6 +104,9 @@ static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 			    svc_route_destroy->intf1_id,
 			    svc_route_destroy->intf2_id);
 		break;
+	case GB_SVC_TYPE_PING:
+		gbsim_debug("SVC ping request response\n");
+		break;
 	case GB_SVC_TYPE_INTF_HOTPLUG:
 	case GB_SVC_TYPE_INTF_HOT_UNPLUG:
 	case GB_SVC_TYPE_INTF_RESET:
@@ -214,6 +217,8 @@ char *svc_get_operation(uint8_t type)
 		return "GB_SVC_TYPE_ROUTE_CREATE";
 	case GB_SVC_TYPE_ROUTE_DESTROY:
 		return "GB_SVC_TYPE_ROUTE_DESTROY";
+	case GB_SVC_TYPE_PING:
+		return "GB_SVC_TYPE_PING";
 	default:
 		return "(Unknown operation)";
 	}
