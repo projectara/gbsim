@@ -40,6 +40,7 @@ struct gb_spi_dev_config {
 	uint16_t	mode;
 	uint32_t	bits_per_word;
 	uint32_t	max_speed_hz;
+	uint8_t		device_type;
 	uint8_t		name[32];
 };
 
@@ -74,14 +75,16 @@ static struct gb_spi_dev_config spidev_config = {
 	.mode		= GB_SPI_MODE_MODE_3,
 	.bits_per_word	= 8,
 	.max_speed_hz	= 10000000,
-	.name		= "spidev",
+	.name		= "dev",
+	.device_type	= GB_SPI_SPI_DEV,
 };
 
 static struct gb_spi_dev_config spinor_config = {
 	.mode		= GB_SPI_MODE_MODE_3,
 	.bits_per_word	= 32,
 	.max_speed_hz	= 10000000,
-	.name		= "w25q256",
+	.name		= "nor",
+	.device_type	= GB_SPI_SPI_NOR,
 };
 
 /* Flash opcodes. */
@@ -339,6 +342,7 @@ int spi_handler(struct gbsim_connection *connection, void *rbuf,
 		op_rsp->spi_dc_rsp.mode = htole16(conf->mode);
 		op_rsp->spi_dc_rsp.bits_per_word = conf->bits_per_word;
 		op_rsp->spi_dc_rsp.max_speed_hz = htole32(conf->max_speed_hz);
+		op_rsp->spi_dc_rsp.device_type = conf->device_type;
 	        memcpy(op_rsp->spi_dc_rsp.name, conf->name, sizeof(conf->name));
 		break;
 	case GB_SPI_TYPE_TRANSFER:
