@@ -218,17 +218,12 @@ int power_supply_handler(struct gbsim_connection *connection, void *rbuf,
 	oph = (struct gb_operation_msg_hdr *)&op_req->header;
 
 	switch (oph->type) {
-	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
-		payload_size = sizeof(struct gb_protocol_version_response);
-		op_rsp->pv_rsp.major = GB_POWER_SUPPLY_VERSION_MAJOR;
-		op_rsp->pv_rsp.minor = GB_POWER_SUPPLY_VERSION_MINOR;
-		/* init psy only after we get a version request */
-		for (i = 0; i < PSY_COUNT; i++)
-			gpsy[i] = power_supply_init(i);
-		break;
 	case GB_POWER_SUPPLY_TYPE_GET_SUPPLIES:
 		payload_size = sizeof(struct gb_power_supply_get_supplies_response);
 		op_rsp->psy_get_supplies_rsp.supplies_count = PSY_COUNT;
+
+		for (i = 0; i < PSY_COUNT; i++)
+			gpsy[i] = power_supply_init(i);
 		break;
 	case GB_POWER_SUPPLY_TYPE_GET_DESCRIPTION:
 		payload_size = sizeof(struct gb_power_supply_get_description_response);
@@ -296,8 +291,6 @@ char *power_supply_get_operation(uint8_t type)
 	switch (type) {
 	case GB_REQUEST_TYPE_INVALID:
 		return "GB_POWER_SUPPLY_TYPE_INVALID";
-	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
-		return "GB_POWER_SUPPLY_TYPE_PROTOCOL_VERSION";
 	case GB_POWER_SUPPLY_TYPE_GET_SUPPLIES:
 		return "GB_POWER_SUPPLY_TYPE_GET_SUPPLIES";
 	case GB_POWER_SUPPLY_TYPE_GET_DESCRIPTION:
