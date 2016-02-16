@@ -286,18 +286,12 @@ int lights_handler(struct gbsim_connection *connection, void *rbuf,
 	oph = (struct gb_operation_msg_hdr *)&op_req->header;
 
 	switch (oph->type) {
-	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
-		payload_size = sizeof(struct gb_protocol_version_response);
-		op_rsp->pv_rsp.major = GB_LIGHTS_VERSION_MAJOR;
-		op_rsp->pv_rsp.minor = GB_LIGHTS_VERSION_MINOR;
-		/* init lights only after we get a version request */
-		for (i = 0; i < LIGHTS_COUNT; i++)
-			gbl[i] = light_init(i);
-		break;
 	case GB_LIGHTS_TYPE_GET_LIGHTS:
 		payload_size = sizeof(struct gb_lights_get_lights_response);
-
 		op_rsp->lights_gl_rsp.lights_count = LIGHTS_COUNT;
+
+		for (i = 0; i < LIGHTS_COUNT; i++)
+			gbl[i] = light_init(i);
 		break;
 	case GB_LIGHTS_TYPE_GET_LIGHT_CONFIG:
 		payload_size = sizeof(struct gb_lights_get_light_config_response);
@@ -406,8 +400,6 @@ char *lights_get_operation(uint8_t type)
 	switch (type) {
 	case GB_REQUEST_TYPE_INVALID:
 		return "GB_LIGHTS_TYPE_INVALID";
-	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
-		return "GB_LIGHTS_TYPE_PROTOCOL_VERSION";
 	case GB_LIGHTS_TYPE_GET_LIGHTS:
 		return "GB_LIGHTS_TYPE_GET_LIGHTS";
 	case GB_LIGHTS_TYPE_GET_LIGHT_CONFIG:
