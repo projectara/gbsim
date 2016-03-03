@@ -54,12 +54,6 @@ int i2c_handler(struct gbsim_connection *connection, void *rbuf,
 		payload_size = sizeof(struct gb_i2c_functionality_response);
 		op_rsp->i2c_fcn_rsp.functionality = htole32(I2C_FUNC_I2C);
 		break;
-	case GB_I2C_TYPE_TIMEOUT:
-		payload_size = 0;
-		break;
-	case GB_I2C_TYPE_RETRIES:
-		payload_size = 0;
-		break;
 	case GB_I2C_TYPE_TRANSFER:
 		op_count = le16toh(op_req->i2c_xfer_req.op_count);
 		write_data = (__u8 *)&op_req->i2c_xfer_req.ops[op_count];
@@ -131,10 +125,6 @@ char *i2c_get_operation(uint8_t type)
 		return "GB_I2C_TYPE_PROTOCOL_VERSION";
 	case GB_I2C_TYPE_FUNCTIONALITY:
 		return "GB_I2C_TYPE_FUNCTIONALITY";
-	case GB_I2C_TYPE_TIMEOUT:
-		return "GB_I2C_TYPE_TIMEOUT";
-	case GB_I2C_TYPE_RETRIES:
-		return "GB_I2C_TYPE_RETRIES";
 	case GB_I2C_TYPE_TRANSFER:
 		return "GB_I2C_TYPE_TRANSFER";
 	default:
