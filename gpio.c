@@ -25,7 +25,8 @@ struct gb_gpio {
 	uint8_t activated;
 	uint8_t direction;
 	uint8_t value;
-	uint8_t edge;
+	uint8_t irq_type;
+	uint8_t irq_unmasked;
 };
 
 static struct gb_gpio gb_gpios[6];
@@ -123,14 +124,20 @@ int gpio_handler(struct gbsim_connection *connection, void *rbuf,
 		break;
 	case GB_GPIO_TYPE_IRQ_TYPE:
 		payload_size = 0;
-		gbsim_debug("GPIO protocol IRQ type %d request\n  ",
-			    op_req->gpio_irq_type_req.type);
+		which = op_req->gpio_irq_type_req.which;
+		gbsim_debug("GPIO %d set IRQ type %d request\n  ",
+			    which, op_req->gpio_irq_type_req.type);
+		gb_gpios[which].irq_type = op_req->gpio_irq_type_req.type;
 		break;
 	case GB_GPIO_TYPE_IRQ_MASK:
 		payload_size = 0;
+		which = op_req->gpio_irq_mask_req.which;
+		gb_gpios[which].irq_unmasked = 0;
 		break;
 	case GB_GPIO_TYPE_IRQ_UNMASK:
 		payload_size = 0;
+		which = op_req->gpio_irq_unmask_req.which;
+		gb_gpios[which].irq_unmasked = 1;
 		break;
 	default:
 		return -EINVAL;
