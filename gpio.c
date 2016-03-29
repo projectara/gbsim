@@ -2,8 +2,8 @@
 /*
  * Greybus Simulator
  *
- * Copyright 2014 Google Inc.
- * Copyright 2014 Linaro Ltd.
+ * Copyright 2014-2016 Google Inc.
+ * Copyright 2014-2016 Linaro Ltd.
  *
  * Provided under the three clause BSD license found in the LICENSE file.
  */
@@ -21,7 +21,14 @@
 
 #include "gbsim.h"
 
-static int gpio_dir[6];
+struct gb_gpio {
+	uint8_t activated;
+	uint8_t direction;
+	uint8_t value;
+	uint8_t edge;
+};
+
+static struct gb_gpio gb_gpios[6];
 static gpio *gpios[6];
 
 int gpio_handler(struct gbsim_connection *connection, void *rbuf,
@@ -34,6 +41,7 @@ int gpio_handler(struct gbsim_connection *connection, void *rbuf,
 	ssize_t nbytes;
 	uint16_t message_size;
 	uint16_t hd_cport_id = connection->hd_cport_id;
+	uint8_t which;
 
 	op_rsp = (struct op_msg *)tbuf;
 	oph = (struct gb_operation_msg_hdr *)&op_req->header;
@@ -50,56 +58,63 @@ int gpio_handler(struct gbsim_connection *connection, void *rbuf,
 		break;
 	case GB_GPIO_TYPE_ACTIVATE:
 		payload_size = 0;
-		gbsim_debug("GPIO %d activate request\n  ",
-			    op_req->gpio_act_req.which);
+		which = op_req->gpio_act_req.which;
+		gbsim_debug("GPIO %d activate request\n", which);
+		gb_gpios[which].activated = 1;
 		break;
 	case GB_GPIO_TYPE_DEACTIVATE:
 		payload_size = 0;
-		gbsim_debug("GPIO %d deactivate request\n  ",
-			    op_req->gpio_deact_req.which);
+		which = op_req->gpio_deact_req.which;
+		gbsim_debug("GPIO %d deactivate request\n", which);
+		gb_gpios[which].activated = 0;
 		break;
 	case GB_GPIO_TYPE_GET_DIRECTION:
 		payload_size = sizeof(struct gb_gpio_get_direction_response);
+		which = op_req->gpio_get_dir_req.which;
 		if (bbb_backend)
-			op_rsp->gpio_get_dir_rsp.direction = libsoc_gpio_get_direction(gpios[op_req->gpio_dir_output_req.which]);
+			op_rsp->gpio_get_dir_rsp.direction = libsoc_gpio_get_direction(gpios[which]);
 		else
-			op_rsp->gpio_get_dir_rsp.direction = gpio_dir[op_req->gpio_get_dir_req.which];
-		gbsim_debug("GPIO %d get direction (%d) response\n  ",
-			    op_req->gpio_get_dir_req.which, op_rsp->gpio_get_dir_rsp.direction);
+			op_rsp->gpio_get_dir_rsp.direction = gb_gpios[which].direction;
+		gbsim_debug("GPIO %d get direction (%d) response\n",
+			    which, op_rsp->gpio_get_dir_rsp.direction);
 		break;
 	case GB_GPIO_TYPE_DIRECTION_IN:
 		payload_size = 0;
-		gbsim_debug("GPIO %d direction input request\n  ",
-			    op_req->gpio_dir_input_req.which);
+		which = op_req->gpio_dir_input_req.which;
+		gbsim_debug("GPIO %d direction input request\n", which);
 		if (bbb_backend)
-			libsoc_gpio_set_direction(gpios[op_req->gpio_dir_output_req.which], INPUT);
+			libsoc_gpio_set_direction(gpios[which], INPUT);
 		else
-			gpio_dir[op_req->gpio_dir_output_req.which] = 0;
+			gb_gpios[which].direction = 1;
 		break;
 	case GB_GPIO_TYPE_DIRECTION_OUT:
 		payload_size = 0;
-		gbsim_debug("GPIO %d direction output request\n  ",
-			    op_req->gpio_dir_output_req.which);
+		which = op_req->gpio_dir_output_req.which;
+		gbsim_debug("GPIO %d direction output request\n", which);
 		if (bbb_backend)
-			libsoc_gpio_set_direction(gpios[op_req->gpio_dir_output_req.which], OUTPUT);
+			libsoc_gpio_set_direction(gpios[which], OUTPUT);
 		else
-			gpio_dir[op_req->gpio_dir_output_req.which] = 1;
+			gb_gpios[which].direction = 0;
 		break;
 	case GB_GPIO_TYPE_GET_VALUE:
 		payload_size = sizeof(struct gb_gpio_get_value_response);
+		which = op_req->gpio_get_val_req.which;
 		if (bbb_backend)
-			op_rsp->gpio_get_val_rsp.value = libsoc_gpio_get_level(gpios[op_req->gpio_dir_output_req.which]);
+			op_rsp->gpio_get_val_rsp.value = libsoc_gpio_get_level(gpios[which]);
 		else
-			op_rsp->gpio_get_val_rsp.value = 1;
+			op_rsp->gpio_get_val_rsp.value = gb_gpios[which].value;
 		gbsim_debug("GPIO %d get value (%d) response\n  ",
-			    op_req->gpio_get_val_req.which, op_rsp->gpio_get_val_rsp.value);
+			    which, op_rsp->gpio_get_val_rsp.value);
 		break;
 	case GB_GPIO_TYPE_SET_VALUE:
 		payload_size = 0;
+		which = op_req->gpio_set_val_req.which;
 		gbsim_debug("GPIO %d set value (%d) request\n  ",
-			    op_req->gpio_set_val_req.which, op_req->gpio_set_val_req.value);
+			    which, op_req->gpio_set_val_req.value);
 		if (bbb_backend)
-			libsoc_gpio_set_level(gpios[op_req->gpio_set_val_req.which], op_req->gpio_set_val_req.value);
+			libsoc_gpio_set_level(gpios[which], op_req->gpio_set_val_req.value);
+		else
+			gb_gpios[which].value = op_req->gpio_set_val_req.value;
 		break;
 	case GB_GPIO_TYPE_SET_DEBOUNCE:
 		payload_size = 0;
