@@ -134,11 +134,11 @@ struct op_msg {
 		struct gb_loopback_transfer_request	loopback_xfer_req;
 		struct gb_loopback_transfer_response	loopback_xfer_resp;
 		struct gb_protocol_version_response	fw_version_request;
-		struct gb_firmware_size_request		fw_size_req;
-		struct gb_firmware_size_response	fw_size_resp;
-		struct gb_firmware_get_firmware_request	fw_get_firmware_req;
-		struct gb_firmware_get_firmware_response fw_get_firmware_resp;
-		struct gb_firmware_ready_to_boot_request fw_rbt_req;
+		struct gb_bootrom_firmware_size_request		fw_size_req;
+		struct gb_bootrom_firmware_size_response	fw_size_resp;
+		struct gb_bootrom_get_firmware_request	fw_get_firmware_req;
+		struct gb_bootrom_get_firmware_response fw_get_firmware_resp;
+		struct gb_bootrom_ready_to_boot_request fw_rbt_req;
 		struct gb_lights_blink_request		lights_blink_req;
 		struct gb_lights_get_lights_response	lights_gl_rsp;
 		struct gb_lights_event_request		lights_gl_event_req;

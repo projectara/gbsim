@@ -149,8 +149,8 @@ static void get_protocol_operation(uint16_t cport_id, char **protocol,
 		*protocol = "POWER_SUPPLY";
 		*operation = power_supply_get_operation(type);
 		break;
-	case GREYBUS_PROTOCOL_FIRMWARE:
-		*protocol = "FIRMWARE";
+	case GREYBUS_PROTOCOL_BOOTROM:
+		*protocol = "BOOTROM";
 		*operation = firmware_get_operation(type);
 		break;
 	default:
@@ -242,7 +242,7 @@ static int connection_recv_handler(struct gbsim_connection *connection,
 		return power_supply_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_LOOPBACK:
 		return loopback_handler(connection, rbuf, rsize, tbuf, tsize);
-	case GREYBUS_PROTOCOL_FIRMWARE:
+	case GREYBUS_PROTOCOL_BOOTROM:
 		return firmware_handler(connection, rbuf, rsize, tbuf, tsize);
 	default:
 		gbsim_error("handler not found for cport %u\n",

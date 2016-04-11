@@ -33,12 +33,12 @@ char *firmware_get_operation(uint8_t type)
 		return "GB_FIRMWARE_TYPE_INVALID";
 	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
 		return "GB_FIRMWARE_TYPE_PROTOCOL_VERSION";
-	case GB_FIRMWARE_TYPE_FIRMWARE_SIZE:
-		return "GB_FIRMWARE_TYPE_FIRMWARE_SIZE";
-	case GB_FIRMWARE_TYPE_GET_FIRMWARE:
-		return "GB_FIRMWARE_TYPE_GET_FIRMWARE";
-	case GB_FIRMWARE_TYPE_READY_TO_BOOT:
-		return "GB_FIRMWARE_TYPE_READY_TO_BOOT";
+	case GB_BOOTROM_TYPE_FIRMWARE_SIZE:
+		return "GB_BOOTROM_TYPE_FIRMWARE_SIZE";
+	case GB_BOOTROM_TYPE_GET_FIRMWARE:
+		return "GB_BOOTROM_TYPE_GET_FIRMWARE";
+	case GB_BOOTROM_TYPE_READY_TO_BOOT:
+		return "GB_BOOTROM_TYPE_READY_TO_BOOT";
 	default:
 		return "(Unknown operation)";
 	}
@@ -49,35 +49,35 @@ int firmware_request_send(uint8_t type, uint16_t hd_cport_id)
 {
 	struct op_msg msg = { };
 	struct gb_operation_msg_hdr *oph = &msg.header;
-	struct gb_firmware_size_request *size_request;
-	struct gb_firmware_get_firmware_request *get_fw_request;
-	struct gb_firmware_ready_to_boot_request *rbt_request;
+	struct gb_bootrom_firmware_size_request *size_request;
+	struct gb_bootrom_get_firmware_request *get_fw_request;
+	struct gb_bootrom_ready_to_boot_request *rbt_request;
 	uint16_t message_size = sizeof(*oph);
 	size_t payload_size;
 
 	switch (type) {
-	case GB_FIRMWARE_TYPE_FIRMWARE_SIZE:
+	case GB_BOOTROM_TYPE_FIRMWARE_SIZE:
 		payload_size = sizeof(*size_request);
 		size_request = &msg.fw_size_req;
-		size_request->stage = GB_FIRMWARE_BOOT_STAGE_ONE;
+		size_request->stage = GB_BOOTROM_BOOT_STAGE_ONE;
 		break;
-	case GB_FIRMWARE_TYPE_GET_FIRMWARE:
+	case GB_BOOTROM_TYPE_GET_FIRMWARE:
 		payload_size = sizeof(*get_fw_request);
 		get_fw_request = &msg.fw_get_firmware_req;
 
 		/* Calculate fetch size for remaining data */
 		firmware_fetch_size = firmware_size - firmware_read_size;
-		if (firmware_fetch_size > GB_FIRMWARE_FETCH_MAX)
-			firmware_fetch_size = GB_FIRMWARE_FETCH_MAX;
+		if (firmware_fetch_size > GB_BOOTROM_FETCH_MAX)
+			firmware_fetch_size = GB_BOOTROM_FETCH_MAX;
 
 		get_fw_request->offset = htole32(firmware_read_size);
 		get_fw_request->size = htole32(firmware_fetch_size);
 		break;
-	case GB_FIRMWARE_TYPE_READY_TO_BOOT:
+	case GB_BOOTROM_TYPE_READY_TO_BOOT:
 		payload_size = sizeof(*rbt_request);
 		rbt_request = &msg.fw_rbt_req;
 
-		rbt_request->status = GB_FIRMWARE_BOOT_STATUS_SECURE;
+		rbt_request->status = GB_BOOTROM_BOOT_STATUS_SECURE;
 		break;
 	default:
 		gbsim_error("firmware operation type %02x not supported\n",
@@ -111,8 +111,8 @@ static int firmware_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 			    version_request->major, version_request->minor);
 
 		version_request = &op_rsp->fw_version_request;
-		version_request->major = GB_FIRMWARE_VERSION_MAJOR;
-		version_request->minor = GB_FIRMWARE_VERSION_MINOR;
+		version_request->major = GB_BOOTROM_VERSION_MAJOR;
+		version_request->minor = GB_BOOTROM_VERSION_MINOR;
 		break;
 	default:
 		gbsim_error("%s: Request not supported (%d)\n", __func__,
@@ -127,7 +127,7 @@ static int firmware_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 	if (ret)
 		return ret;
 
-	ret = firmware_request_send(GB_FIRMWARE_TYPE_FIRMWARE_SIZE, hd_cport_id);
+	ret = firmware_request_send(GB_BOOTROM_TYPE_FIRMWARE_SIZE, hd_cport_id);
 	if (ret)
 		gbsim_error("%s: Failed to get size (%d)\n", __func__, ret);
 
@@ -138,7 +138,7 @@ static int fetch_firmware(uint16_t hd_cport_id)
 {
 	int ret;
 
-	ret = firmware_request_send(GB_FIRMWARE_TYPE_GET_FIRMWARE,
+	ret = firmware_request_send(GB_BOOTROM_TYPE_GET_FIRMWARE,
 				    hd_cport_id);
 	if (ret)
 		gbsim_error("%s: Failed to get firmware (%d)\n", __func__, ret);
@@ -181,8 +181,8 @@ static int firmware_handler_response(uint16_t cport_id, uint16_t hd_cport_id,
 {
 	struct op_msg *op_rsp = rbuf;
 	struct gb_operation_msg_hdr *oph = &op_rsp->header;
-	struct gb_firmware_size_response *size_response;
-	struct gb_firmware_get_firmware_response *get_fw_response;
+	struct gb_bootrom_firmware_size_response *size_response;
+	struct gb_bootrom_get_firmware_response *get_fw_response;
 	int ret = 0;
 	int type = oph->type & ~OP_RESPONSE;
 
@@ -194,7 +194,7 @@ static int firmware_handler_response(uint16_t cport_id, uint16_t hd_cport_id,
 	}
 
 	switch (type) {
-	case GB_FIRMWARE_TYPE_FIRMWARE_SIZE:
+	case GB_BOOTROM_TYPE_FIRMWARE_SIZE:
 		size_response = &op_rsp->fw_size_resp;
 		firmware_size = le32toh(size_response->size);
 
@@ -203,7 +203,7 @@ static int firmware_handler_response(uint16_t cport_id, uint16_t hd_cport_id,
 
 		ret = fetch_firmware(hd_cport_id);
 		break;
-	case GB_FIRMWARE_TYPE_GET_FIRMWARE:
+	case GB_BOOTROM_TYPE_GET_FIRMWARE:
 		get_fw_response = &op_rsp->fw_get_firmware_resp;
 		ret = dump_firmware(get_fw_response->data);
 		if (ret)
@@ -214,13 +214,13 @@ static int firmware_handler_response(uint16_t cport_id, uint16_t hd_cport_id,
 			break;
 		}
 
-		ret = firmware_request_send(GB_FIRMWARE_TYPE_READY_TO_BOOT,
+		ret = firmware_request_send(GB_BOOTROM_TYPE_READY_TO_BOOT,
 					    hd_cport_id);
 		if (ret)
 			gbsim_error("%s: Failed to send ready to boot message(%d)\n",
 				    __func__, ret);
 		break;
-	case GB_FIRMWARE_TYPE_READY_TO_BOOT:
+	case GB_BOOTROM_TYPE_READY_TO_BOOT:
 		gbsim_debug("%s: AP granted permission to boot.\n", __func__);
 		break;
 	default:
