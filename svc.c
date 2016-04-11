@@ -69,7 +69,7 @@ static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 		dme_get_request = &op_req->svc_dme_peer_get_request;
 		dme_get_response = &op_rsp->svc_dme_peer_get_response;
 		dme_get_response->result_code = 0;
-		dme_get_response->attr_value = 1;
+		dme_get_response->attr_value = 0x0126;
 
 		gbsim_debug("SVC dme peer get (%hhu %hu %hu) request\n",
 			    dme_get_request->intf_id, dme_get_request->attr,
