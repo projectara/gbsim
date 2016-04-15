@@ -1,5 +1,5 @@
 /*
- * Greybus Simulator: FIRMWARE CPort protocol
+ * Greybus Simulator: BOOTROM CPort protocol
  *
  * Copyright 2015 Google Inc.
  * Copyright 2015 Linaro Ltd.
@@ -26,13 +26,13 @@ static int firmware_read_size;
 static int firmware_fetch_size;
 static int firmware_fd;
 
-char *firmware_get_operation(uint8_t type)
+char *bootrom_get_operation(uint8_t type)
 {
 	switch (type) {
 	case GB_REQUEST_TYPE_INVALID:
-		return "GB_FIRMWARE_TYPE_INVALID";
+		return "GB_BOOTROM_TYPE_INVALID";
 	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
-		return "GB_FIRMWARE_TYPE_PROTOCOL_VERSION";
+		return "GB_BOOTROM_TYPE_PROTOCOL_VERSION";
 	case GB_BOOTROM_TYPE_FIRMWARE_SIZE:
 		return "GB_BOOTROM_TYPE_FIRMWARE_SIZE";
 	case GB_BOOTROM_TYPE_GET_FIRMWARE:
@@ -45,7 +45,7 @@ char *firmware_get_operation(uint8_t type)
 }
 
 /* Request from Module to AP */
-int firmware_request_send(uint8_t type, uint16_t hd_cport_id)
+int bootrom_request_send(uint8_t type, uint16_t hd_cport_id)
 {
 	struct op_msg msg = { };
 	struct gb_operation_msg_hdr *oph = &msg.header;
@@ -90,7 +90,7 @@ int firmware_request_send(uint8_t type, uint16_t hd_cport_id)
 }
 
 /* Request from AP to Module */
-static int firmware_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
+static int bootrom_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 			       void *rbuf, size_t rsize, void *tbuf,
 			       size_t tsize)
 {
@@ -107,7 +107,7 @@ static int firmware_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 		payload_size = sizeof(*version_request);
 		version_request = &op_req->fw_version_request;
 
-		gbsim_debug("AP Firmware version (%d %d)\n",
+		gbsim_debug("AP Bootrom version (%d %d)\n",
 			    version_request->major, version_request->minor);
 
 		version_request = &op_rsp->fw_version_request;
@@ -127,18 +127,18 @@ static int firmware_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 	if (ret)
 		return ret;
 
-	ret = firmware_request_send(GB_BOOTROM_TYPE_FIRMWARE_SIZE, hd_cport_id);
+	ret = bootrom_request_send(GB_BOOTROM_TYPE_FIRMWARE_SIZE, hd_cport_id);
 	if (ret)
 		gbsim_error("%s: Failed to get size (%d)\n", __func__, ret);
 
 	return ret;
 }
 
-static int fetch_firmware(uint16_t hd_cport_id)
+static int fetch_bootrom(uint16_t hd_cport_id)
 {
 	int ret;
 
-	ret = firmware_request_send(GB_BOOTROM_TYPE_GET_FIRMWARE,
+	ret = bootrom_request_send(GB_BOOTROM_TYPE_GET_FIRMWARE,
 				    hd_cport_id);
 	if (ret)
 		gbsim_error("%s: Failed to get firmware (%d)\n", __func__, ret);
@@ -146,7 +146,7 @@ static int fetch_firmware(uint16_t hd_cport_id)
 	return ret;
 }
 
-static int dump_firmware(uint8_t *data)
+static int dump_bootrom(uint8_t *data)
 {
 	int ret;
 
@@ -176,7 +176,7 @@ static int dump_firmware(uint8_t *data)
 }
 
 /* Response from AP to Module, in response to a request Module has sent earlier */
-static int firmware_handler_response(uint16_t cport_id, uint16_t hd_cport_id,
+static int bootrom_handler_response(uint16_t cport_id, uint16_t hd_cport_id,
 				void *rbuf, size_t rsize)
 {
 	struct op_msg *op_rsp = rbuf;
@@ -189,7 +189,7 @@ static int firmware_handler_response(uint16_t cport_id, uint16_t hd_cport_id,
 	/* Did the request fail? */
 	if (oph->result) {
 		gbsim_error("%s: Operation type: %s FAILED (%d)\n", __func__,
-			    firmware_get_operation(type), oph->result);
+			    bootrom_get_operation(type), oph->result);
 		return oph->result;
 	}
 
@@ -201,20 +201,20 @@ static int firmware_handler_response(uint16_t cport_id, uint16_t hd_cport_id,
 		gbsim_debug("%s: Firmware size returned is %d bytes\n",
 			    __func__, firmware_size);
 
-		ret = fetch_firmware(hd_cport_id);
+		ret = fetch_bootrom(hd_cport_id);
 		break;
 	case GB_BOOTROM_TYPE_GET_FIRMWARE:
 		get_fw_response = &op_rsp->fw_get_firmware_resp;
-		ret = dump_firmware(get_fw_response->data);
+		ret = dump_bootrom(get_fw_response->data);
 		if (ret)
 			break;
 
 		if (firmware_read_size < firmware_size) {
-			ret = fetch_firmware(hd_cport_id);
+			ret = fetch_bootrom(hd_cport_id);
 			break;
 		}
 
-		ret = firmware_request_send(GB_BOOTROM_TYPE_READY_TO_BOOT,
+		ret = bootrom_request_send(GB_BOOTROM_TYPE_READY_TO_BOOT,
 					    hd_cport_id);
 		if (ret)
 			gbsim_error("%s: Failed to send ready to boot message(%d)\n",
@@ -232,7 +232,7 @@ static int firmware_handler_response(uint16_t cport_id, uint16_t hd_cport_id,
 	return ret;
 }
 
-int firmware_handler(struct gbsim_connection *connection, void *rbuf,
+int bootrom_handler(struct gbsim_connection *connection, void *rbuf,
 		    size_t rsize, void *tbuf, size_t tsize)
 {
 	struct op_msg *op = rbuf;
@@ -241,8 +241,8 @@ int firmware_handler(struct gbsim_connection *connection, void *rbuf,
 	uint16_t hd_cport_id = connection->hd_cport_id;
 
 	if (oph->type & OP_RESPONSE)
-		return firmware_handler_response(cport_id, hd_cport_id, rbuf, rsize);
+		return bootrom_handler_response(cport_id, hd_cport_id, rbuf, rsize);
 	else
-		return firmware_handler_request(cport_id, hd_cport_id, rbuf, rsize,
+		return bootrom_handler_request(cport_id, hd_cport_id, rbuf, rsize,
 					   tbuf, tsize);
 }

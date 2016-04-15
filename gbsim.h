@@ -265,8 +265,8 @@ char *loopback_get_operation(uint8_t type);
 void loopback_init(void);
 void loopback_cleanup(void);
 
-int firmware_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
-char *firmware_get_operation(uint8_t type);
+int bootrom_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
+char *bootrom_get_operation(uint8_t type);
 
 bool manifest_parse(void *data, size_t size);
 void reset_hd_cport_id(void);
