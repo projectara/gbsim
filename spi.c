@@ -320,9 +320,9 @@ int spi_handler(struct gbsim_connection *connection, void *rbuf,
 		payload_size = sizeof(struct gb_protocol_version_response);
 		op_rsp->pv_rsp.major = GB_SPI_VERSION_MAJOR;
 		op_rsp->pv_rsp.minor = GB_SPI_VERSION_MINOR;
-		spi_master_setup();
 		break;
 	case GB_SPI_TYPE_MASTER_CONFIG:
+		spi_master_setup();
 		payload_size = sizeof(struct gb_spi_master_config_response);
 
 		op_rsp->spi_mc_rsp.mode = htole16(master->mode);
