@@ -36,6 +36,12 @@ static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 	struct gb_svc_dme_peer_set_response *dme_set_response;
 	struct gb_svc_route_create_request *svc_route_create;
 	struct gb_svc_route_destroy_request *svc_route_destroy;
+	struct gb_svc_pwrmon_rail_count_get_response *svc_pwrmon_rail_count_get_response;
+	struct gb_svc_intf_vsys_response *svc_intf_vsys_response;
+	struct gb_svc_intf_refclk_response *svc_intf_refclk_response;
+	struct gb_svc_intf_unipro_response *svc_intf_unipro_response;
+	struct gb_svc_intf_activate_response *svc_intf_activate_response;
+	struct gb_svc_intf_set_pwrm_response *svc_intf_set_pwrm_response;
 	uint16_t message_size = sizeof(*oph);
 	size_t payload_size = 0;
 
@@ -106,6 +112,53 @@ static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 		break;
 	case GB_SVC_TYPE_PING:
 		gbsim_debug("SVC ping request response\n");
+		break;
+	case GB_SVC_TYPE_PWRMON_RAIL_COUNT_GET:
+		payload_size = sizeof(*svc_pwrmon_rail_count_get_response);
+		svc_pwrmon_rail_count_get_response = &op_rsp->svc_pwrmon_rail_count_get_response;
+		svc_pwrmon_rail_count_get_response->rail_count = 0;
+		break;
+	case GB_SVC_TYPE_INTF_VSYS_ENABLE:
+		payload_size = sizeof(*svc_intf_vsys_response);
+		svc_intf_vsys_response = &op_rsp->svc_intf_vsys_response;
+		svc_intf_vsys_response->result_code = 0;
+		break;
+	case GB_SVC_TYPE_INTF_VSYS_DISABLE:
+		payload_size = sizeof(*svc_intf_vsys_response);
+		svc_intf_vsys_response = &op_rsp->svc_intf_vsys_response;
+		svc_intf_vsys_response->result_code = 0;
+		break;
+	case GB_SVC_TYPE_INTF_REFCLK_ENABLE:
+		payload_size = sizeof(*svc_intf_refclk_response);
+		svc_intf_refclk_response = &op_rsp->svc_intf_refclk_response;
+		svc_intf_refclk_response->result_code = 0;
+		break;
+	case GB_SVC_TYPE_INTF_REFCLK_DISABLE:
+		payload_size = sizeof(*svc_intf_refclk_response);
+		svc_intf_refclk_response = &op_rsp->svc_intf_refclk_response;
+		svc_intf_refclk_response->result_code = 0;
+		break;
+	case GB_SVC_TYPE_INTF_UNIPRO_ENABLE:
+		payload_size = sizeof(*svc_intf_unipro_response);
+		svc_intf_unipro_response = &op_rsp->svc_intf_unipro_response;
+		svc_intf_unipro_response->result_code = 0;
+		break;
+	case GB_SVC_TYPE_INTF_UNIPRO_DISABLE:
+		payload_size = sizeof(*svc_intf_unipro_response);
+		svc_intf_unipro_response = &op_rsp->svc_intf_unipro_response;
+		svc_intf_unipro_response->result_code = 0;
+		break;
+	case GB_SVC_TYPE_INTF_ACTIVATE:
+		payload_size = sizeof(*svc_intf_activate_response);
+		svc_intf_activate_response = &op_rsp->svc_intf_activate_response;
+		svc_intf_activate_response->intf_type = GB_SVC_INTF_TYPE_GREYBUS;
+		break;
+	case GB_SVC_TYPE_INTF_MAILBOX_EVENT:
+		break;
+	case GB_SVC_TYPE_INTF_SET_PWRM:
+		payload_size = sizeof(*svc_intf_set_pwrm_response);
+		svc_intf_set_pwrm_response = &op_rsp->svc_intf_set_pwrm_response;
+		svc_intf_set_pwrm_response->result_code = 0;
 		break;
 	case GB_SVC_TYPE_INTF_HOTPLUG:
 	case GB_SVC_TYPE_INTF_HOT_UNPLUG:
@@ -219,6 +272,52 @@ char *svc_get_operation(uint8_t type)
 		return "GB_SVC_TYPE_ROUTE_DESTROY";
 	case GB_SVC_TYPE_PING:
 		return "GB_SVC_TYPE_PING";
+	case GB_SVC_TYPE_TIMESYNC_ENABLE:
+		return "GB_SVC_TYPE_TIMESYNC_ENABLE";
+	case GB_SVC_TYPE_TIMESYNC_DISABLE:
+		return "GB_SVC_TYPE_TIMESYNC_DISABLE";
+	case GB_SVC_TYPE_TIMESYNC_AUTHORITATIVE:
+		return "GB_SVC_TYPE_TIMESYNC_AUTHORITATIVE";
+	case GB_SVC_TYPE_INTF_SET_PWRM:
+		return "GB_SVC_TYPE_INTF_SET_PWRM";
+	case GB_SVC_TYPE_INTF_EJECT:
+		return "GB_SVC_TYPE_INTF_EJECT";
+	case GB_SVC_TYPE_KEY_EVENT:
+		return "GB_SVC_TYPE_KEY_EVENT";
+	case GB_SVC_TYPE_PWRMON_RAIL_COUNT_GET:
+		return "GB_SVC_TYPE_PWRMON_RAIL_COUNT_GET";
+	case GB_SVC_TYPE_PWRMON_RAIL_NAMES_GET:
+		return "GB_SVC_TYPE_PWRMON_RAIL_NAMES_GET";
+	case GB_SVC_TYPE_PWRMON_SAMPLE_GET:
+		return "GB_SVC_TYPE_PWRMON_SAMPLE_GET";
+	case GB_SVC_TYPE_PWRMON_INTF_SAMPLE_GET:
+		return "GB_SVC_TYPE_PWRMON_INTF_SAMPLE_GET";
+	case GB_SVC_TYPE_TIMESYNC_WAKE_PINS_ACQUIRE:
+		return "GB_SVC_TYPE_TIMESYNC_WAKE_PINS_ACQUIRE";
+	case GB_SVC_TYPE_TIMESYNC_WAKE_PINS_RELEASE:
+		return "GB_SVC_TYPE_TIMESYNC_WAKE_PINS_RELEASE";
+	case GB_SVC_TYPE_TIMESYNC_PING:
+		return "GB_SVC_TYPE_TIMESYNC_PING";
+	case GB_SVC_TYPE_MODULE_INSERTED:
+		return "GB_SVC_TYPE_MODULE_INSERTED";
+	case GB_SVC_TYPE_MODULE_REMOVED:
+		return "GB_SVC_TYPE_MODULE_REMOVED";
+	case GB_SVC_TYPE_INTF_VSYS_ENABLE:
+		return "GB_SVC_TYPE_INTF_VSYS_ENABLE";
+	case GB_SVC_TYPE_INTF_VSYS_DISABLE:
+		return "GB_SVC_TYPE_INTF_VSYS_DISABLE";
+	case GB_SVC_TYPE_INTF_REFCLK_ENABLE:
+		return "GB_SVC_TYPE_INTF_REFCLK_ENABLE";
+	case GB_SVC_TYPE_INTF_REFCLK_DISABLE:
+		return "GB_SVC_TYPE_INTF_REFCLK_DISABLE";
+	case GB_SVC_TYPE_INTF_UNIPRO_ENABLE:
+		return "GB_SVC_TYPE_INTF_UNIPRO_ENABLE";
+	case GB_SVC_TYPE_INTF_UNIPRO_DISABLE:
+		return "GB_SVC_TYPE_INTF_UNIPRO_DISABLE";
+	case GB_SVC_TYPE_INTF_ACTIVATE:
+		return "GB_SVC_TYPE_INTF_ACTIVATE";
+	case GB_SVC_TYPE_INTF_MAILBOX_EVENT:
+		return "GB_SVC_TYPE_INTF_MAILBOX_EVENT";
 	default:
 		return "(Unknown operation)";
 	}

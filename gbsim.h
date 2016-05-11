@@ -93,6 +93,12 @@ struct op_msg {
 		struct gb_svc_dme_peer_set_response	svc_dme_peer_set_response;
 		struct gb_svc_route_create_request	svc_route_create_request;
 		struct gb_svc_route_destroy_request	svc_route_destroy_request;
+		struct gb_svc_pwrmon_rail_count_get_response	svc_pwrmon_rail_count_get_response;
+		struct gb_svc_intf_vsys_response	svc_intf_vsys_response;
+		struct gb_svc_intf_refclk_response	svc_intf_refclk_response;
+		struct gb_svc_intf_unipro_response	svc_intf_unipro_response;
+		struct gb_svc_intf_activate_response	svc_intf_activate_response;
+		struct gb_svc_intf_set_pwrm_response	svc_intf_set_pwrm_response;
 		struct gb_gpio_line_count_response	gpio_lc_rsp;
 		struct gb_gpio_activate_request		gpio_act_req;
 		struct gb_gpio_deactivate_request	gpio_deact_req;
