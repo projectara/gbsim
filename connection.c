@@ -55,6 +55,17 @@ struct gbsim_connection *connection_find(uint16_t cport_id)
 	return NULL;
 }
 
+uint16_t find_hd_cport_for_protocol(int protocol_id)
+{
+	struct gbsim_connection *connection;
+
+	TAILQ_FOREACH(connection, &interface.connections, cnode)
+		if (connection->protocol == protocol_id)
+			return connection->hd_cport_id;
+
+	return 0;
+}
+
 void allocate_connection(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id)
 {
 	struct gbsim_connection *connection;

@@ -209,6 +209,7 @@ static inline uint8_t cport_to_module_id(uint16_t cport_id)
 
 struct gbsim_connection *connection_find(uint16_t cport_id);
 void allocate_connection(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id);
+uint16_t find_hd_cport_for_protocol(int protocol_id);
 void free_connection(struct gbsim_connection *connections);
 void free_connections(void);
 
