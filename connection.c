@@ -164,6 +164,14 @@ static void get_protocol_operation(uint16_t cport_id, char **protocol,
 		*protocol = "BOOTROM";
 		*operation = bootrom_get_operation(type);
 		break;
+	case GREYBUS_PROTOCOL_FW_MANAGEMENT:
+		*protocol = "fw-mgmt";
+		*operation = fw_mgmt_get_operation(type);
+		break;
+	case GREYBUS_PROTOCOL_FW_DOWNLOAD:
+		*protocol = "fw-download";
+		*operation = fw_download_get_operation(type);
+		break;
 	default:
 		*protocol = "(Unknown protocol)";
 		*operation = "(Unknown operation)";
@@ -255,6 +263,10 @@ static int connection_recv_handler(struct gbsim_connection *connection,
 		return loopback_handler(connection, rbuf, rsize, tbuf, tsize);
 	case GREYBUS_PROTOCOL_BOOTROM:
 		return bootrom_handler(connection, rbuf, rsize, tbuf, tsize);
+	case GREYBUS_PROTOCOL_FW_MANAGEMENT:
+		return fw_mgmt_handler(connection, rbuf, rsize, tbuf, tsize);
+	case GREYBUS_PROTOCOL_FW_DOWNLOAD:
+		return fw_download_handler(connection, rbuf, rsize, tbuf, tsize);
 	default:
 		gbsim_error("handler not found for cport %u\n",
 				connection->cport_id);

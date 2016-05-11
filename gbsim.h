@@ -175,6 +175,18 @@ struct op_msg {
 		struct gb_spi_device_config_response	spi_dc_rsp;
 		struct gb_spi_transfer_request		spi_xfer_req;
 		struct gb_spi_transfer_response		spi_xfer_rsp;
+		struct gb_fw_download_find_firmware_request	fw_download_find_req;
+		struct gb_fw_download_find_firmware_response	fw_download_find_rsp;
+		struct gb_fw_download_fetch_firmware_request	fw_download_fetch_req;
+		struct gb_fw_download_fetch_firmware_response	fw_download_fetch_rsp;
+		struct gb_fw_download_release_firmware_request	fw_download_release_req;
+		struct gb_fw_mgmt_interface_fw_version_response	fw_mgmt_intf_fw_version_rsp;
+		struct gb_fw_mgmt_load_and_validate_fw_request	fw_mgmt_load_validate_fw_req;
+		struct gb_fw_mgmt_loaded_fw_request		fw_mgmt_loaded_fw_req;
+		struct gb_fw_mgmt_backend_fw_version_request	fw_mgmt_backend_fw_ver_req;
+		struct gb_fw_mgmt_backend_fw_version_response	fw_mgmt_backend_fw_ver_rsp;
+		struct gb_fw_mgmt_backend_fw_update_request	fw_mgmt_backend_fw_update_req;
+		struct gb_fw_mgmt_backend_fw_updated_request	fw_mgmt_backend_fw_updated_req;
 	};
 };
 
@@ -273,6 +285,13 @@ void loopback_cleanup(void);
 
 int bootrom_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
 char *bootrom_get_operation(uint8_t type);
+
+int fw_mgmt_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
+char *fw_mgmt_get_operation(uint8_t type);
+
+int fw_download_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
+char *fw_download_get_operation(uint8_t type);
+int download_firmware(char *tag, uint16_t hd_cport_id, void (*func)(void));
 
 bool manifest_parse(void *data, size_t size);
 void reset_hd_cport_id(void);

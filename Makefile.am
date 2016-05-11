@@ -28,6 +28,8 @@ gbsim_SOURCES = \
 	spi.c \
 	power_supply.c \
 	light.c \
+	fw-management.c \
+	fw-download.c \
 	uart.c
 
 gbsim_CPPFLAGS = \
