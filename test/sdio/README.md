@@ -78,7 +78,7 @@ read strings
 usb 1-1: new high-speed USB device number 2 using dummy_hcd
 configfs-gadget gadget: high-speed config #1: config
 [I] GBSIM: AP handshake complete
-[I] GBSIM: IID1-simple-sdio-module.mnfb Interface inserted
+[I] GBSIM: simple-sdio-module.mnfb Interface inserted
 # greybus endo0:1:1:1:1: card inserted now event
 mmc0: mmc_rescan_try_freq: trying to init card at 400000 Hz
 greybus endo0:1:1:1:1: no support for card's volts

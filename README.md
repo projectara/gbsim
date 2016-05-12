@@ -136,15 +136,11 @@ directory. Manifest blob files can be created using the Manifesto tool
 found at https://github.com/projectara/manifesto. Using the Simple I2C Module as
 an example, a module can be inserted as follows:
 
-`cp /foo/bar/simple-i2c-module.mnfb /path/to/hotplug-module/IID1-simple-i2c-module.mnfb`
-
-The *IIDn* prefix is required to specify the Interface ID, indicating its
-location in the endoskeleton where *n* is a decimal integer greater than 0
-indicating the Interface ID.
+`cp /foo/bar/simple-i2c-module.mnfb /path/to/hotplug-module/simple-i2c-module.mnfb`
 
 After module insertion, gbsim will report:
 
 ```
-[I] GBSIM: IID1-simple-i2c-module.mnfb module inserted
+[I] GBSIM: simple-i2c-module.mnfb module inserted
 [D] GBSIM: SVC->AP hotplug event (plug) sent
 ```
