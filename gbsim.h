@@ -18,12 +18,12 @@
 #include <stdio.h>
 #include <usbg/usbg.h>
 
-#include <greybus_manifest.h>
-#include <greybus_protocols.h>
-
 #ifndef BIT
 #define BIT(n)	(1UL << (n))
 #endif
+
+#include <greybus_manifest.h>
+#include <greybus_protocols.h>
 
 /* Wouldn't support types larger than 4 bytes */
 #define _ALIGNBYTES		(sizeof(uint32_t) - 1)
