@@ -165,7 +165,7 @@ static int spidev_xfer_req_recv(struct gb_spi_dev *dev,
 	int ret;
 
 	/* if it is only a write transfer write it to a file in tmp */
-	if (xfer->rdwr & ~GB_SPI_XFER_READ) {
+	if (xfer->xfer_flags & ~GB_SPI_XFER_READ) {
 		fd = open("/tmp/spi_file", O_WRONLY | O_CREAT | O_APPEND, 0);
 		lseek(fd, SEEK_END, 0);
 		ret = write(fd, xfer_data, xfer->len);
@@ -359,9 +359,9 @@ int spi_handler(struct gbsim_connection *connection, void *rbuf,
 		for (i = 0; i < xfer_count; i++, xfer++) {
 			spi_dev->xfer_req_recv(spi_dev, xfer, xfer_data);
 			/* we only increment if transfer is write */
-			if (xfer->rdwr & GB_SPI_XFER_WRITE)
+			if (xfer->xfer_flags & GB_SPI_XFER_WRITE)
 				xfer_data += xfer->len;
-			if (xfer->rdwr & GB_SPI_XFER_READ)
+			if (xfer->xfer_flags & GB_SPI_XFER_READ)
 				xfer_rx += xfer->len;
 		}
 
