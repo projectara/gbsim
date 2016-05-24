@@ -40,11 +40,6 @@ int pwm_handler(struct gbsim_connection *connection, void *rbuf,
 	oph = (struct gb_operation_msg_hdr *)&op_req->header;
 
 	switch (oph->type) {
-	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
-		payload_size = sizeof(struct gb_protocol_version_response);
-		op_rsp->pv_rsp.major = GREYBUS_VERSION_MAJOR;
-		op_rsp->pv_rsp.minor = GREYBUS_VERSION_MINOR;
-		break;
 	case GB_PWM_TYPE_PWM_COUNT:
 		payload_size = sizeof(struct gb_pwm_count_response);
 		op_rsp->pwm_cnt_rsp.count = 1; /* Something arbitrary, but useful */
@@ -113,8 +108,6 @@ char *pwm_get_operation(uint8_t type)
 	switch (type) {
 	case GB_REQUEST_TYPE_INVALID:
 		return "GB_PWM_TYPE_INVALID";
-	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
-		return "GB_PWM_TYPE_PROTOCOL_VERSION";
 	case GB_PWM_TYPE_PWM_COUNT:
 		return "GB_PWM_TYPE_PWM_COUNT";
 	case GB_PWM_TYPE_ACTIVATE:

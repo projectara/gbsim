@@ -37,6 +37,7 @@ extern int verbose;
 extern char *hotplug_basedir;
 
 /* Matches up with the Greybus Protocol specification document */
+#define GB_REQUEST_TYPE_PROTOCOL_VERSION 0x01
 #define GREYBUS_VERSION_MAJOR	0x00
 #define GREYBUS_VERSION_MINOR	0x01
 

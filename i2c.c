@@ -45,11 +45,6 @@ int i2c_handler(struct gbsim_connection *connection, void *rbuf,
 	oph = (struct gb_operation_msg_hdr *)&op_req->header;
 
 	switch (oph->type) {
-	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
-		payload_size = sizeof(struct gb_protocol_version_response);
-		op_rsp->pv_rsp.major = GREYBUS_VERSION_MAJOR;
-		op_rsp->pv_rsp.minor = GREYBUS_VERSION_MINOR;
-		break;
 	case GB_I2C_TYPE_FUNCTIONALITY:
 		payload_size = sizeof(struct gb_i2c_functionality_response);
 		op_rsp->i2c_fcn_rsp.functionality = htole32(I2C_FUNC_I2C);
@@ -121,8 +116,6 @@ char *i2c_get_operation(uint8_t type)
 	switch (type) {
 	case GB_REQUEST_TYPE_INVALID:
 		return "GB_I2C_TYPE_INVALID";
-	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
-		return "GB_I2C_TYPE_PROTOCOL_VERSION";
 	case GB_I2C_TYPE_FUNCTIONALITY:
 		return "GB_I2C_TYPE_FUNCTIONALITY";
 	case GB_I2C_TYPE_TRANSFER:

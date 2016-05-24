@@ -553,11 +553,6 @@ int uart_handler(struct gbsim_connection *connection, void *rbuf,
 		return i;
 
 	switch (oph->type) {
-	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
-		payload_size = sizeof(struct gb_protocol_version_response);
-		op_rsp->pv_rsp.major = GREYBUS_VERSION_MAJOR;
-		op_rsp->pv_rsp.minor = GREYBUS_VERSION_MINOR;
-		break;
 	case GB_UART_TYPE_SEND_DATA:
 		send_data = &op_req->uart_send_data_req;
 		if (tty_write(module_id, cport_id, send_data->data, send_data->size) < send_data->size)
@@ -705,8 +700,6 @@ char *uart_get_operation(uint8_t type)
 	switch (type) {
 	case GB_REQUEST_TYPE_INVALID:
 		return "GB_UART_TYPE_INVALID";
-	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
-		return "GB_UART_TYPE_PROTOCOL_VERSION";
 	case GB_UART_TYPE_SEND_DATA:
 		return "GB_UART_TYPE_SEND_DATA";
 	case GB_UART_TYPE_RECEIVE_DATA:

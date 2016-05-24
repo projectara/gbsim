@@ -658,13 +658,6 @@ int sdio_handler(struct gbsim_connection *connection, void *rbuf,
 	oph = (struct gb_operation_msg_hdr *)&op_req->header;
 
 	switch (oph->type) {
-	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
-		payload_size = sizeof(struct gb_protocol_version_response);
-		op_rsp->pv_rsp.major = GB_SDIO_VERSION_MAJOR;
-		op_rsp->pv_rsp.minor = GB_SDIO_VERSION_MINOR;
-		gbsim_debug("Module %hhu -> AP CPort %hu SDIO protocol version response\n  ",
-			    module_id, cport_id);
-		break;
 	case GB_SDIO_TYPE_GET_CAPABILITIES:
 		payload_size = sizeof(struct gb_sdio_get_caps_response);
 		op_rsp->sdio_caps_rsp.caps = htole32(GB_SDIO_CAPS);
@@ -722,8 +715,6 @@ char *sdio_get_operation(uint8_t type)
 	switch (type) {
 	case GB_REQUEST_TYPE_INVALID:
 		return "GB_SDIO_TYPE_INVALID";
-	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
-		return "GB_SDIO_TYPE_PROTOCOL_VERSION";
 	case GB_SDIO_TYPE_GET_CAPABILITIES:
 		return "GB_SDIO_TYPE_GET_CAPABILITIES";
 	case GB_SDIO_TYPE_SET_IOS:

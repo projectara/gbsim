@@ -316,11 +316,6 @@ int spi_handler(struct gbsim_connection *connection, void *rbuf,
 	oph = (struct gb_operation_msg_hdr *)&op_req->header;
 
 	switch (oph->type) {
-	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
-		payload_size = sizeof(struct gb_protocol_version_response);
-		op_rsp->pv_rsp.major = GB_SPI_VERSION_MAJOR;
-		op_rsp->pv_rsp.minor = GB_SPI_VERSION_MINOR;
-		break;
 	case GB_SPI_TYPE_MASTER_CONFIG:
 		spi_master_setup();
 		payload_size = sizeof(struct gb_spi_master_config_response);
@@ -383,8 +378,6 @@ char *spi_get_operation(uint8_t type)
 	switch (type) {
 	case GB_REQUEST_TYPE_INVALID:
 		return "GB_SPI_TYPE_INVALID";
-	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
-		return "GB_SPI_TYPE_PROTOCOL_VERSION";
 	case GB_SPI_TYPE_MASTER_CONFIG:
 		return "GB_SPI_TYPE_MASTER_CONFIG";
 	case GB_SPI_TYPE_DEVICE_CONFIG:
