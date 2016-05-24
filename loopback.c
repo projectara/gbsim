@@ -146,11 +146,6 @@ int loopback_handler(struct gbsim_connection *connection, void *rbuf,
 	loopback_init_port(module_id, cport_id, hd_cport_id, oph->operation_id);
 
 	switch (oph->type) {
-	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
-		payload_size = sizeof(struct gb_protocol_version_response);
-		op_rsp->pv_rsp.major = GB_LOOPBACK_VERSION_MAJOR;
-		op_rsp->pv_rsp.minor = GB_LOOPBACK_VERSION_MINOR;
-		break;
 	case GB_LOOPBACK_TYPE_PING:
 		break;
 	case GB_LOOPBACK_TYPE_TRANSFER:
@@ -187,8 +182,6 @@ char *loopback_get_operation(uint8_t type)
 	switch (type) {
 	case GB_REQUEST_TYPE_INVALID:
 		return "GB_LOOPBACK_TYPE_INVALID";
-	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
-		return "GB_LOOPBACK_TYPE_PROTOCOL_VERSION";
 	case GB_LOOPBACK_TYPE_PING:
 		return "GB_LOOPBACK_TYPE_PING";
 	case GB_LOOPBACK_TYPE_TRANSFER:
