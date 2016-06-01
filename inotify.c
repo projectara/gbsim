@@ -130,12 +130,12 @@ static void *inotify_thread(void *param)
 
 					gbsim_info("%s Interface inserted\n", event->name);
 					/* Fix Interface ID to 1 */
-					svc_request_send(GB_SVC_TYPE_INTF_HOTPLUG, 1);
+					svc_request_send(GB_SVC_TYPE_MODULE_INSERTED, 1);
 				} else
 					gbsim_error("missing manifest blob, no hotplug event sent\n");
 			} else if (event->mask & IN_DELETE) {
 				/* Fix Interface ID to 1 */
-				svc_request_send(GB_SVC_TYPE_INTF_HOT_UNPLUG, 1);
+				svc_request_send(GB_SVC_TYPE_MODULE_REMOVED, 1);
 				gbsim_info("%s interface removed\n", event->name);
 			}
 		}

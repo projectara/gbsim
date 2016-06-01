@@ -160,8 +160,8 @@ static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 		svc_intf_set_pwrm_response = &op_rsp->svc_intf_set_pwrm_response;
 		svc_intf_set_pwrm_response->result_code = 0;
 		break;
-	case GB_SVC_TYPE_INTF_HOTPLUG:
-	case GB_SVC_TYPE_INTF_HOT_UNPLUG:
+	case GB_SVC_TYPE_MODULE_INSERTED:
+	case GB_SVC_TYPE_MODULE_REMOVED:
 	case GB_SVC_TYPE_INTF_RESET:
 	default:
 		gbsim_error("%s: Request not supported (%d)\n", __func__,
@@ -211,10 +211,10 @@ static int svc_handler_response(uint16_t cport_id, uint16_t hd_cport_id,
 		if (ret < 0)
 			gbsim_error("Failed to start inotify thread\n");
 		break;
-	case GB_SVC_TYPE_INTF_HOT_UNPLUG:
+	case GB_SVC_TYPE_MODULE_REMOVED:
 		free_connections();
 		break;
-	case GB_SVC_TYPE_INTF_HOTPLUG:
+	case GB_SVC_TYPE_MODULE_INSERTED:
 	case GB_SVC_TYPE_INTF_RESET:
 		break;
 	default:
@@ -252,10 +252,10 @@ char *svc_get_operation(uint8_t type)
 		return "GB_SVC_TYPE_SVC_HELLO";
 	case GB_SVC_TYPE_INTF_DEVICE_ID:
 		return "GB_SVC_TYPE_INTF_DEVICE_ID";
-	case GB_SVC_TYPE_INTF_HOTPLUG:
-		return "GB_SVC_TYPE_INTF_HOTPLUG";
-	case GB_SVC_TYPE_INTF_HOT_UNPLUG:
-		return "GB_SVC_TYPE_INTF_HOT_UNPLUG";
+	case GB_SVC_TYPE_MODULE_INSERTED:
+		return "GB_SVC_TYPE_MODULE_INSERTED";
+	case GB_SVC_TYPE_MODULE_REMOVED:
+		return "GB_SVC_TYPE_MODULE_REMOVED";
 	case GB_SVC_TYPE_INTF_RESET:
 		return "GB_SVC_TYPE_INTF_RESET";
 	case GB_SVC_TYPE_CONN_CREATE:
@@ -298,10 +298,6 @@ char *svc_get_operation(uint8_t type)
 		return "GB_SVC_TYPE_TIMESYNC_WAKE_PINS_RELEASE";
 	case GB_SVC_TYPE_TIMESYNC_PING:
 		return "GB_SVC_TYPE_TIMESYNC_PING";
-	case GB_SVC_TYPE_MODULE_INSERTED:
-		return "GB_SVC_TYPE_MODULE_INSERTED";
-	case GB_SVC_TYPE_MODULE_REMOVED:
-		return "GB_SVC_TYPE_MODULE_REMOVED";
 	case GB_SVC_TYPE_INTF_VSYS_ENABLE:
 		return "GB_SVC_TYPE_INTF_VSYS_ENABLE";
 	case GB_SVC_TYPE_INTF_VSYS_DISABLE:
@@ -329,8 +325,8 @@ int svc_request_send(uint8_t type, uint8_t intf_id)
 	struct gb_operation_msg_hdr *oph = &msg.header;
 	struct gb_protocol_version_response *version_request;
 	struct gb_svc_hello_request *hello_request;
-	struct gb_svc_intf_hotplug_request *hotplug;
-	struct gb_svc_intf_hot_unplug_request *hotunplug;
+	struct gb_svc_module_inserted_request *inserted;
+	struct gb_svc_module_removed_request *removed;
 	struct gb_svc_intf_reset_request *reset;
 	uint16_t message_size = sizeof(*oph);
 	size_t payload_size;
@@ -349,23 +345,19 @@ int svc_request_send(uint8_t type, uint8_t intf_id)
 		hello_request->endo_id = htole16(ENDO_ID);
 		hello_request->interface_id = AP_INTF_ID;
 		break;
-	case GB_SVC_TYPE_INTF_HOTPLUG:
-		payload_size = sizeof(*hotplug);
-		hotplug = &msg.svc_intf_hotplug_request;
+	case GB_SVC_TYPE_MODULE_INSERTED:
+		payload_size = sizeof(*inserted);
+		inserted = &msg.svc_module_inserted_request;
 
-		hotplug->intf_id = intf_id;
+		inserted->primary_intf_id = intf_id;
+		inserted->intf_count = 1;
+		inserted->flags = 0;
 
-		//FIXME: Use some real version numbers here ?
-		hotplug->data.ddbl1_mfr_id = htole32(1);
-		hotplug->data.ddbl1_prod_id = htole32(1);
-		hotplug->data.ara_vend_id = htole32(1);
-		hotplug->data.ara_prod_id = htole32(1);
-		hotplug->data.serial_number = htole64(0x0000000000001234);
 		break;
-	case GB_SVC_TYPE_INTF_HOT_UNPLUG:
-		payload_size = sizeof(*hotunplug);
-		hotunplug = &msg.svc_intf_hot_unplug_request;
-		hotunplug->intf_id = intf_id;
+	case GB_SVC_TYPE_MODULE_REMOVED:
+		payload_size = sizeof(*removed);
+		removed = &msg.svc_module_removed_request;
+		removed->primary_intf_id = intf_id;
 		break;
 	case GB_SVC_TYPE_INTF_RESET:
 		payload_size = sizeof(*reset);

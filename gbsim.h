@@ -85,8 +85,8 @@ struct op_msg {
 		struct gb_svc_intf_device_id_request	svc_intf_device_id_request;
 		struct gb_svc_conn_create_request	svc_conn_create_request;
 		struct gb_svc_conn_destroy_request	svc_conn_destroy_request;
-		struct gb_svc_intf_hotplug_request	svc_intf_hotplug_request;
-		struct gb_svc_intf_hot_unplug_request	svc_intf_hot_unplug_request;
+		struct gb_svc_module_inserted_request	svc_module_inserted_request;
+		struct gb_svc_module_removed_request	svc_module_removed_request;
 		struct gb_svc_intf_reset_request	svc_intf_reset_request;
 		struct gb_svc_dme_peer_get_request	svc_dme_peer_get_request;
 		struct gb_svc_dme_peer_get_response	svc_dme_peer_get_response;
