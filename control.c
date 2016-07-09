@@ -58,11 +58,6 @@ int control_handler(struct gbsim_connection *connection, void *rbuf,
 	case GB_CONTROL_TYPE_DISCONNECTED:
 		payload_size = 0;
 		break;
-	case GB_CONTROL_TYPE_INTERFACE_VERSION:
-		payload_size = sizeof(op_rsp->control_version_rsp);
-		op_rsp->control_version_rsp.major = htole16(0);
-		op_rsp->control_version_rsp.minor = htole16(1);
-		break;
 	default:
 		gbsim_error("control operation type %02x not supported\n", oph->type);
 		return -EINVAL;
@@ -91,8 +86,6 @@ char *control_get_operation(uint8_t type)
 		return "GB_CONTROL_TYPE_CONNECTED";
 	case GB_CONTROL_TYPE_DISCONNECTED:
 		return "GB_CONTROL_TYPE_DISCONNECTED";
-	case GB_CONTROL_TYPE_INTERFACE_VERSION:
-		return "GB_CONTROL_TYPE_INTERFACE_VERSION";
 	default:
 		return "(Unknown operation)";
 	}
