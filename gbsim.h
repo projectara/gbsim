@@ -77,7 +77,7 @@ extern struct gbsim_interface interface;
 struct op_msg {
 	struct gb_operation_msg_hdr			header;
 	union {
-		struct gb_protocol_version_response	pv_rsp;
+		struct gb_control_version_response	control_version_rsp;
 		struct gb_control_get_manifest_size_response control_msize_rsp;
 		struct gb_control_get_manifest_response control_manifest_rsp;
 		struct gb_protocol_version_response	svc_version_request;
