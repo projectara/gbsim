@@ -7,6 +7,7 @@ bin_PROGRAMS = \
 	gbsim
 
 gbsim_SOURCES = \
+	arpc.h \
 	config.h \
 	connection.c \
 	bootrom.c \

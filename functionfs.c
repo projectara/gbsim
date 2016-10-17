@@ -25,6 +25,7 @@
 #include <linux/usb/functionfs.h>
 
 #include "gbsim.h"
+#include "arpc.h"
 #include "config.h"
 
 #define FFS_PREFIX		"/dev/ffs-gbsim/"
@@ -267,6 +268,46 @@ static int dump_control_msg(const struct usb_ctrlrequest *setup)
 	return count;
 }
 
+static void arpc_response_send(const struct usb_ctrlrequest *setup)
+{
+	uint8_t buf[256];
+	struct arpc_request_message *arpc_req;
+	struct arpc_response_message arpc_rsp;
+	uint16_t arpc_size;
+	int count;
+
+	arpc_size = le16toh(setup->wLength);
+	if (arpc_size < sizeof(*arpc_req))
+		gbsim_debug("arpc run received with the wrong size: %u : %lu\n",
+			    arpc_size, sizeof(*arpc_req));
+
+	count = read(control, buf, arpc_size);
+	if (count < 0) {
+		perror("ARPC: Failed to read\n");
+		return;
+	}
+
+	arpc_req = (struct arpc_request_message *)buf;
+	if (verbose) {
+		gbsim_debug("AP->ARPC message\n");
+		gbsim_debug("   id	= 0x%04x\n", le16toh(arpc_req->id));
+		gbsim_debug("   size	= 0x%04x\n", le16toh(arpc_req->size));
+		gbsim_debug("   type	= 0x%02x\n", arpc_req->type);
+	}
+
+	/*
+	 * we reply success to every arpc request, as we are not doing anything
+	 * with the it...yet.
+	 */
+	arpc_rsp.id = arpc_req->id;
+	arpc_rsp.result = ARPC_SUCCESS;
+
+	count = write(to_ap_arpc, &arpc_rsp,
+		      sizeof(struct arpc_response_message));
+	if (count < 0)
+		perror("ARPC: Failed to write\n");
+}
+
 static void handle_setup(const struct usb_ctrlrequest *setup)
 {
 	uint16_t count;
@@ -324,6 +365,9 @@ static void handle_setup(const struct usb_ctrlrequest *setup)
 		dump_control_msg(setup);
 		gbsim_debug("latency_tag_dis request for cport: %04x\n",
 			    le16toh(setup->wValue));
+		break;
+	case GB_APB_REQUEST_ARPC_RUN:
+		arpc_response_send(setup);
 		break;
 	default:
 		gbsim_error("Invalid request type %02x\n", setup->bRequest);
