@@ -27,17 +27,15 @@
 #include "gbsim.h"
 #include "config.h"
 
-#define FFS_PREFIX	"/dev/ffs-gbsim/"
-#define FFS_GBEMU_EP0	FFS_PREFIX"ep0"
-#define FFS_GBEMU_IN	FFS_PREFIX"ep1"
-#define FFS_GBEMU_OUT	FFS_PREFIX"ep8"
+#define FFS_PREFIX		"/dev/ffs-gbsim/"
+#define FFS_GBEMU_EP0		FFS_PREFIX"ep0"
+#define FFS_GBEMU_IN		FFS_PREFIX"ep1"
+#define FFS_GBEMU_IN_ARPC	FFS_PREFIX"ep2"
+#define FFS_GBEMU_OUT		FFS_PREFIX"ep3"
 
 #define STR_INTERFACE	"gbsim"
 
 #define NEVENT		5
-
-/* Number of bulk in and bulk out couple */
-#define NUM_BULKS		7
 
 /* vendor request APB1 log */
 #define REQUEST_LOG		0x02
@@ -57,11 +55,11 @@
 
 int control = -ENXIO;
 int to_ap = -ENXIO;
+int to_ap_arpc = -ENXIO;
 int from_ap = -ENXIO;
 
 static pthread_t recv_pthread;
 
-#define GBSIM_LEGACY_DESCRIPTORS
 
 /*
  * Descriptors:
@@ -82,8 +80,9 @@ static struct {
 	} __attribute__((packed)) header;
 	struct {
 		struct usb_interface_descriptor intf;
-		struct usb_endpoint_descriptor_no_audio to_ap[NUM_BULKS];
-		struct usb_endpoint_descriptor_no_audio from_ap[NUM_BULKS];
+		struct usb_endpoint_descriptor_no_audio to_ap;
+		struct usb_endpoint_descriptor_no_audio to_ap_arpc;
+		struct usb_endpoint_descriptor_no_audio from_ap;
 	} __attribute__((packed)) fs_descs, hs_descs;
 } __attribute__((packed)) descriptors = {
 	.header = {
@@ -95,25 +94,64 @@ static struct {
 				     FUNCTIONFS_HAS_HS_DESC),
 #endif
 		.length = htole32(sizeof descriptors),
-		.fs_count = htole32(2 * NUM_BULKS + 1),
-		.hs_count = htole32(2 * NUM_BULKS + 1),
+		.fs_count = htole32(4),
+		.hs_count = htole32(4),
 	},
 	.fs_descs = {
 		.intf = {
 			.bLength = sizeof descriptors.fs_descs.intf,
 			.bDescriptorType = USB_DT_INTERFACE,
-			.bNumEndpoints = 2 * NUM_BULKS,
+			.bNumEndpoints = 3,
 			.bInterfaceClass = USB_CLASS_VENDOR_SPEC,
 			.iInterface = 1,
+		},
+		.to_ap = {
+			.bLength = sizeof(descriptors.fs_descs.to_ap),
+			.bDescriptorType = USB_DT_ENDPOINT,
+			.bEndpointAddress = 1 | USB_DIR_IN,
+			.bmAttributes = USB_ENDPOINT_XFER_BULK,
+		},
+		.to_ap_arpc = {
+			.bLength = sizeof(descriptors.fs_descs.to_ap_arpc),
+			.bDescriptorType = USB_DT_ENDPOINT,
+			.bEndpointAddress = 2 | USB_DIR_IN,
+			.bmAttributes = USB_ENDPOINT_XFER_BULK,
+		},
+		.from_ap = {
+			.bLength = sizeof(descriptors.fs_descs.from_ap),
+			.bDescriptorType = USB_DT_ENDPOINT,
+			.bEndpointAddress = 3 | USB_DIR_OUT,
+			.bmAttributes = USB_ENDPOINT_XFER_BULK,
 		},
 	},
 	.hs_descs = {
 		.intf = {
 			.bLength = sizeof descriptors.hs_descs.intf,
 			.bDescriptorType = USB_DT_INTERFACE,
-			.bNumEndpoints = 2 * NUM_BULKS,
+			.bNumEndpoints = 3,
 			.bInterfaceClass = USB_CLASS_VENDOR_SPEC,
 			.iInterface = 1,
+		},
+		.to_ap = {
+			.bLength = sizeof(descriptors.hs_descs.to_ap),
+			.bDescriptorType = USB_DT_ENDPOINT,
+			.bEndpointAddress = 1 | USB_DIR_IN,
+			.bmAttributes = USB_ENDPOINT_XFER_BULK,
+			.wMaxPacketSize = htole16(512),
+		},
+		.to_ap_arpc = {
+			.bLength = sizeof(descriptors.hs_descs.to_ap_arpc),
+			.bDescriptorType = USB_DT_ENDPOINT,
+			.bEndpointAddress = 2 | USB_DIR_IN,
+			.bmAttributes = USB_ENDPOINT_XFER_BULK,
+			.wMaxPacketSize = htole16(512),
+		},
+		.from_ap = {
+			.bLength = sizeof(descriptors.hs_descs.from_ap),
+			.bDescriptorType = USB_DT_ENDPOINT,
+			.bEndpointAddress = 3 | USB_DIR_OUT,
+			.bmAttributes = USB_ENDPOINT_XFER_BULK,
+			.wMaxPacketSize = htole16(512),
 		},
 	},
 };
@@ -174,6 +212,10 @@ static int enable_endpoints(void)
 	if (to_ap < 0)
 		return to_ap;
 
+	to_ap_arpc = open(FFS_GBEMU_IN_ARPC, O_RDWR);
+	if (to_ap_arpc < 0)
+		return to_ap_arpc;
+
 	from_ap = open(FFS_GBEMU_OUT, O_RDWR);
 	if (from_ap < 0)
 		return from_ap;
@@ -199,6 +241,8 @@ static void disable_endpoints(void)
 
 	close(from_ap);
 	from_ap = -EINVAL;
+	close(to_ap_arpc);
+	to_ap_arpc = -EINVAL;
 	close(to_ap);
 	to_ap = -EINVAL;
 }
@@ -343,43 +387,7 @@ static int read_control(void)
 
 static void functionfs_init_gb(void)
 {
-	int ret, i;
-	struct usb_endpoint_descriptor_no_audio *ep;
-
-	/* Initialize bulk in/out endpoints */
-	for (i = 0; i < NUM_BULKS; i++) {
-		ep = &descriptors.fs_descs.to_ap[i];
-		ep->bLength = sizeof(*ep);
-		ep->bDescriptorType = USB_DT_ENDPOINT;
-		ep->bEndpointAddress = (i + 1) | USB_DIR_IN;
-		ep->bmAttributes = USB_ENDPOINT_XFER_BULK;
-		ep->wMaxPacketSize = 64;
-		ep->bInterval = 0;
-
-		ep = &descriptors.hs_descs.to_ap[i];
-		ep->bLength = sizeof(*ep);
-		ep->bDescriptorType = USB_DT_ENDPOINT;
-		ep->bEndpointAddress = (i + 1) | USB_DIR_IN;
-		ep->bmAttributes = USB_ENDPOINT_XFER_BULK;
-		ep->wMaxPacketSize = 512;
-		ep->bInterval = 0;
-
-		ep = &descriptors.fs_descs.from_ap[i];
-		ep->bLength = sizeof(*ep);
-		ep->bDescriptorType = USB_DT_ENDPOINT;
-		ep->bEndpointAddress = (i + NUM_BULKS + 1) | USB_DIR_OUT;
-		ep->bmAttributes = USB_ENDPOINT_XFER_BULK;
-		ep->wMaxPacketSize = 64;
-		ep->bInterval = 0;
-
-		ep = &descriptors.hs_descs.from_ap[i];
-		ep->bLength = sizeof(*ep);
-		ep->bDescriptorType = USB_DT_ENDPOINT;
-		ep->bEndpointAddress = (i + NUM_BULKS + 1) | USB_DIR_OUT;
-		ep->bmAttributes = USB_ENDPOINT_XFER_BULK;
-		ep->wMaxPacketSize = 512;
-		ep->bInterval = 0;
-	}
+	int ret;
 
 	control = open(FFS_GBEMU_EP0, O_RDWR);
 	if (control < 0) {
