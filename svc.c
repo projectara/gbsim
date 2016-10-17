@@ -41,6 +41,7 @@ static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 	struct gb_svc_intf_refclk_response *svc_intf_refclk_response;
 	struct gb_svc_intf_unipro_response *svc_intf_unipro_response;
 	struct gb_svc_intf_activate_response *svc_intf_activate_response;
+	struct gb_svc_intf_resume_response *svc_intf_resume_response;
 	struct gb_svc_intf_set_pwrm_response *svc_intf_set_pwrm_response;
 	uint16_t message_size = sizeof(*oph);
 	size_t payload_size = 0;
@@ -152,6 +153,11 @@ static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 		payload_size = sizeof(*svc_intf_activate_response);
 		svc_intf_activate_response = &op_rsp->svc_intf_activate_response;
 		svc_intf_activate_response->intf_type = GB_SVC_INTF_TYPE_GREYBUS;
+		break;
+	case GB_SVC_TYPE_INTF_RESUME:
+		payload_size = sizeof(*svc_intf_resume_response);
+		svc_intf_resume_response = &op_rsp->svc_intf_resume_response;
+		svc_intf_resume_response->status = GB_SVC_OP_SUCCESS;
 		break;
 	case GB_SVC_TYPE_INTF_MAILBOX_EVENT:
 		break;
@@ -313,6 +319,8 @@ char *svc_get_operation(uint8_t type)
 		return "GB_SVC_TYPE_INTF_UNIPRO_DISABLE";
 	case GB_SVC_TYPE_INTF_ACTIVATE:
 		return "GB_SVC_TYPE_INTF_ACTIVATE";
+	case GB_SVC_TYPE_INTF_RESUME:
+		return "GB_SVC_TYPE_INTF_RESUME";
 	case GB_SVC_TYPE_INTF_MAILBOX_EVENT:
 		return "GB_SVC_TYPE_INTF_MAILBOX_EVENT";
 	default:
