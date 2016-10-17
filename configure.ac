@@ -55,10 +55,5 @@ AC_MSG_RESULT([
 	cflags:                 ${CFLAGS}
 	ldflags:                ${LDFLAGS}
 
-	***NOTE***
-	Be sure to declare GBDIR to point to location of greybus kernel .h files
-
-	Example:
-	  GBDIR=/home/foo/ara/greybus make
 ])
 

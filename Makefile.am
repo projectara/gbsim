@@ -1,8 +1,6 @@
 AM_LDFLAGS = \
 	-Wl,--as-needed
 
-GBUS_CPPFLAGS = -I${GBDIR}
-
 data_DATA =
 
 bin_PROGRAMS = \
@@ -16,6 +14,8 @@ gbsim_SOURCES = \
 	gadget.c \
 	gbsim.h \
 	gpio.c \
+	greybus_protocols.h \
+	greybus_manifest.h \
 	control.c \
 	svc.c \
 	i2c.c \
