@@ -139,7 +139,7 @@ struct op_msg {
 		struct gb_sdio_transfer_response	sdio_xfer_rsp;
 		struct gb_loopback_transfer_request	loopback_xfer_req;
 		struct gb_loopback_transfer_response	loopback_xfer_resp;
-		struct gb_protocol_version_response	fw_version_request;
+		struct gb_bootrom_version_response	fw_version_response;
 		struct gb_bootrom_firmware_size_request		fw_size_req;
 		struct gb_bootrom_firmware_size_response	fw_size_resp;
 		struct gb_bootrom_get_firmware_request	fw_get_firmware_req;

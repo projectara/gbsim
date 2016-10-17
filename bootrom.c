@@ -31,7 +31,7 @@ char *bootrom_get_operation(uint8_t type)
 	switch (type) {
 	case GB_REQUEST_TYPE_INVALID:
 		return "GB_BOOTROM_TYPE_INVALID";
-	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
+	case GB_BOOTROM_TYPE_VERSION:
 		return "GB_BOOTROM_TYPE_PROTOCOL_VERSION";
 	case GB_BOOTROM_TYPE_FIRMWARE_SIZE:
 		return "GB_BOOTROM_TYPE_FIRMWARE_SIZE";
@@ -97,22 +97,22 @@ static int bootrom_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 	struct op_msg *op_req = rbuf;
 	struct op_msg *op_rsp = tbuf;
 	struct gb_operation_msg_hdr *oph = &op_req->header;
-	struct gb_protocol_version_response *version_request;
+	struct gb_bootrom_version_response *version_response;
 	uint16_t message_size = sizeof(*oph);
 	size_t payload_size;
 	int ret;
 
 	switch (oph->type) {
-	case GB_REQUEST_TYPE_PROTOCOL_VERSION:
-		payload_size = sizeof(*version_request);
-		version_request = &op_req->fw_version_request;
+	case GB_BOOTROM_TYPE_VERSION:
+		payload_size = sizeof(*version_response);
+
+		version_response = &op_rsp->fw_version_response;
+		version_response->major = GB_BOOTROM_VERSION_MAJOR;
+		version_response->minor = GB_BOOTROM_VERSION_MINOR;
 
 		gbsim_debug("AP Bootrom version (%d %d)\n",
-			    version_request->major, version_request->minor);
+			    version_response->major, version_response->minor);
 
-		version_request = &op_rsp->fw_version_request;
-		version_request->major = GB_BOOTROM_VERSION_MAJOR;
-		version_request->minor = GB_BOOTROM_VERSION_MINOR;
 		break;
 	default:
 		gbsim_error("%s: Request not supported (%d)\n", __func__,
