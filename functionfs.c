@@ -366,6 +366,10 @@ static void handle_setup(const struct usb_ctrlrequest *setup)
 		gbsim_debug("latency_tag_dis request for cport: %04x\n",
 			    le16toh(setup->wValue));
 		break;
+	case GB_APB_REQUEST_CPORT_FLAGS:
+		dump_control_msg(setup);
+		gbsim_debug("cport flags request, nothing to do\n");
+		break;
 	case GB_APB_REQUEST_ARPC_RUN:
 		arpc_response_send(setup);
 		break;
