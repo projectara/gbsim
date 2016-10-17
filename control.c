@@ -37,6 +37,9 @@ int control_handler(struct gbsim_connection *connection, void *rbuf,
 	uint16_t hd_cport_id = connection->hd_cport_id;
 
 	switch (oph->type) {
+	case GB_REQUEST_TYPE_CPORT_SHUTDOWN:
+		payload_size = 0;
+		break;
 	case GB_CONTROL_TYPE_VERSION:
 		payload_size = sizeof(op_rsp->control_version_rsp);
 		op_rsp->control_version_rsp.major = GBSIM_CONTROL_VERSION_MAJOR;
@@ -55,7 +58,26 @@ int control_handler(struct gbsim_connection *connection, void *rbuf,
 	case GB_CONTROL_TYPE_CONNECTED:
 		payload_size = 0;
 		break;
+	case GB_CONTROL_TYPE_BUNDLE_ACTIVATE:
+		payload_size = sizeof(op_rsp->control_bundle_pm_rsp);
+		op_rsp->control_bundle_pm_rsp.status = GB_CONTROL_BUNDLE_PM_OK;
+		break;
+	case GB_CONTROL_TYPE_BUNDLE_SUSPEND:
+		payload_size = sizeof(op_rsp->control_bundle_pm_rsp);
+		op_rsp->control_bundle_pm_rsp.status = GB_CONTROL_BUNDLE_PM_OK;
+		break;
+	case GB_CONTROL_TYPE_BUNDLE_RESUME:
+		payload_size = sizeof(op_rsp->control_bundle_pm_rsp);
+		op_rsp->control_bundle_pm_rsp.status = GB_CONTROL_BUNDLE_PM_OK;
+		break;
 	case GB_CONTROL_TYPE_DISCONNECTED:
+		payload_size = 0;
+		break;
+	case GB_CONTROL_TYPE_INTF_SUSPEND_PREPARE:
+		payload_size = sizeof(op_rsp->control_intf_pm_rsp);
+		op_rsp->control_intf_pm_rsp.status = GB_CONTROL_INTF_PM_OK;
+		break;
+	case GB_CONTROL_TYPE_DISCONNECTING:
 		payload_size = 0;
 		break;
 	default:
@@ -72,6 +94,8 @@ int control_handler(struct gbsim_connection *connection, void *rbuf,
 char *control_get_operation(uint8_t type)
 {
 	switch (type) {
+	case GB_REQUEST_TYPE_CPORT_SHUTDOWN:
+		return "GB_REQUEST_TYPE_CPORT_SHUTDOWN";
 	case GB_REQUEST_TYPE_INVALID:
 		return "GB_CONTROL_TYPE_INVALID";
 	case GB_CONTROL_TYPE_VERSION:
@@ -86,6 +110,16 @@ char *control_get_operation(uint8_t type)
 		return "GB_CONTROL_TYPE_CONNECTED";
 	case GB_CONTROL_TYPE_DISCONNECTED:
 		return "GB_CONTROL_TYPE_DISCONNECTED";
+	case GB_CONTROL_TYPE_DISCONNECTING:
+		return "GB_CONTROL_TYPE_DISCONNECTING";
+	case GB_CONTROL_TYPE_BUNDLE_ACTIVATE:
+		return "GB_CONTROL_TYPE_BUNDLE_ACTIVATE";
+	case GB_CONTROL_TYPE_BUNDLE_SUSPEND:
+		return "GB_CONTROL_TYPE_BUNDLE_SUSPEND";
+	case GB_CONTROL_TYPE_BUNDLE_RESUME:
+		return "GB_CONTROL_TYPE_BUNDLE_RESUME";
+	case GB_CONTROL_TYPE_INTF_SUSPEND_PREPARE:
+		return "GB_CONTROL_TYPE_INTF_SUSPEND_PREPARE";
 	default:
 		return "(Unknown operation)";
 	}
