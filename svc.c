@@ -289,8 +289,6 @@ char *svc_get_operation(uint8_t type)
 		return "GB_SVC_TYPE_INTF_SET_PWRM";
 	case GB_SVC_TYPE_INTF_EJECT:
 		return "GB_SVC_TYPE_INTF_EJECT";
-	case GB_SVC_TYPE_KEY_EVENT:
-		return "GB_SVC_TYPE_KEY_EVENT";
 	case GB_SVC_TYPE_PWRMON_RAIL_COUNT_GET:
 		return "GB_SVC_TYPE_PWRMON_RAIL_COUNT_GET";
 	case GB_SVC_TYPE_PWRMON_RAIL_NAMES_GET:
