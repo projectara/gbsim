@@ -22,6 +22,7 @@ gbsim_SOURCES = \
 	control.c \
 	svc.c \
 	i2c.c \
+	interface.c \
 	inotify.c \
 	loopback.c \
 	main.c \

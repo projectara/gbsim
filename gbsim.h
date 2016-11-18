@@ -25,8 +25,8 @@
 #define BIT(n)	(1UL << (n))
 #endif
 
-#include <greybus_manifest.h>
-#include <greybus_protocols.h>
+#include "greybus_manifest.h"
+#include "greybus_protocols.h"
 
 /* Wouldn't support types larger than 4 bytes */
 #define _ALIGNBYTES		(sizeof(uint32_t) - 1)
@@ -57,15 +57,9 @@ struct gbsim_connection {
 	uint16_t cport_id;
 	uint16_t hd_cport_id;
 	int protocol;
-};
 
-struct gbsim_interface {
-	void *manifest;
-	size_t manifest_size;
-	TAILQ_HEAD(chead, gbsim_connection) connections;
+	struct gbsim_interface *intf;
 };
-
-extern struct gbsim_interface interface;
 
 /* CPorts */
 
@@ -101,6 +95,7 @@ struct op_msg {
 		struct gb_svc_route_create_request	svc_route_create_request;
 		struct gb_svc_route_destroy_request	svc_route_destroy_request;
 		struct gb_svc_pwrmon_rail_count_get_response	svc_pwrmon_rail_count_get_response;
+		struct gb_svc_intf_vsys_request		svc_intf_vsys_request;
 		struct gb_svc_intf_vsys_response	svc_intf_vsys_response;
 		struct gb_svc_intf_refclk_response	svc_intf_refclk_response;
 		struct gb_svc_intf_unipro_response	svc_intf_unipro_response;
@@ -228,24 +223,58 @@ static inline uint8_t cport_to_module_id(uint16_t cport_id)
 }
 
 struct gbsim_connection *connection_find(uint16_t cport_id);
-void allocate_connection(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id);
+struct gbsim_connection *allocate_connection(struct gbsim_interface *intf,
+					     uint16_t cport_id,
+					     uint16_t hd_cport_id);
+void connection_set_protocol(struct gbsim_connection *connection,
+			     uint16_t cport_id);
 uint16_t find_hd_cport_for_protocol(int protocol_id);
 void free_connection(struct gbsim_connection *connections);
 void free_connections(void);
 
-int inotify_start(char *);
+struct gbsim_interface {
+	TAILQ_ENTRY(gbsim_interface) intf_node;
+
+	uint8_t interface_id;
+	uint8_t features;
+
+	char *vendor_id;
+	char *product_id;
+	uint32_t serial_number;
+
+	void *manifest;
+	size_t manifest_size;
+
+	struct gbsim_connection *control_conn;
+	struct gbsim_svc *svc;
+
+	TAILQ_HEAD(chead, gbsim_connection) connections;
+};
+
+struct gbsim_svc {
+	struct gbsim_interface *intf;
+
+	TAILQ_HEAD(intf_head, gbsim_interface) intfs;
+};
+
+int inotify_start(struct gbsim_svc *svc, char *base_dir);
+
+int svc_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
+int svc_request_send(uint8_t, uint8_t);
+char *svc_get_operation(uint8_t type);
+int svc_init(void);
+void svc_exit(void);
+
+struct gbsim_interface *interface_alloc(struct gbsim_svc *svc, uint8_t id);
+struct gbsim_interface *interface_get_by_id(struct gbsim_svc *svc, uint8_t id);
+
+void interface_free(struct gbsim_svc *svc, struct gbsim_interface *intf);
 
 void *recv_thread(void *);
 void recv_thread_cleanup(void *);
 
 int control_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
 char *control_get_operation(uint8_t type);
-
-int svc_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
-int svc_request_send(uint8_t, uint8_t);
-char *svc_get_operation(uint8_t type);
-void svc_init(void);
-void svc_exit(void);
 
 int gpio_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
 char *gpio_get_operation(uint8_t type);
@@ -292,8 +321,10 @@ int fw_download_handler(struct gbsim_connection *, void *, size_t, void *, size_
 char *fw_download_get_operation(uint8_t type);
 int download_firmware(char *tag, uint16_t hd_cport_id, void (*func)(void));
 
-bool manifest_parse(void *data, size_t size);
+bool manifest_parse(struct gbsim_svc *svc, void *data, size_t size);
+int cport_get_protocol(struct gbsim_interface *intf, uint16_t cport_id);
 void reset_hd_cport_id(void);
+void free_hd_cport_id(void);
 int send_response(uint16_t hd_cport_id,
 			struct op_msg *message, uint16_t message_size,
 			uint16_t operation_id, uint8_t type, uint8_t result);

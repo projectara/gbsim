@@ -12,6 +12,7 @@
 #include <linux/types.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/queue.h>
 #include <errno.h>
 
 #include "gbsim.h"
@@ -22,6 +23,8 @@
 /* Receive buffer for all data arriving from the AP */
 static char cport_rbuf[ES1_MSG_SIZE];
 static char cport_tbuf[ES1_MSG_SIZE];
+
+extern struct gbsim_svc *svc;
 
 /*
  * We (ab)use the operation-message header pad bytes to transfer the
@@ -48,10 +51,12 @@ static uint16_t gbsim_message_cport_unpack(struct gb_operation_msg_hdr *header)
 struct gbsim_connection *connection_find(uint16_t cport_id)
 {
 	struct gbsim_connection *connection;
+	struct gbsim_interface *intf;
 
-	TAILQ_FOREACH(connection, &interface.connections, cnode)
-		if (connection->hd_cport_id == cport_id)
-			return connection;
+	TAILQ_FOREACH(intf, &svc->intfs, intf_node)
+		TAILQ_FOREACH(connection, &intf->connections, cnode)
+			if (connection->hd_cport_id == cport_id)
+				return connection;
 
 	return NULL;
 }
@@ -59,46 +64,79 @@ struct gbsim_connection *connection_find(uint16_t cport_id)
 uint16_t find_hd_cport_for_protocol(int protocol_id)
 {
 	struct gbsim_connection *connection;
+	struct gbsim_interface *intf;
 
-	TAILQ_FOREACH(connection, &interface.connections, cnode)
-		if (connection->protocol == protocol_id)
-			return connection->hd_cport_id;
+	TAILQ_FOREACH(intf, &svc->intfs, intf_node)
+		TAILQ_FOREACH(connection, &intf->connections, cnode)
+			if (connection->protocol == protocol_id)
+				return connection->hd_cport_id;
 
 	return 0;
 }
 
-void allocate_connection(uint16_t cport_id, uint16_t hd_cport_id, int protocol_id)
+void connection_set_protocol(struct gbsim_connection *connection,
+			     uint16_t cport_id)
+{
+	int protocol_id;
+
+	protocol_id = cport_get_protocol(connection->intf, cport_id);
+	if (protocol_id < 0)
+		gbsim_error("fail to get protocol to cport_id: %u\n", cport_id);
+
+	connection->protocol = protocol_id;
+}
+
+struct gbsim_connection *allocate_connection(struct gbsim_interface *intf,
+					     uint16_t cport_id,
+					     uint16_t hd_cport_id)
 {
 	struct gbsim_connection *connection;
 
-	connection = malloc(sizeof(*connection));
+	connection = calloc(1, sizeof(*connection));
+	if (!connection)
+		return NULL;
+
 	connection->cport_id = cport_id;
 
 	connection->hd_cport_id = hd_cport_id;
-	connection->protocol = protocol_id;
-	TAILQ_INSERT_TAIL(&interface.connections, connection, cnode);
+
+	TAILQ_INSERT_TAIL(&intf->connections, connection, cnode);
+
+	if (cport_id == GB_CONTROL_CPORT_ID)
+		intf->control_conn = connection;
+
+	connection->intf = intf;
+
+	return connection;
 }
 
 void free_connection(struct gbsim_connection *connection)
 {
-	TAILQ_REMOVE(&interface.connections, connection, cnode);
+	struct gbsim_interface *intf = connection->intf;
+
+	TAILQ_REMOVE(&intf->connections, connection, cnode);
 	free(connection);
 }
 
 void free_connections(void)
 {
 	struct gbsim_connection *connection;
+	struct gbsim_interface *intf;
 
 	/*
 	 * Linux doesn't have a foreach_safe version of tailq and so the dirty
 	 * trick of 'goto again'.
 	 */
 again:
-	TAILQ_FOREACH(connection, &interface.connections, cnode) {
-		if (connection->hd_cport_id == GB_SVC_CPORT_ID)
-			continue;
+	TAILQ_FOREACH(intf, &svc->intfs, intf_node) {
+		TAILQ_FOREACH(connection, &intf->connections, cnode) {
+			if (connection->hd_cport_id == GB_SVC_CPORT_ID)
+				continue;
 
-		free_connection(connection);
+			free_connection(connection);
+			goto again;
+		}
+		interface_free(svc, intf);
 		goto again;
 	}
 	reset_hd_cport_id();

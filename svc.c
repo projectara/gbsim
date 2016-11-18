@@ -20,6 +20,8 @@
 
 #include "gbsim.h"
 
+struct gbsim_svc *svc;
+
 static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 			       void *rbuf, size_t rsize, void *tbuf,
 			       size_t tsize)
@@ -43,7 +45,11 @@ static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 	struct gb_svc_intf_activate_response *svc_intf_activate_response;
 	struct gb_svc_intf_resume_response *svc_intf_resume_response;
 	struct gb_svc_intf_set_pwrm_response *svc_intf_set_pwrm_response;
+	struct gbsim_interface *intf;
+	struct gbsim_connection *connection;
+	uint16_t ap_intf_id, ap_cport_id, mod_intf_id, mod_cport_id;
 	uint16_t message_size = sizeof(*oph);
+	uint8_t intf_id = 0;
 	size_t payload_size = 0;
 
 	switch (oph->type) {
@@ -60,16 +66,46 @@ static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 	case GB_SVC_TYPE_CONN_CREATE:
 		svc_conn_create = &op_req->svc_conn_create_request;
 
-		gbsim_debug("SVC connection create request (%hhu %hu):(%hhu %hu) response\n",
-			    svc_conn_create->intf1_id, svc_conn_create->cport1_id,
-			    svc_conn_create->intf2_id, svc_conn_create->cport2_id);
+		ap_intf_id = le16toh(svc_conn_create->intf1_id);
+		ap_cport_id = le16toh(svc_conn_create->cport1_id);
+		mod_intf_id = le16toh(svc_conn_create->intf2_id);
+		mod_cport_id = le16toh(svc_conn_create->cport2_id);
+
+		gbsim_debug("SVC connection create request (%hu %hu):(%hu %hu) response\n",
+			    ap_intf_id, ap_cport_id, mod_intf_id, mod_cport_id);
+
+		intf = interface_get_by_id(svc, mod_intf_id);
+		if (!intf) {
+			gbsim_error("SVC No interface: %hu\n", mod_intf_id);
+			break;
+		}
+
+		connection = allocate_connection(intf, mod_cport_id,
+						 ap_cport_id);
+		if (!connection) {
+			gbsim_error("Failed to allocate connection: (%hu %hu):(%hu %hu)\n",
+				    ap_intf_id, ap_cport_id, mod_intf_id,
+				    mod_cport_id);
+			return -ENOMEM;
+		}
+
+		connection_set_protocol(connection, mod_cport_id);
+
 		break;
 	case GB_SVC_TYPE_CONN_DESTROY:
 		svc_conn_destroy = &op_req->svc_conn_destroy_request;
 
-		gbsim_debug("SVC connection destroy request (%hhu %hu):(%hhu %hu) response\n",
-			    svc_conn_destroy->intf1_id, svc_conn_destroy->cport1_id,
-			    svc_conn_destroy->intf2_id, svc_conn_destroy->cport2_id);
+		ap_intf_id = le16toh(svc_conn_destroy->intf1_id);
+		ap_cport_id = le16toh(svc_conn_destroy->cport1_id);
+		mod_intf_id = le16toh(svc_conn_destroy->intf2_id);
+		mod_cport_id = le16toh(svc_conn_destroy->cport2_id);
+
+		gbsim_debug("SVC connection destroy request (%hu %hu):(%hu %hu) response\n",
+			    ap_intf_id, ap_cport_id, mod_intf_id, mod_cport_id);
+
+		connection = connection_find(ap_cport_id);
+
+		free_connection(connection);
 		break;
 	case GB_SVC_TYPE_DME_PEER_GET:
 		payload_size = sizeof(*dme_get_response);
@@ -128,6 +164,14 @@ static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 		payload_size = sizeof(*svc_intf_vsys_response);
 		svc_intf_vsys_response = &op_rsp->svc_intf_vsys_response;
 		svc_intf_vsys_response->result_code = 0;
+
+		intf_id = op_req->svc_intf_vsys_request.intf_id;
+
+		intf = interface_get_by_id(svc, intf_id);
+		if (!intf)
+			return -ENODEV;
+		interface_free(svc, intf);
+
 		break;
 	case GB_SVC_TYPE_INTF_REFCLK_ENABLE:
 		payload_size = sizeof(*svc_intf_refclk_response);
@@ -214,12 +258,11 @@ static int svc_handler_response(uint16_t cport_id, uint16_t hd_cport_id,
 		 * AP's SVC cport is ready now, start scanning for module
 		 * hotplug.
 		 */
-		ret = inotify_start(hotplug_basedir);
+		ret = inotify_start(svc, hotplug_basedir);
 		if (ret < 0)
 			gbsim_error("Failed to start inotify thread\n");
 		break;
 	case GB_SVC_TYPE_MODULE_REMOVED:
-		free_connections();
 		break;
 	case GB_SVC_TYPE_MODULE_INSERTED:
 	case GB_SVC_TYPE_INTF_RESET:
@@ -381,13 +424,34 @@ int svc_request_send(uint8_t type, uint8_t intf_id)
 	return send_request(GB_SVC_CPORT_ID, &msg, message_size, 1, type);
 }
 
-void svc_init(void)
+int svc_init(void)
 {
-	/* Allocate cport for svc protocol between AP and SVC */
-	allocate_connection(GB_SVC_CPORT_ID, GB_SVC_CPORT_ID, GREYBUS_PROTOCOL_SVC);
+	struct gbsim_connection *connection;
+
+	svc = calloc(1, sizeof(*svc));
+	if (!svc)
+		return -ENOMEM;
+
+	TAILQ_INIT(&svc->intfs);
+
+	/* init svc->ap interface */
+	svc->intf = interface_alloc(svc, 0);
+	if (!svc->intf)
+		return -ENOMEM;
+
+	connection = allocate_connection(svc->intf, GB_SVC_CPORT_ID,
+					 GB_SVC_CPORT_ID);
+	if (!connection)
+		return -ENOMEM;
+
+	connection_set_protocol(connection, GB_SVC_CPORT_ID);
+
+	return 0;
 }
 
 void svc_exit(void)
 {
-	free_connection(connection_find(GB_SVC_CPORT_ID));
+	if (svc && svc->intf)
+		interface_free(svc, svc->intf);
+	free(svc);
 }

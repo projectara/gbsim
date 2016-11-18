@@ -20,7 +20,6 @@
  * in manifest. To match that here, we can just use a simple counter.
  */
 static uint16_t hd_cport_id_counter;
-static int control_done;
 
 static uint16_t allocate_hd_cport_id(void)
 {
@@ -49,7 +48,8 @@ void reset_hd_cport_id(void)
  * Returns the number of bytes consumed by the descriptor, or a
  * negative errno.
  */
-static int identify_descriptor(struct greybus_descriptor *desc, size_t size)
+static int identify_descriptor(struct gbsim_interface *intf,
+			       struct greybus_descriptor *desc, size_t size)
 {
 	struct greybus_descriptor_header *desc_header = &desc->header;
 	size_t expected_size;
@@ -85,22 +85,6 @@ static int identify_descriptor(struct greybus_descriptor *desc, size_t size)
 		break;
 	case GREYBUS_TYPE_CPORT:
 		expected_size += sizeof(struct greybus_descriptor_cport);
-
-		/*
-		 * Module's control protocol's node might not be present in
-		 * manifest, and the first allocated cport should be for control
-		 * protocol.
-		 */
-		if (!control_done &&
-			(le16toh(desc->cport.id) != GB_CONTROL_CPORT_ID)) {
-			allocate_connection(GB_CONTROL_CPORT_ID,
-					allocate_hd_cport_id(),
-					GREYBUS_PROTOCOL_CONTROL);
-		}
-
-		control_done = 1;
-		allocate_connection(le16toh(desc->cport.id), allocate_hd_cport_id(),
-				desc->cport.protocol_id);
 		break;
 	case GREYBUS_TYPE_INVALID:
 	default:
@@ -146,8 +130,9 @@ static int identify_descriptor(struct greybus_descriptor *desc, size_t size)
  *
  * Returns true if parsing was successful, false otherwise.
  */
-bool manifest_parse(void *data, size_t size)
+bool manifest_parse(struct gbsim_svc *svc, void *data, size_t size)
 {
+	struct gbsim_interface *intf;
 	struct greybus_manifest *manifest;
 	struct greybus_manifest_header *header;
 	struct greybus_descriptor *desc;
@@ -181,13 +166,18 @@ bool manifest_parse(void *data, size_t size)
 	desc = (struct greybus_descriptor *)(header + 1);
 	size -= sizeof(*header);
 
-	/* Reset control protocol's counter */
-	control_done = 0;
+	/* get interface with id 1, for now */
+	intf = interface_alloc(svc, 1);
+	if (!intf)
+		return false;
+
+	intf->manifest = manifest;
+	intf->manifest_size = manifest_size;
 
 	while (size) {
 		int desc_size;
 
-		desc_size = identify_descriptor(desc, size);
+		desc_size = identify_descriptor(intf, desc, size);
 		if (desc_size < 0)
 			return false;
 
@@ -196,4 +186,60 @@ bool manifest_parse(void *data, size_t size)
 	}
 
 	return true;
+}
+
+struct greybus_descriptor *manifest_get_descriptor(struct gbsim_interface *intf,
+				   enum greybus_descriptor_type desc_type,
+				   int skip)
+{
+	struct greybus_manifest *manifest = intf->manifest;
+	struct greybus_manifest_header *header = &manifest->header;
+	struct greybus_descriptor_header *desc_header;
+	struct greybus_descriptor *desc;
+	__u16 size = intf->manifest_size;
+	int desc_size;
+	int offset = 0;
+
+	desc = (struct greybus_descriptor *)(header + 1);
+	size -= sizeof(*header);
+
+	while (size) {
+		desc_header = &desc->header;
+		desc_size = (int)le16toh(desc_header->size);
+
+		if (desc_header->type == desc_type && offset == skip)
+			return desc;
+
+		if (desc_header->type == desc_type)
+			offset++;
+
+		/* Descriptor needs to at least have a header */
+		desc = (struct greybus_descriptor *)((char *)desc + desc_size);
+		size -= desc_size;
+	}
+
+	return NULL;
+}
+
+int cport_get_protocol(struct gbsim_interface *intf, uint16_t cport_id)
+{
+	struct greybus_descriptor *desc;
+	int skip = 0;
+
+	if (intf->interface_id == 0 && cport_id == GB_SVC_CPORT_ID)
+		return GREYBUS_PROTOCOL_SVC;
+
+	if (cport_id == GB_CONTROL_CPORT_ID)
+		return GREYBUS_PROTOCOL_CONTROL;
+
+	do {
+		desc = manifest_get_descriptor(intf, GREYBUS_TYPE_CPORT, skip);
+		if (!desc)
+			return -EINVAL;
+		if (desc->cport.id == cport_id)
+			return desc->cport.protocol_id;
+		skip++;
+	} while (desc);
+
+	return -EINVAL;
 }

@@ -86,6 +86,7 @@ static void *inotify_thread(void *param)
 {
 	char buffer[16 * INOTIFY_EVENT_BUF];
 	ssize_t length;
+	struct gbsim_svc *svc = param;
 	int i;
 
 	(void) param;
@@ -124,9 +125,8 @@ static void *inotify_thread(void *param)
 				strcat(mnfs, event->name);
 				mh = get_manifest_blob(mnfs);
 				if (mh) {
-					interface.manifest = mh;
-					interface.manifest_size = le16toh(mh->size);
-					manifest_parse(mh, le16toh(mh->size));
+					manifest_parse(svc, mh,
+						       le16toh(mh->size));
 
 					gbsim_info("%s Interface inserted\n", event->name);
 					/* Fix Interface ID to 1 */
@@ -144,7 +144,7 @@ static void *inotify_thread(void *param)
 	return NULL;
 }
 
-int inotify_start(char *base_dir)
+int inotify_start(struct gbsim_svc *svc, char *base_dir)
 {
 	int ret;
 	struct stat root_stat;
@@ -167,7 +167,7 @@ int inotify_start(char *base_dir)
 	if ((notify_wd = inotify_add_watch(notify_fd, root, IN_CLOSE_WRITE|IN_DELETE)) < 0)
 		perror("inotify add watch failed");
 
-	ret = pthread_create(&inotify_pthread, NULL, inotify_thread, NULL);
+	ret = pthread_create(&inotify_pthread, NULL, inotify_thread, svc);
 	if (ret < 0) {
 		perror("can't create inotify thread");
 		exit(EXIT_FAILURE);

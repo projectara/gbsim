@@ -117,14 +117,15 @@ int main(int argc, char *argv[])
 
 	signals_init();
 
-	TAILQ_INIT(&interface.connections);
-
 	ret = gbsim_usb_init();
 	if (ret < 0)
 		goto out;
 
 	/* Protocol handlers */
-	svc_init();
+	ret = svc_init();
+	if (ret < 0)
+		goto out_cleanup;
+
 	gpio_init();
 	i2c_init();
 	uart_init();
@@ -132,6 +133,9 @@ int main(int argc, char *argv[])
 	loopback_init();
 
 	ret = functionfs_loop();
+
+out_cleanup:
+	cleanup();
 
 out:
 	return ret;

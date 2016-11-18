@@ -32,6 +32,7 @@ int control_handler(struct gbsim_connection *connection, void *rbuf,
 	struct op_msg *op_req = rbuf;
 	struct op_msg *op_rsp = tbuf;
 	struct gb_operation_msg_hdr *oph = &op_req->header;
+	struct gbsim_interface *intf = connection->intf;
 	size_t payload_size;
 	uint16_t message_size = sizeof(*oph);
 	uint16_t hd_cport_id = connection->hd_cport_id;
@@ -47,12 +48,11 @@ int control_handler(struct gbsim_connection *connection, void *rbuf,
 		break;
 	case GB_CONTROL_TYPE_GET_MANIFEST_SIZE:
 		payload_size = sizeof(op_rsp->control_msize_rsp);
-		op_rsp->control_msize_rsp.size =
-				htole16(interface.manifest_size);
+		op_rsp->control_msize_rsp.size = htole16(intf->manifest_size);
 		break;
 	case GB_CONTROL_TYPE_GET_MANIFEST:
-		payload_size = interface.manifest_size;
-		memcpy(&op_rsp->control_manifest_rsp.data, interface.manifest,
+		payload_size = intf->manifest_size;
+		memcpy(&op_rsp->control_manifest_rsp.data, intf->manifest,
 		       payload_size);
 		break;
 	case GB_CONTROL_TYPE_CONNECTED:
