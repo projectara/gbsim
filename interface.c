@@ -13,6 +13,18 @@
 
 #include "gbsim.h"
 
+struct gbsim_interface *interface_get_by_hash(struct gbsim_svc *svc,
+					      uint32_t hash)
+{
+	struct gbsim_interface *intf;
+
+	TAILQ_FOREACH(intf, &svc->intfs, intf_node)
+		if (intf->manifest_fname_hash == hash)
+			return intf;
+
+	return NULL;
+}
+
 struct gbsim_interface *interface_get_by_id(struct gbsim_svc *svc, uint8_t id)
 {
 	struct gbsim_interface *intf;

@@ -82,11 +82,42 @@ out:
 	return NULL;
 }
 
+static int get_interface_id_from_fname(char *fname)
+{
+	char *iid_str;
+	char tmp[256];
+
+	/* if manifest name start with IID fetch the interface from there */
+	if (fname) {
+		strcpy(tmp, fname);
+		iid_str = strtok(tmp, "-");
+		if (!strncmp(iid_str, "IID", 3))
+			return strtol(iid_str + 3, NULL, 0);
+	}
+
+	return -ENOENT;
+}
+
+/* djb2 string hash function */
+static uint32_t hash_filename(char *fname)
+{
+	uint32_t hash = 5381;
+	int c;
+
+	while ((c = *fname++))
+		hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+	return hash;
+}
+
 static void *inotify_thread(void *param)
 {
 	char buffer[16 * INOTIFY_EVENT_BUF];
 	ssize_t length;
 	struct gbsim_svc *svc = param;
+	struct gbsim_interface *intf;
+	uint32_t hash;
+	int intf_id;
 	int i;
 
 	(void) param;
@@ -123,19 +154,45 @@ static void *inotify_thread(void *param)
 				strcpy(mnfs, root);
 				strcat(mnfs, "/");
 				strcat(mnfs, event->name);
+
+				/* get interface id by filename or next available */
+				intf_id = get_interface_id_from_fname(event->name);
+				if (intf_id < 0)
+					intf_id = svc_get_next_intf_id(svc);
+
+				/* allocate interface with given interface id */
+				intf = interface_alloc(svc, intf_id);
+				if (!intf)
+					return false;
+
+				hash = hash_filename(event->name);
+				intf->manifest_fname_hash = hash;
+
 				mh = get_manifest_blob(mnfs);
 				if (mh) {
-					manifest_parse(svc, mh,
+					manifest_parse(svc, intf_id, mh,
 						       le16toh(mh->size));
 
-					gbsim_info("%s Interface inserted\n", event->name);
-					/* Fix Interface ID to 1 */
-					svc_request_send(GB_SVC_TYPE_MODULE_INSERTED, 1);
+					gbsim_info("%s Interface %d inserted\n",
+						   event->name, intf_id);
+
+					svc_request_send(GB_SVC_TYPE_MODULE_INSERTED,
+							 intf_id);
 				} else
 					gbsim_error("missing manifest blob, no hotplug event sent\n");
 			} else if (event->mask & IN_DELETE) {
-				/* Fix Interface ID to 1 */
-				svc_request_send(GB_SVC_TYPE_MODULE_REMOVED, 1);
+				/* get interface by filename hash */
+				hash = hash_filename(event->name);
+
+				intf = interface_get_by_hash(svc, hash);
+				if (!intf) {
+					gbsim_error("interface not found for file: %s\n",
+						    event->name);
+					return NULL;
+				}
+
+				svc_request_send(GB_SVC_TYPE_MODULE_REMOVED,
+						 intf->interface_id);
 				gbsim_info("%s interface removed\n", event->name);
 			}
 		}

@@ -244,6 +244,7 @@ struct gbsim_interface {
 
 	void *manifest;
 	size_t manifest_size;
+	unsigned long manifest_fname_hash;
 
 	struct gbsim_connection *control_conn;
 	struct gbsim_svc *svc;
@@ -262,11 +263,14 @@ int inotify_start(struct gbsim_svc *svc, char *base_dir);
 int svc_handler(struct gbsim_connection *, void *, size_t, void *, size_t);
 int svc_request_send(uint8_t, uint8_t);
 char *svc_get_operation(uint8_t type);
+int svc_get_next_intf_id(struct gbsim_svc *svc);
 int svc_init(void);
 void svc_exit(void);
 
 struct gbsim_interface *interface_alloc(struct gbsim_svc *svc, uint8_t id);
 struct gbsim_interface *interface_get_by_id(struct gbsim_svc *svc, uint8_t id);
+struct gbsim_interface *interface_get_by_hash(struct gbsim_svc *svc,
+					      uint32_t hash);
 
 void interface_free(struct gbsim_svc *svc, struct gbsim_interface *intf);
 
@@ -321,7 +325,8 @@ int fw_download_handler(struct gbsim_connection *, void *, size_t, void *, size_
 char *fw_download_get_operation(uint8_t type);
 int download_firmware(char *tag, uint16_t hd_cport_id, void (*func)(void));
 
-bool manifest_parse(struct gbsim_svc *svc, void *data, size_t size);
+bool manifest_parse(struct gbsim_svc *svc, int intf_id, void *data,
+		    size_t size);
 int cport_get_protocol(struct gbsim_interface *intf, uint16_t cport_id);
 int send_response(uint16_t hd_cport_id,
 			struct op_msg *message, uint16_t message_size,

@@ -22,6 +22,22 @@
 
 struct gbsim_svc *svc;
 
+int svc_get_next_intf_id(struct gbsim_svc *s)
+{
+	struct gbsim_interface *intf;
+	int intf_id = 1;
+
+start_again:
+	TAILQ_FOREACH(intf, &s->intfs, intf_node) {
+		if (intf_id == intf->interface_id) {
+			intf_id++;
+			goto start_again;
+		}
+	}
+
+	return intf_id;
+}
+
 static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 			       void *rbuf, size_t rsize, void *tbuf,
 			       size_t tsize)

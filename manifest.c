@@ -107,7 +107,7 @@ static int identify_descriptor(struct gbsim_interface *intf,
  *
  * Returns true if parsing was successful, false otherwise.
  */
-bool manifest_parse(struct gbsim_svc *svc, void *data, size_t size)
+bool manifest_parse(struct gbsim_svc *svc, int intf_id, void *data, size_t size)
 {
 	struct gbsim_interface *intf;
 	struct greybus_manifest *manifest;
@@ -143,8 +143,7 @@ bool manifest_parse(struct gbsim_svc *svc, void *data, size_t size)
 	desc = (struct greybus_descriptor *)(header + 1);
 	size -= sizeof(*header);
 
-	/* get interface with id 1, for now */
-	intf = interface_alloc(svc, 1);
+	intf = interface_get_by_id(svc, intf_id);
 	if (!intf)
 		return false;
 
