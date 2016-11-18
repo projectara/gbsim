@@ -116,7 +116,7 @@ static void loopback_init_port(uint8_t module_id, uint16_t cport_id,
 	gblb.hd_cport_id = hd_cport_id;
 	gblb.id = id;
 	gblb.init = true;
-	gbsim_debug("Loopback Module %hu Cport %hhu HDCport %hhu index %d\n",
+	gbsim_debug("Loopback Module %u Cport %hu HDCport %hu index %d\n",
 		    module_id, cport_id, hd_cport_id, port_count);
 }
 
@@ -150,10 +150,10 @@ int loopback_handler(struct gbsim_connection *connection, void *rbuf,
 		break;
 	case GB_LOOPBACK_TYPE_TRANSFER:
 		request = &op_req->loopback_xfer_req;
-		gbsim_debug("%s: LOOPBACK xfer rx %hu\n", __func__,
+		gbsim_debug("%s: LOOPBACK xfer rx %u\n", __func__,
 			    request->len);
 		if (request->len > GB_OPERATION_DATA_SIZE_MAX) {
-			gbsim_error("Module %hhu -> AP Cport %hu rx %hu bytes\n",
+			gbsim_error("Module %hhu -> AP Cport %hu rx %u bytes\n",
 				    module_id, cport_id, request->len);
 			result = PROTOCOL_STATUS_INVALID;
 		} else {
@@ -165,7 +165,7 @@ int loopback_handler(struct gbsim_connection *connection, void *rbuf,
 		break;
 	case GB_LOOPBACK_TYPE_SINK:
 		request = &op_req->loopback_xfer_req;
-		gbsim_debug("%s: LOOPBACK sink rx %hu\n", __func__,
+		gbsim_debug("%s: LOOPBACK sink rx %u\n", __func__,
 			    request->len);
 		break;
 	default:

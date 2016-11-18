@@ -100,7 +100,7 @@ static int svc_handler_request(uint16_t cport_id, uint16_t hd_cport_id,
 	case GB_SVC_TYPE_ROUTE_CREATE:
 		svc_route_create = &op_req->svc_route_create_request;
 
-		gbsim_debug("SVC route create request (%hhu %hu):(%hhu %hu) response\n",
+		gbsim_debug("SVC route create request (%hhu %u):(%hhu %u) response\n",
 			    svc_route_create->intf1_id, svc_route_create->dev1_id,
 			    svc_route_create->intf2_id, svc_route_create->dev2_id);
 		break;

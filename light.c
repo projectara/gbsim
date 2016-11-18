@@ -259,7 +259,7 @@ static ssize_t lights_send_event(struct op_msg *op_req, uint16_t hd_cport_id,
 	op_req->lights_gl_event_req.event = event;
 	op_req->lights_gl_event_req.light_id = light_id;
 
-	gbsim_debug("Module -> AP Light_Id %hu Lights protocol event request\n",
+	gbsim_debug("Module -> AP Light_Id %u Lights protocol event request\n",
 		    light_id);
 
 	message_size = sizeof(struct gb_operation_msg_hdr) + payload_size;

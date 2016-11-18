@@ -372,7 +372,7 @@ static int tty_set_line_coding(int i,
 		speed = B4000000;
 		break;
 	default:
-		gbsim_error("UART BUAD %hhu invalid\n", slc->rate);
+		gbsim_error("UART BUAD %u invalid\n", slc->rate);
 		return -EINVAL;
 	}
 	cfsetispeed(&newtios, speed);
@@ -393,7 +393,7 @@ static int tty_set_line_coding(int i,
 		newtios.c_cflag |= CS8;
 		break;
 	default:
-		gbsim_error("UART data format %hu invalid\n", slc->data_bits);
+		gbsim_error("UART data format %u invalid\n", slc->data_bits);
 		return -EINVAL;
 	}
 
@@ -425,7 +425,7 @@ static int tty_set_line_coding(int i,
 			newtios.c_cflag |= CMSPAR;
 			break;
 		default:
-			gbsim_error("UART parity %hu invalid\n", slc->parity);
+			gbsim_error("UART parity %u invalid\n", slc->parity);
 			return -EINVAL;
 		}
 
@@ -507,7 +507,7 @@ static int uart_init_port(uint8_t module_id, uint16_t cport_id,
 		return i;
 
 	if (port_count >= GB_UART_MAX) {
-		gbsim_error("All UARTs used Module %hu CPort %hhu\n",
+		gbsim_error("All UARTs used Module %u CPort %u\n",
 			    module_id, cport_id);
 		return -ENODEV;
 	}
@@ -516,7 +516,7 @@ static int uart_init_port(uint8_t module_id, uint16_t cport_id,
 	up[port_count].hd_cport_id = hd_cport_id;
 	up[port_count].id = id;
 	up[port_count].init = true;
-	gbsim_info("UART Module %hu Cport %hhu HDCport %hhu port-index %d\n",
+	gbsim_info("UART Module %u Cport %u HDCport %u port-index %d\n",
 		   module_id, cport_id, hd_cport_id, port_count);
 	i = port_count;
 	port_count++;

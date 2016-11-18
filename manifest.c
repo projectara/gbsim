@@ -171,9 +171,9 @@ bool manifest_parse(void *data, size_t size)
 
 	/* Validate major/minor number */
 	if (header->version_major > GREYBUS_VERSION_MAJOR) {
-		gbsim_error("manifest version too new (%hhu.%hhu > %hhu.%hhu)\n",
-			header->version_major, header->version_minor,
-			GREYBUS_VERSION_MAJOR, GREYBUS_VERSION_MINOR);
+		gbsim_error("manifest version too new (%hhu.%hhu > %d.%d)\n",
+			    header->version_major, header->version_minor,
+			    GREYBUS_VERSION_MAJOR, GREYBUS_VERSION_MINOR);
 		return false;
 	}
 
