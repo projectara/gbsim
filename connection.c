@@ -118,29 +118,6 @@ void free_connection(struct gbsim_connection *connection)
 	free(connection);
 }
 
-void free_connections(void)
-{
-	struct gbsim_connection *connection;
-	struct gbsim_interface *intf;
-
-	/*
-	 * Linux doesn't have a foreach_safe version of tailq and so the dirty
-	 * trick of 'goto again'.
-	 */
-again:
-	TAILQ_FOREACH(intf, &svc->intfs, intf_node) {
-		TAILQ_FOREACH(connection, &intf->connections, cnode) {
-			if (connection->hd_cport_id == GB_SVC_CPORT_ID)
-				continue;
-
-			free_connection(connection);
-			goto again;
-		}
-		interface_free(svc, intf);
-		goto again;
-	}
-}
-
 static void get_protocol_operation(uint16_t cport_id, char **protocol,
 				   char **operation, uint8_t type)
 {

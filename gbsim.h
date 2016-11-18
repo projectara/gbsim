@@ -230,7 +230,6 @@ void connection_set_protocol(struct gbsim_connection *connection,
 			     uint16_t cport_id);
 uint16_t find_hd_cport_for_protocol(int protocol_id);
 void free_connection(struct gbsim_connection *connections);
-void free_connections(void);
 
 struct gbsim_interface {
 	TAILQ_ENTRY(gbsim_interface) intf_node;
