@@ -582,6 +582,9 @@ int uart_handler(struct gbsim_connection *connection, void *rbuf,
 		gbsim_error("AP -> Module %hhu CPort %hu unsol resp %02x\n",
 			    module_id, cport_id, oph->type);
 		return 0;
+	case GB_REQUEST_TYPE_CPORT_SHUTDOWN:
+		payload_size = 0;
+		break;
 	default:
 		return -EINVAL;
 	}
@@ -700,6 +703,8 @@ char *uart_get_operation(uint8_t type)
 	switch (type) {
 	case GB_REQUEST_TYPE_INVALID:
 		return "GB_UART_TYPE_INVALID";
+	case GB_REQUEST_TYPE_CPORT_SHUTDOWN:
+		return "GB_REQUEST_TYPE_CPORT_SHUTDOWN";
 	case GB_UART_TYPE_SEND_DATA:
 		return "GB_UART_TYPE_SEND_DATA";
 	case GB_UART_TYPE_RECEIVE_DATA:

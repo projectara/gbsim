@@ -168,6 +168,9 @@ int loopback_handler(struct gbsim_connection *connection, void *rbuf,
 		gbsim_debug("%s: LOOPBACK sink rx %u\n", __func__,
 			    request->len);
 		break;
+	case GB_REQUEST_TYPE_CPORT_SHUTDOWN:
+		payload_size = 0;
+		break;
 	default:
 		return -EINVAL;
 	}
@@ -182,6 +185,8 @@ char *loopback_get_operation(uint8_t type)
 	switch (type) {
 	case GB_REQUEST_TYPE_INVALID:
 		return "GB_LOOPBACK_TYPE_INVALID";
+	case GB_REQUEST_TYPE_CPORT_SHUTDOWN:
+		return "GB_REQUEST_TYPE_CPORT_SHUTDOWN";
 	case GB_LOOPBACK_TYPE_PING:
 		return "GB_LOOPBACK_TYPE_PING";
 	case GB_LOOPBACK_TYPE_TRANSFER:

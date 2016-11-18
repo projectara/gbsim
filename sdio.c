@@ -693,6 +693,9 @@ int sdio_handler(struct gbsim_connection *connection, void *rbuf,
 		sdio_transfer_rsp(op_rsp, hd_cport_id, oph, data_blocks,
 				  data_blksz, data);
 		return 0;
+	case GB_REQUEST_TYPE_CPORT_SHUTDOWN:
+		payload_size = 0;
+		break;
 	default:
 		gbsim_error("sdio operation type %02x not supported\n",
 			    oph->type);
@@ -715,6 +718,8 @@ char *sdio_get_operation(uint8_t type)
 	switch (type) {
 	case GB_REQUEST_TYPE_INVALID:
 		return "GB_SDIO_TYPE_INVALID";
+	case GB_REQUEST_TYPE_CPORT_SHUTDOWN:
+		return "GB_REQUEST_TYPE_CPORT_SHUTDOWN";
 	case GB_SDIO_TYPE_GET_CAPABILITIES:
 		return "GB_SDIO_TYPE_GET_CAPABILITIES";
 	case GB_SDIO_TYPE_SET_IOS:

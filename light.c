@@ -377,6 +377,9 @@ int lights_handler(struct gbsim_connection *connection, void *rbuf,
 
 		channel->strobe = op_req->lights_glc_fstrobe_req.state ? true : false;
 		break;
+	case GB_REQUEST_TYPE_CPORT_SHUTDOWN:
+		payload_size = 0;
+		break;
 	}
 
 	/* send response */
@@ -400,6 +403,8 @@ char *lights_get_operation(uint8_t type)
 	switch (type) {
 	case GB_REQUEST_TYPE_INVALID:
 		return "GB_LIGHTS_TYPE_INVALID";
+	case GB_REQUEST_TYPE_CPORT_SHUTDOWN:
+		return "GB_REQUEST_TYPE_CPORT_SHUTDOWN";
 	case GB_LIGHTS_TYPE_GET_LIGHTS:
 		return "GB_LIGHTS_TYPE_GET_LIGHTS";
 	case GB_LIGHTS_TYPE_GET_LIGHT_CONFIG:

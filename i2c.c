@@ -102,6 +102,9 @@ int i2c_handler(struct gbsim_connection *connection, void *rbuf,
 
 		payload_size = read_op ? read_count : 0;
 		break;
+	case GB_REQUEST_TYPE_CPORT_SHUTDOWN:
+		payload_size = 0;
+		break;
 	default:
 		return -EINVAL;
 	}
@@ -116,6 +119,8 @@ char *i2c_get_operation(uint8_t type)
 	switch (type) {
 	case GB_REQUEST_TYPE_INVALID:
 		return "GB_I2C_TYPE_INVALID";
+	case GB_REQUEST_TYPE_CPORT_SHUTDOWN:
+		return "GB_REQUEST_TYPE_CPORT_SHUTDOWN";
 	case GB_I2C_TYPE_FUNCTIONALITY:
 		return "GB_I2C_TYPE_FUNCTIONALITY";
 	case GB_I2C_TYPE_TRANSFER:

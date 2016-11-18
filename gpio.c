@@ -175,6 +175,9 @@ int gpio_handler(struct gbsim_connection *connection, void *rbuf,
 		which = op_req->gpio_irq_unmask_req.which;
 		gb_gpios[which].irq_unmasked = 1;
 		break;
+	case GB_REQUEST_TYPE_CPORT_SHUTDOWN:
+		payload_size = 0;
+		break;
 	default:
 		return -EINVAL;
 	}
@@ -212,6 +215,8 @@ char *gpio_get_operation(uint8_t type)
 	switch (type) {
 	case GB_REQUEST_TYPE_INVALID:
 		return "GB_GPIO_TYPE_INVALID";
+	case GB_REQUEST_TYPE_CPORT_SHUTDOWN:
+		return "GB_REQUEST_TYPE_CPORT_SHUTDOWN";
 	case GB_GPIO_TYPE_LINE_COUNT:
 		return "GB_GPIO_TYPE_LINE_COUNT";
 	case GB_GPIO_TYPE_ACTIVATE:

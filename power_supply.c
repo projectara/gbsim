@@ -275,6 +275,9 @@ int power_supply_handler(struct gbsim_connection *connection, void *rbuf,
 			break;
 		psy_prop->val = prop_val;
 		break;
+	case GB_REQUEST_TYPE_CPORT_SHUTDOWN:
+		payload_size = 0;
+		break;
 	}
 
 	/* send response */
@@ -291,6 +294,8 @@ char *power_supply_get_operation(uint8_t type)
 	switch (type) {
 	case GB_REQUEST_TYPE_INVALID:
 		return "GB_POWER_SUPPLY_TYPE_INVALID";
+	case GB_REQUEST_TYPE_CPORT_SHUTDOWN:
+		return "GB_REQUEST_TYPE_CPORT_SHUTDOWN";
 	case GB_POWER_SUPPLY_TYPE_GET_SUPPLIES:
 		return "GB_POWER_SUPPLY_TYPE_GET_SUPPLIES";
 	case GB_POWER_SUPPLY_TYPE_GET_DESCRIPTION:
