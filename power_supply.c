@@ -180,7 +180,7 @@ static struct gb_power_supply *power_supply_init(int id)
 		break;
 	default:
 		gbsim_debug("power_supply: wrong power supply id %d\n", id);
-		break;
+		return NULL;
 	}
 	psy->id = id;
 
