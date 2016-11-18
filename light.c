@@ -88,13 +88,6 @@ static const struct gb_channel channel_red = {
 	.color_name	=	"red",
 };
 
-static const struct gb_channel channel_blue = {
-	.flags		=	0,
-	.max_brightness	=	255,
-	.color		=	0x000000FF,
-	.color_name	=	"blue",
-};
-
 static const struct gb_channel channel_flash = {
 	.mode		=	GB_CHANNEL_MODE_FLASH,
 	.flags		=	0,
