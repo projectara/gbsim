@@ -14,6 +14,8 @@ gbsim_SOURCES = \
 	functionfs.c \
 	gadget.c \
 	gbsim.h \
+	gbsim_usb.h \
+	gbsim_usb.c \
 	gpio.c \
 	greybus_protocols.h \
 	greybus_manifest.h \

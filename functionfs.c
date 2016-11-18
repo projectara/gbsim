@@ -508,9 +508,7 @@ int functionfs_init(void)
 	return 0;
 }
 
-int functionfs_cleanup(void)
+void functionfs_cleanup(void)
 {
 	recv_thread_cleanup(NULL);
-
-	return 0;
 }

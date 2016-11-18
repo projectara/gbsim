@@ -14,9 +14,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <usbg/usbg.h>
-
 #include "gbsim.h"
+#include "gbsim_usb.h"
 
 int bbb_backend = 0;
 int i2c_adapter = 0;
@@ -24,9 +23,6 @@ int uart_portno = 0;
 int uart_count = 0;
 char *hotplug_basedir;
 int verbose = 0;
-
-static usbg_state *s;
-static usbg_gadget *g;
 
 static struct sigaction sigact;
 
@@ -38,8 +34,7 @@ static void cleanup(void)
 	sigemptyset(&sigact.sa_mask);
 
 	uart_cleanup();
-	gadget_cleanup(s, g);
-	functionfs_cleanup();
+	gbsim_usb_cleanup();
 	svc_exit();
 }
 
@@ -124,15 +119,7 @@ int main(int argc, char *argv[])
 
 	TAILQ_INIT(&interface.connections);
 
-	ret = gadget_create(&s, &g);
-	if (ret < 0)
-		goto out;
-
-	ret = functionfs_init();
-	if (ret < 0)
-		goto out;
-
-	ret = gadget_enable(g);
+	ret = gbsim_usb_init();
 	if (ret < 0)
 		goto out;
 

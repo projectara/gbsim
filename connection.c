@@ -15,6 +15,7 @@
 #include <errno.h>
 
 #include "gbsim.h"
+#include "gbsim_usb.h"
 
 #define ES1_MSG_SIZE	(2 * 1024)
 

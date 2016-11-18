@@ -12,6 +12,7 @@
 #include <usbg/usbg.h>
 
 #include "gbsim.h"
+#include "gbsim_usb.h"
 
 #define VENDOR		0x18d1
 #define PRODUCT		0x1eaf
@@ -97,10 +98,10 @@ out1:
 
 int gadget_enable(usbg_gadget *g)
 {
-	return usbg_enable_gadget(g, NULL);	
+	return usbg_enable_gadget(g, NULL);
 }
 
-int gadget_cleanup(usbg_state *s, usbg_gadget *g)
+void gadget_cleanup(usbg_state *s, usbg_gadget *g)
 {
 	gbsim_debug("gadget_cleanup\n");
 
@@ -110,6 +111,4 @@ int gadget_cleanup(usbg_state *s, usbg_gadget *g)
 	}
 
 	usbg_cleanup(s);
-
-	return 0;
 }
