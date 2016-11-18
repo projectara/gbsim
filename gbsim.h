@@ -323,8 +323,6 @@ int download_firmware(char *tag, uint16_t hd_cport_id, void (*func)(void));
 
 bool manifest_parse(struct gbsim_svc *svc, void *data, size_t size);
 int cport_get_protocol(struct gbsim_interface *intf, uint16_t cport_id);
-void reset_hd_cport_id(void);
-void free_hd_cport_id(void);
 int send_response(uint16_t hd_cport_id,
 			struct op_msg *message, uint16_t message_size,
 			uint16_t operation_id, uint8_t type, uint8_t result);

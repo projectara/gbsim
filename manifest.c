@@ -16,29 +16,6 @@
 #include "gbsim.h"
 
 /*
- * Greybus kernel assigns hd-cport-ids to cports in the order they are present
- * in manifest. To match that here, we can just use a simple counter.
- */
-static uint16_t hd_cport_id_counter;
-
-static uint16_t allocate_hd_cport_id(void)
-{
-	/*
-	 * AP's hd_cport_id GB_SVC_CPORT_ID is reserved and must not be used for
-	 * other protocols.
-	 */
-	if (hd_cport_id_counter == GB_SVC_CPORT_ID)
-		++hd_cport_id_counter;
-
-	return hd_cport_id_counter++;
-}
-
-void reset_hd_cport_id(void)
-{
-	hd_cport_id_counter = 0;
-}
-
-/*
  * Validate the given descriptor.  Its reported size must fit within
  * the number of bytes reamining, and it must have a recognized
  * type.  Check that the reported size is at least as big as what

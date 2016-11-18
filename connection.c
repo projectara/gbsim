@@ -139,7 +139,6 @@ again:
 		interface_free(svc, intf);
 		goto again;
 	}
-	reset_hd_cport_id();
 }
 
 static void get_protocol_operation(uint16_t cport_id, char **protocol,
