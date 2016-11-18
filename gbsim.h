@@ -16,6 +16,10 @@
 #include <endian.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <sys/queue.h>
+#include <stdint.h>
+#include <linux/types.h>
+
 
 #ifndef BIT
 #define BIT(n)	(1UL << (n))
